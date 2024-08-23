@@ -1,7 +1,7 @@
-#!/usr/bin/env python3
+#conda activate trophic-mode-working-test-updated
 
 """
-Author: Ben Lambert
+Author: Adapted from Ben Lambert by Elaina Thomas
 This script carries out feature selection using the mean decrease accuracy approach.
 Usage:
 python mda.py -model [rf, xgboost] -data [path/to/balanced/datasets] -o [output file name and path]

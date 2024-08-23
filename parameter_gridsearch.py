@@ -1,7 +1,7 @@
-#!/usr/bin/env python3
+#conda activate trophic-mode-working-test-updated
 
 """
-Author: Ben Lambert
+Author: Adapted from Ben Lambert by Elaina Thomas
 Script to carry out grid search for hyperparameters for Random Forest Classifier, XGboost, and Neural network.
 Usage: python parameter_gridsearch.py -model [rf, xgboost, nn] -data [path to data file e.g. 'MMETSP-training-data']
         -labels [path to labels file e.g. 'MMETSP-training-labels'] -o [path and filename to output results]
