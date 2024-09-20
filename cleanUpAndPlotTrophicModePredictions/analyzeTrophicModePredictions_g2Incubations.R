@@ -311,6 +311,7 @@ merged %>% semi_join(mixed, by = c("taxa")) %>%
   scale_color_manual(values = c("Phototrophic" = "deepskyblue2", "Heterotrophic" = "red", "Mixotrophic" = "black"))+
   guides(color = "none")
 
+#from plotAllTrophicModePredictions.R
 insitu <- read_csv("g2SurfaceInsituPredictions.csv")
 
 head(insitu)
