@@ -1,0 +1,703 @@
+###g2 surface: find best pfam for each contig
+
+#concatenate all of the pfam results for the g2 polyA metaT contigs
+#ryan sent me the location of these files over slack on 7/29/22
+egthomas@grazer:/mnt/nfs/projects/ryan/Gradients2/PA/assemblies/raw/Pfam34$ for f in *domtblout.tab; do (cat "${f}"; echo) >> ~/prepareG2DCMReads/G2_surface/G2_surface_pfamAnnotations; done
+
+#make directory for processing g2 surface polyA metaT samples
+egthomas@grazer:~/prepareG2DCMReads$ mkdir G2_surface
+
+#loads R on grazer
+egthomas@grazer:d$ R
+
+> library(tidyverse)
+
+#loads the concatenated pfam results for the g2 polyA metaT contigs
+> res <- read.table("../g2DCM/G2_surface/G2_surface_pfamAnnotations")
+
+> str(res$V8)
+ num [1:27728680] 56.6 53.9 53.5 53.2 52.7 52.7 52.6 52.6 52.6 52.5 ...
+
+> res %>% group_by(V1) %>% summarize(n = n()) %>% filter(n > 1)
+# A tibble: 4,343,120 × 2
+   V1                                                    n
+   <chr>                                             <int>
+ 1 G2PA.S02C1.15m.0_2um_TRINITY_DN1000023_c0_g1_i1_3     2
+ 2 G2PA.S02C1.15m.0_2um_TRINITY_DN1000032_c0_g1_i1_2     2
+ 3 G2PA.S02C1.15m.0_2um_TRINITY_DN1000066_c0_g2_i1_2     4
+ 4 G2PA.S02C1.15m.0_2um_TRINITY_DN1000086_c0_g1_i1_2     7
+ 5 G2PA.S02C1.15m.0_2um_TRINITY_DN1000102_c0_g1_i1_3     4
+ 6 G2PA.S02C1.15m.0_2um_TRINITY_DN1000102_c0_g1_i2_1     2
+ 7 G2PA.S02C1.15m.0_2um_TRINITY_DN1000123_c0_g1_i1_3     2
+ 8 G2PA.S02C1.15m.0_2um_TRINITY_DN1000141_c0_g1_i1_3     5
+ 9 G2PA.S02C1.15m.0_2um_TRINITY_DN1000229_c0_g1_i1_1     2
+10 G2PA.S02C1.15m.0_2um_TRINITY_DN1000270_c0_g1_i1_1     6
+# … with 4,343,110 more rows
+
+> str(res$V7)
+ num [1:27728680] 3.7e-13 2.6e-12 3.3e-12 4.4e-12 6.0e-12 ...
+ 
+> res <- res %>% filter(V7 < 10^(-5))
+
+> #for contig reading frame, get the pfam with the highest score
+> best_pfam_dat <- res %>% group_by(V1) %>% slice(which.max(V8))
+
+#writes best pfam for each contig reading frame to a csv
+> best_pfam_dat %>% write_csv("../g2DCM/G2_surface/G2_surface_pfamAnnotations_bestPfam.tab")
+
+###checking out when marferret database files were created
+egthomas@grazer:/mnt/nfs/projects/armbrust-metat/gradients2/g2_station_pa_metat/assemblies/annotations/joined$ stat G2PA.contig_dat_all.csv.gz 
+  File: G2PA.contig_dat_all.csv.gz
+  Size: 1466153103      Blocks: 2863634    IO Block: 131072 regular file
+Device: 5eh/94d Inode: 766816      Links: 1
+Access: (0664/-rw-rw-r--)  Uid: ( 1061/rgrous83)   Gid: ( 2000/     lab)
+Access: 2023-08-23 14:39:54.587782264 +0000
+Modify: 2023-08-23 14:54:48.775239673 +0000
+Change: 2023-08-23 15:03:05.297690055 +0000
+ Birth: -
+
+egthomas@grazer:/mnt/nfs/projects/armbrust-metat/gradients2/g2_station_pa_metat/assemblies/annotations/joined$ cp G2PA.contig_dat_all.csv.gz ~/g2/
+
+egthomas@grazer:~/g2$ gunzip G2PA.contig_dat_all.csv.gz
+
+ulimit -v 83886080
+
+egthomas@grazer:~$ R
+
+> getwd()
+[1] "/mnt/nfs/home/egthomas/g2"
+
+> library(tidyverse)
+
+#load number of transcripts mapped to each contig for g2 poly A samples
+#this file was produced by ryan
+> g2 <- read_csv("G2PA.contig_dat_all.csv")
+
+egthomas@guppy:/mnt/nfs/projects/armbrust-metat/gradients2/g2_station_pa_metat/assemblies/annotations/diamond/marferret_v1.1$ stat NPac.G2PA.MarFERReT_v1.1_MMDB.lca.tab 
+  File: NPac.G2PA.MarFERReT_v1.1_MMDB.lca.tab
+  Size: 2940051451      Blocks: 1958662    IO Block: 131072 regular file
+Device: 4ah/74d Inode: 316355      Links: 1
+Access: (0664/-rw-rw-r--)  Uid: ( 1061/rgrous83)   Gid: ( 2000/     lab)
+Access: 2023-12-04 13:04:32.990057131 -0800
+Modify: 2023-12-03 09:45:48.829261991 -0800
+Change: 2023-12-04 14:32:01.495613508 -0800
+ Birth: -
+ 
+ > getwd()
+[1] "/mnt/nfs/projects/armbrust-metat/gradients2/g2_station_pa_metat/assemblies/annotations/diamond/marferret_v1.1"
+
+#loads g2 pa contigs mapped against updated marferret database combined with marmicro db 
+#with last common ancestor assigned 
+#ryan made this file
+> tax <- read.table("NPac.G2PA.MarFERReT_v1.1_MMDB.lca.tab")
+
+> head(tax)
+                                                 V1      V2       V3
+1 G2PA.S15C1.15m.0_2um_TRINITY_DN1196795_c0_g1_i1_2    2864 1.42e-39
+2 G2PA.S15C1.15m.0_2um_TRINITY_DN1196819_c0_g1_i1_2       0 0.00e+00
+3 G2PA.S15C1.15m.0_2um_TRINITY_DN1196987_c0_g1_i1_2    2969 1.30e-38
+4 G2PA.S15C1.15m.0_2um_TRINITY_DN1197013_c0_g1_i1_2 1735743 3.90e-46
+5 G2PA.S15C1.15m.0_2um_TRINITY_DN1197166_c0_g1_i2_6       0 0.00e+00
+6 G2PA.S15C1.15m.0_2um_TRINITY_DN1197345_c0_g1_i1_5       0 0.00e+00
+
+> str(tax$V2)
+ int [1:49691936] 2864 0 2969 1735743 0 0 2864 0 407301 0 ...
+
+> tax_noNA <- tax %>% filter(V2 != 0)
+> tax_noNA <- tax_noNA %>% filter(!is.na(V2))
+
+#make variable for nucleotide id
+> tax_noNA <- tax_noNA %>% mutate(nt_id = str_replace(V1, "_[0-9]{1,}$", ""))
+
+> str(tax_noNA$V3)
+ num [1:27618915] 1.42e-39 1.30e-38 3.90e-46 1.11e-11 2.97e-25 ...
+
+> tax_best <- tax_noNA %>% group_by(nt_id) %>% arrange(V3) %>% slice(1)
+
+> tax_best %>% write_csv("~/g2/NPac.G2PA.MarFERReT_MarMicroDB.lca_bestAnnotation_fall2023.csv")
+
+> tax_best <- read_csv("~/g2/NPac.G2PA.MarFERReT_MarMicroDB.lca_bestAnnotation_fall2023.csv")
+
+> g2 <- g2 %>% select(-c(dmnd_eval, pfam_score, tax_id, pfam))
+
+> head(g2)
+# A tibble: 6 × 61
+  nt_id                     length G2PA.S11C1.15m.0_2um.C G2PA.S16C1.15m.0_2um.B
+  <chr>                      <dbl>                  <dbl>                  <dbl>
+1 G2PA.S02C1.15m.0_2um_TRI…    315                      0                      0
+2 G2PA.S02C1.15m.0_2um_TRI…    325                      0                      0
+3 G2PA.S02C1.15m.0_2um_TRI…    470                      0                      0
+4 G2PA.S02C1.15m.0_2um_TRI…    427                      0                      0
+5 G2PA.S02C1.15m.0_2um_TRI…    322                      0                      0
+6 G2PA.S02C1.15m.0_2um_TRI…    481                      0                      0
+# ℹ 57 more variables
+
+#add taxa annotations of contigs to the number of reads mapped to contig per sample
+> nrow(g2)
+[1] 44353029
+> g2_tax <- g2 %>% left_join(tax_best, by = c("nt_id"))
+> nrow(g2_tax)
+[1] 44353029
+
+> colnames(g2_tax)
+ [1] "nt_id"                  "length"                 "G2PA.S11C1.15m.0_2um.C"
+ [4] "G2PA.S16C1.15m.0_2um.B" "G2PA.S06C1.15m.3um.B"   "G2PA.S02C1.15m.0_2um.B"
+ [7] "G2PA.S15C1.15m.3um.C"   "G2PA.S17C1.15m.3um.C"   "G2PA.S07C1.15m.3um.A"  
+[10] "G2PA.S16C1.15m.0_2um.C" "G2PA.S06C1.15m.3um.C"   "G2PA.S02C1.15m.0_2um.C"
+[13] "G2PA.S16C1.15m.3um.A"   "G2PA.S07C1.15m.0_2um.B" "G2PA.S02C1.15m.3um.A"  
+[16] "G2PA.S15C1.15m.0_2um.B" "G2PA.S18C1.15m.3um.B"   "G2PA.S17C1.15m.3um.A"  
+[19] "G2PA.S02C1.15m.3um.B"   "G2PA.S16C1.15m.3um.B"   "G2PA.S18C1.15m.0_2um.A"
+[22] "G2PA.S05C1.15m.3um.B"   "G2PA.S05C1.15m.0_2um.C" "G2PA.S17C1.15m.0_2um.A"
+[25] "G2PA.S06C1.15m.0_2um.B" "G2PA.S18C1.15m.3um.A"   "G2PA.S15C1.15m.0_2um.C"
+[28] "G2PA.S09C1.15m.3um.B"   "G2PA.S05C1.15m.3um.C"   "G2PA.S07C1.15m.3um.B"  
+[31] "G2PA.S09C1.15m.0_2um.B" "G2PA.S07C1.15m.0_2um.A" "G2PA.S11C1.15m.3um.C"  
+[34] "G2PA.S09C1.15m.0_2um.A" "G2PA.S07C1.15m.0_2um.C" "G2PA.S02C1.15m.0_2um.A"
+[37] "G2PA.S18C1.15m.0_2um.B" "G2PA.S11C1.15m.3um.B"   "G2PA.S05C1.15m.0_2um.A"
+[40] "G2PA.S11C1.15m.3um.A"   "G2PA.S06C1.15m.0_2um.C" "G2PA.S11C1.15m.0_2um.B"
+[43] "G2PA.S16C1.15m.3um.C"   "G2PA.S17C1.15m.0_2um.C" "G2PA.S09C1.15m.3um.C"  
+[46] "G2PA.S17C1.15m.3um.B"   "G2PA.S15C1.15m.3um.B"   "G2PA.S09C1.15m.0_2um.C"
+[49] "G2PA.S09C1.15m.3um.A"   "G2PA.S17C1.15m.0_2um.B" "G2PA.S02C1.15m.3um.C"  
+[52] "G2PA.S05C1.15m.3um.A"   "G2PA.S15C1.15m.3um.A"   "G2PA.S15C1.15m.0_2um.A"
+[55] "G2PA.S05C1.15m.0_2um.B" "G2PA.S16C1.15m.0_2um.A" "G2PA.S18C1.15m.3um.C"  
+[58] "G2PA.S06C1.15m.3um.A"   "G2PA.S11C1.15m.0_2um.A" "G2PA.S07C1.15m.3um.C"  
+[61] "G2PA.S06C1.15m.0_2um.A" "V1"                     "V2"                    
+[64] "V3"
+
+> str(g2_tax$V2)
+ num [1:44353029] NA 412157 NA NA 34765 ...
+ 
+> g2_tax <- g2_tax %>% filter(!is.na(V2))
+
+> g2_gather <- g2_tax %>% gather(`G2PA.S11C1.15m.0_2um.C`:`G2PA.S06C1.15m.0_2um.A`, key = "var", value = "value")
+
+
+
+#ungroup dataframe
+> g2_tax <- g2_gather %>% ungroup()
+
+> head(g2_tax)
+# A tibble: 6 × 7
+  nt_id                                 length V1        V2       V3 var   value
+  <chr>                                  <dbl> <chr>  <dbl>    <dbl> <chr> <dbl>
+1 G2PA.S02C1.15m.0_2um_TRINITY_DN72_c0…    325 G2PA… 412157 1.78e-15 G2PA…     0
+2 G2PA.S02C1.15m.0_2um_TRINITY_DN324_c…    322 G2PA…  34765 4.12e-27 G2PA…     0
+3 G2PA.S02C1.15m.0_2um_TRINITY_DN345_c…    481 G2PA…   2759 2.11e-45 G2PA…     0
+4 G2PA.S02C1.15m.0_2um_TRINITY_DN579_c…    324 G2PA…   2759 9.5 e-19 G2PA…     0
+5 G2PA.S02C1.15m.0_2um_TRINITY_DN515_c…    333 G2PA…   2759 6.02e-29 G2PA…     0
+6 G2PA.S02C1.15m.0_2um_TRINITY_DN670_c…    350 G2PA…  33313 5.30e-59 G2PA…     0
+
+> str(g2_tax$value)
+ num [1:1536546381] 0 0 0 0 0 0 0 0 0 0 ...
+
+#gets rid of rows for contigs that have 0 transcripts mapped to them in the sample
+> g2_tax <- g2_tax %>% filter(value > 0)
+
+
+
+#loads best pfam annotation for each contig reading frame
+> pfam <- read_csv("~/g2DCM/G2_surface/G2_surface_pfamAnnotations_bestPfam.tab")
+
+#make variable for the nucleotide id 
+> pfam <- pfam %>% mutate(nt_id = str_replace(V1, "_[0-9]{1,}$", ""))
+
+> pfam %>% nrow()
+[1] 15241470
+> pfam %>% distinct(nt_id) %>% nrow()
+[1] 15124459
+
+#gets amino acid id (longest reading frame) per nucleotide id 
+> aa_nt_pfam <- read_csv("/mnt/nfs/projects/ryan/NPacAssemblies_2021/joined/G2PA.best_pfam.csv") %>% distinct(aa_id, nt_id, knum)
+
+#gets only the pfam annotation for the longest amino acid sequence for each 
+#nucleotide id
+> pfam_select <- pfam %>% semi_join(aa_nt_pfam, by = c("V1" = "aa_id"))
+
+#gets rid of unnecessary variables
+> pfam_select <- pfam_select %>% select(V1, V4, V5, nt_id)
+
+#now there is only one pfam annotation for nucleotide id which is good
+> pfam_select %>% nrow()
+[1] 15124457
+> pfam_select %>% distinct(V1) %>% nrow()
+[1] 15124457
+> pfam_select %>% distinct(nt_id) %>% nrow()
+[1] 15124457
+
+#adds best pfam annotation to each nucleotide id in counts dataframe
+> nrow(g2_tax)
+[1] 162454544
+> g2_gather_merged <- g2_tax %>% left_join(pfam_select %>% select(-V1), by = c("nt_id"))
+> nrow(g2_gather_merged)
+[1] 162454544
+
+> head(g2_gather_merged)
+# A tibble: 6 × 9
+  nt_id                     length V1        V2       V3 var   value V4    V5
+  <chr>                      <dbl> <chr>  <dbl>    <dbl> <chr> <dbl> <chr> <chr>
+1 G2PA.S02C1.15m.0_2um_TRI…    309 G2PA… 2.76e3 1.94e-34 G2PA…  6    ABC_… PF00…
+2 G2PA.S02C1.15m.0_2um_TRI…    364 G2PA… 1.32e5 8.44e-40 G2PA…  4    Bac_… PF01…
+3 G2PA.S02C1.15m.0_2um_TRI…    316 G2PA… 2.70e6 9.54e-19 G2PA…  2    NA    NA
+4 G2PA.S02C1.15m.0_2um_TRI…    336 G2PA… 1   e0 5.14e-76 G2PA…  3    PBP_… PF12…
+5 G2PA.S02C1.15m.0_2um_TRI…    466 G2PA… 2.86e3 3.63e-35 G2PA…  4.79 NA    NA
+6 G2PA.S02C1.15m.0_2um_TRI…    570 G2PA… 2.70e6 2.27e-40 G2PA…  3    NA    NA
+
+#write data with number of mapped reads per contig per sample, with the contig's 
+#pfam and taxa annotation to csv file
+> g2_gather_merged %>% write_csv("~/g2/G2_surface_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_fall2023.csv")
+
+> g2_gather_merged <- g2_gather_merged %>% mutate(length_kb = length/1000)
+
+> g2_gather_merged <- g2_gather_merged %>% mutate(est_counts_div_length_kb = value/length_kb)
+
+> mCounts <- g2_gather_merged %>% group_by(var, V2) %>% summarize(mCount = sum(est_counts_div_length_kb)/1e6)
+`summarise()` has grouped output by 'var'. You can override using the `.groups` argument.
+
+> mCounts <- mCounts %>% ungroup()
+
+> nrow(g2_gather_merged)
+[1] 162454544
+> g2_gather_merged <- g2_gather_merged %>% left_join(mCounts, by = c("var", "V2"))
+> nrow(g2_gather_merged)
+[1] 162454544
+
+> g2_gather_merged %>% filter(is.na(mCount))
+# A tibble: 0 × 12
+
+> g2_gather_merged <- g2_gather_merged %>% mutate(tpm = est_counts_div_length_kb/mCount)
+
+> g2_gather_merged %>% write_csv("~/g2/G2_surface_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_tpm_fall2023.csv")
+
+> g2_gather_merged %>% select(V5) %>% head()
+# A tibble: 6 × 1
+  V5        
+  <chr>     
+1 PF00005.29
+2 PF01036.20
+3 NA        
+4 PF12849.9 
+5 NA        
+6 NA  
+
+> g2_gather_merged <- g2_gather_merged %>% filter(!is.na(V5))
+
+> g2_gather_merged %>% write_csv("~/g2/G2_surface_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_tpm_noNAPfam_fall2023.csv")
+
+
+egthomas@grazer:~/g2$ R
+
+> g2_gather_merged <- read_csv("~/g2/G2_surface_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_tpm_noNAPfam_fall2023.csv")
+
+> head(g2_gather_merged)
+# A tibble: 6 × 13
+  nt_id           length V1        V2       V3 var   value V4    V5    length_kb
+  <chr>            <dbl> <chr>  <dbl>    <dbl> <chr> <dbl> <chr> <chr>     <dbl>
+1 G2PA.S02C1.15m…    309 G2PA… 2.76e3 1.94e-34 G2PA…   6   ABC_… PF00…     0.309
+2 G2PA.S02C1.15m…    364 G2PA… 1.32e5 8.44e-40 G2PA…   4   Bac_… PF01…     0.364
+3 G2PA.S02C1.15m…    336 G2PA… 1   e0 5.14e-76 G2PA…   3   PBP_… PF12…     0.336
+4 G2PA.S02C1.15m…    377 G2PA… 1.74e6 3.46e-71 G2PA…   5   eIF2A PF08…     0.377
+5 G2PA.S02C1.15m…    483 G2PA… 2.70e6 4.84e- 8 G2PA…  13.4 Phos… PF04…     0.483
+6 G2PA.S02C1.15m…    370 G2PA… 2.76e3 2.84e-17 G2PA…   8   Glyc… PF01…     0.37 
+# ℹ 3 more variables: est_counts_div_length_kb <dbl>, mCount <dbl>, tpm <dbl>
+
+> pfam <- read_csv("~/Extracted_Pfams_noOutliers_newContaminationMetric_xg.csv")
+
+> g2_gather_merged <- g2_gather_merged %>% mutate(pfam = str_replace(V5, "\\..*", ""))
+
+> g2_gather_merged %>% semi_join(pfam, by = c("pfam")) %>% write_csv("~/g2/G2_surface_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_tpm_pfamsOfInt.csv")
+
+(base) Elainas-MacBook-Pro-2:g2Surface elaina$ scp -r -P 3004 -i ~/.ssh/id_ed25519  egthomas@frustule.ocean.washington.edu:~/g2/G2_surface_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_tpm_pfamsOfInt.csv .
+G2_surface_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_tpm_pfamsOfInt.csv                                                                             100% 1229MB   7.5MB/s   02:43    
+
+
+
+> name <- read_csv("/mnt/nfs/projects/marferret/v1/data/MarFERReT.v1.taxa.csv")
+
+> name <- name %>% select(1:4)
+
+> colnames(g2_gather_merged)[4]
+[1] "V2"
+
+> colnames(g2_gather_merged)[4] <- "tax_id"
+
+#are all of the missing taxa id from marmicro??
+> g2_gather_merged %>% anti_join(name, by = c("tax_id")) %>% distinct(tax_id) %>% nrow()
+[1] 3435
+> g2_gather_merged %>% semi_join(name, by = c("tax_id")) %>% distinct(tax_id) %>% nrow()
+[1] 684
+
+> nrow(g2_gather_merged)
+[1] 69756838
+> g2_gather_merged_name <- g2_gather_merged %>% left_join(name, by = c("tax_id"))
+> nrow(g2_gather_merged_name)
+[1] 69756838
+
+> g2_gather_merged_name_noMissingTaxa <- g2_gather_merged_name %>% filter(!is.na(tax_name))
+
+> head(g2_gather_merged_name_noMissingTaxa)
+# A tibble: 6 × 16
+  nt_id           length V1    tax_id       V3 var   value V4    V5    length_kb
+  <chr>            <dbl> <chr>  <dbl>    <dbl> <chr> <dbl> <chr> <chr>     <dbl>
+1 G2PA.S02C1.15m…    309 G2PA… 2.76e3 1.94e-34 G2PA…   6   ABC_… PF00…     0.309
+2 G2PA.S02C1.15m…    364 G2PA… 1.32e5 8.44e-40 G2PA…   4   Bac_… PF01…     0.364
+3 G2PA.S02C1.15m…    336 G2PA… 1   e0 5.14e-76 G2PA…   3   PBP_… PF12…     0.336
+4 G2PA.S02C1.15m…    377 G2PA… 1.74e6 3.46e-71 G2PA…   5   eIF2A PF08…     0.377
+5 G2PA.S02C1.15m…    483 G2PA… 2.70e6 4.84e- 8 G2PA…  13.4 Phos… PF04…     0.483
+6 G2PA.S02C1.15m…    370 G2PA… 2.76e3 2.84e-17 G2PA…   8   Glyc… PF01…     0.37 
+# ℹ 6 more variables: est_counts_div_length_kb <dbl>, mCount <dbl>, tpm <dbl>,
+#   parent_id <dbl>, rank <chr>, tax_name <chr>
+
+> g2_gather_merged_name_noMissingTaxa %>% filter(is.na(value))
+# A tibble: 0 × 16
+
+> g2_gather_merged_name_noMissingTaxa %>% filter(value == 0)
+# A tibble: 0 × 16
+
+> g2_gather_merged_name_noMissingTaxa %>% filter(is.na(V5))
+# A tibble: 0 × 16
+
+> core <- read_csv("~/MarFERReT.v1.core_genes.csv")
+
+> g2_gather_merged_name_noMissingTaxa %>% distinct(var)
+# A tibble: 59 × 1
+   var                   
+   <chr>                 
+ 1 G2PA.S11C1.15m.0_2um.C
+ 2 G2PA.S16C1.15m.0_2um.B
+ 3 G2PA.S06C1.15m.3um.B  
+ 4 G2PA.S02C1.15m.0_2um.B
+ 5 G2PA.S15C1.15m.3um.C  
+ 6 G2PA.S17C1.15m.3um.C  
+ 7 G2PA.S07C1.15m.3um.A  
+ 8 G2PA.S16C1.15m.0_2um.C
+ 9 G2PA.S06C1.15m.3um.C  
+10 G2PA.S02C1.15m.0_2um.C
+# ℹ 49 more rows
+
+> g2_gather_merged_name_noMissingTaxa %>% filter(is.na(var))
+# A tibble: 0 × 16
+
+> core <- core %>% filter(lineage == "Eukaryota")
+
+> head(g2_gather_merged_name_noMissingTaxa$V5)
+[1] "PF00005.29" "PF01036.20" "PF12849.9"  "PF08662.13" "PF04916.15"
+[6] "PF01229.19"
+
+> pfamSummary <- g2_gather_merged_name_noMissingTaxa %>% semi_join(core, by = c("V5" = "pfam_id"))
+
+> pfamSummary <- pfamSummary %>% group_by(var, tax_id, tax_name) %>% distinct(V5) %>% summarize(numCorePfams = n())
+`summarise()` has grouped output by 'var', 'tax_id'. You can override using the `.groups` argument.
+
+> pfamSummary <- pfamSummary %>% ungroup() %>% mutate(propCorePfams = numCorePfams/605)
+
+> pfamSummary %>% write_csv("~/g2/pfamSummary.csv")
+
+> pfamSummary <- pfamSummary %>% filter(propCorePfams >= .7)
+
+> pfamSummary %>% ungroup() %>% distinct(tax_name) %>% nrow()
+[1] 48
+
+g2_gather_merged_name_noMissingTaxa_allSamples <- g2_gather_merged_name_noMissingTaxa
+
+#gets just the counts for taxa and sample pairs that have at least 800 expressed non-NA distinct pfams
+> g2_gather_merged_name_noMissingTaxa <- g2_gather_merged_name_noMissingTaxa %>% semi_join(pfamSummary, by = c("tax_id", "var"))
+
+> g2_gather_merged_name_noMissingTaxa %>% ungroup() %>% distinct(tax_name) %>% nrow()
+[1] 48
+
+> g2_gather_merged_name_noMissingTaxa_allSamples %>% ungroup() %>% distinct(tax_name) %>% nrow()
+[1] 684
+
+> head(g2_gather_merged_name_noMissingTaxa_allSamples)
+# A tibble: 6 × 16
+  nt_id           length V1    tax_id       V3 var   value V4    V5    length_kb
+  <chr>            <dbl> <chr>  <dbl>    <dbl> <chr> <dbl> <chr> <chr>     <dbl>
+1 G2PA.S02C1.15m…    309 G2PA… 2.76e3 1.94e-34 G2PA…   6   ABC_… PF00…     0.309
+2 G2PA.S02C1.15m…    364 G2PA… 1.32e5 8.44e-40 G2PA…   4   Bac_… PF01…     0.364
+3 G2PA.S02C1.15m…    336 G2PA… 1   e0 5.14e-76 G2PA…   3   PBP_… PF12…     0.336
+4 G2PA.S02C1.15m…    377 G2PA… 1.74e6 3.46e-71 G2PA…   5   eIF2A PF08…     0.377
+5 G2PA.S02C1.15m…    483 G2PA… 2.70e6 4.84e- 8 G2PA…  13.4 Phos… PF04…     0.483
+6 G2PA.S02C1.15m…    370 G2PA… 2.76e3 2.84e-17 G2PA…   8   Glyc… PF01…     0.37 
+# ℹ 6 more variables: est_counts_div_length_kb <dbl>, mCount <dbl>, tpm <dbl>,
+#   parent_id <dbl>, rank <chr>, tax_name <chr>
+
+
+#for each taxa, sample, and pfam combination, get the total number of counts
+> g2_summary <- g2_gather_merged_name_noMissingTaxa %>% ungroup() %>% dplyr::group_by(var, tax_id, tax_name, V5) %>% dplyr::summarize(tpm = sum(tpm))
+`summarise()` has grouped output by 'var', 'tax_id', 'tax_name'. You can override using the `.groups` argument.
+
+> allSamples_estCounts <- g2_gather_merged_name_noMissingTaxa_allSamples %>% ungroup() %>% dplyr::group_by(var, tax_id, tax_name, V5) %>% dplyr::summarize(est_counts = sum(value))
+`summarise()` has grouped output by 'var', 'tax_id', 'tax_name'. You can override using the `.groups` argument.
+
+#ungroup counts summary data
+> g2_summary <- g2_summary %>% ungroup()
+
+> allSamples_estCounts <- allSamples_estCounts %>% ungroup()
+
+#not one million because I already removed NA Pfams
+> g2_summary %>% group_by(var, tax_name) %>% summarize(tpm = sum(tpm)) %>% distinct(tpm) %>% ungroup() %>% distinct(tpm)
+`summarise()` has grouped output by 'var'. You can override using the `.groups` argument.
+# A tibble: 876 × 1
+       tpm
+     <dbl>
+ 1 630980.
+ 2 380292.
+ 3 719150.
+ 4 599644.
+ 5 611931.
+ 6 667445.
+ 7 388148.
+ 8 742882.
+ 9 608848.
+10 635218.
+# ℹ 866 more rows
+
+> colnames(g2_summary)[4]
+[1] "V5"
+
+> colnames(allSamples_estCounts)[4]
+[1] "V5"
+
+> colnames(g2_summary)[4] <- "pfam"
+
+> colnames(allSamples_estCounts)[4] <- "pfam"
+  
+> g2_summary <- g2_summary %>% mutate(shortPfam = str_replace(pfam, "\\..{1,}$", ""))
+
+> allSamples_estCounts <- allSamples_estCounts %>% mutate(shortPfam = str_replace(pfam, "\\..{1,}$", ""))
+
+> g2_summary %>% filter(is.na(shortPfam))
+# A tibble: 0 × 6
+
+> allSamples_estCounts %>% filter(is.na(shortPfam))
+# A tibble: 0 × 6
+
+> colnames(g2_summary)[1]
+[1] "var"
+
+> colnames(allSamples_estCounts)[1]
+[1] "var"
+
+> colnames(g2_summary)[1] <- "sample_id"
+
+> colnames(allSamples_estCounts)[1] <- "sample_id"
+
+> g2_summary_spread <- g2_summary %>% select(sample_id, tax_name, shortPfam, tpm)
+
+> allSamples_estCounts <- allSamples_estCounts %>% select(sample_id, tax_name, shortPfam, est_counts)
+
+> g2_summary_spread <- g2_summary_spread %>% spread(key = shortPfam, value = tpm, fill = 0)
+
+> allSamples_estCounts <- allSamples_estCounts %>% spread(key = shortPfam, value = est_counts, fill = 0)
+
+> pfam <- read_csv("~/Extracted_Pfams_noOutliers_newContaminationMetric_xg.csv")
+
+> merg <- g2_summary_spread
+
+> dim(merg)
+[1]  876 6747
+
+> merg %>% select(1:5) %>% head()
+# A tibble: 6 × 5
+  sample_id              tax_name         PF00001 PF00002 PF00003
+  <chr>                  <chr>              <dbl>   <dbl>   <dbl>
+1 G2PA.S02C1.15m.0_2um.A Calanoida        104.          0  287.  
+2 G2PA.S02C1.15m.0_2um.A Dinophyceae        0           0    0   
+3 G2PA.S02C1.15m.0_2um.A Eukaryota          0.744       0    2.54
+4 G2PA.S02C1.15m.0_2um.A Ochrophyta         0           0   59.3 
+5 G2PA.S02C1.15m.0_2um.A Prymnesiophyceae   0           0   15.1 
+6 G2PA.S02C1.15m.0_2um.A Sar                0           0    0   
+
+> merg <- merg %>% gather(3:6747, key = "pfam", value = "tpm")
+
+> dim(allSamples_estCounts)
+[1] 39296  7423
+
+> allSamples_estCounts %>% select(1:5) %>% head()
+# A tibble: 6 × 5
+  sample_id              tax_name                 PF00001 PF00002 PF00003
+  <chr>                  <chr>                      <dbl>   <dbl>   <dbl>
+1 G2PA.S02C1.15m.0_2um.A Abedinium                      0       0       0
+2 G2PA.S02C1.15m.0_2um.A Abedinium dasypus              0       0       0
+3 G2PA.S02C1.15m.0_2um.A Abedinium folium               0       0       0
+4 G2PA.S02C1.15m.0_2um.A Acartia tonsa                  0       0       0
+5 G2PA.S02C1.15m.0_2um.A Acytostelium subglobosum       0       0       0
+6 G2PA.S02C1.15m.0_2um.A Adineta ricciae                0       0       0
+
+> allSamples_estCounts <- allSamples_estCounts %>% gather(3:7423, key = "pfam", value = "est_counts")
+
+> allSamples_estCounts %>% write_csv("~/g2/G2_surface_updatedMarferret_marmicroDb2023_sampleTaxa_noOutliers_fall2023_allPfams_allSamples_estCounts.csv")
+
+> allSamples_estCounts <- read_csv("~/g2/G2_surface_updatedMarferret_marmicroDb2023_sampleTaxa_noOutliers_fall2023_allPfams_allSamples_estCounts.csv")
+
+> species <- read_csv("g2/G2_surface_tpm_updatedMarferret_marmicroDb2023_sampleTaxa_noOutliers_fixedTPM_fall2023.csv")
+
+> species <- species %>% distinct(tax_name)
+
+> allSamples_estCounts %>% semi_join(species, by = c("tax_name")) %>% 
+write_csv("~/g2/G2_surface_updatedMarferret_marmicroDb2023_sampleTaxa_noOutliers_fall2023_allPfams_allSamples_estCounts_speciesWithTP.csv")
+
+> species27 <- read_csv("~/27SpeciesWithTrophicPredictions.csv")
+
+> allSamples_estCounts %>% semi_join(species27, by = c("tax_name" = "taxa")) %>% distinct(tax_name) %>% nrow()
+[1] 27
+
+> allSamples_estCounts %>% semi_join(species27, by = c("tax_name" = "taxa")) %>% 
++ write_csv("~/g2/G2_surface_updatedMarferret_marmicroDb2023_sampleTaxa_noOutliers_fall2023_allPfams_allSamples_estCounts_speciesWithTP_27.csv")
+
+
+> head(merg)
+# A tibble: 6 × 4
+  sample_id              tax_name         pfam        tpm
+  <chr>                  <chr>            <chr>     <dbl>
+1 G2PA.S02C1.15m.0_2um.A Calanoida        PF00001 104.   
+2 G2PA.S02C1.15m.0_2um.A Dinophyceae      PF00001   0    
+3 G2PA.S02C1.15m.0_2um.A Eukaryota        PF00001   0.744
+4 G2PA.S02C1.15m.0_2um.A Ochrophyta       PF00001   0    
+5 G2PA.S02C1.15m.0_2um.A Prymnesiophyceae PF00001   0    
+6 G2PA.S02C1.15m.0_2um.A Sar              PF00001   0    
+
+> miss <- pfam %>% anti_join(merg, by = c("pfam"))
+
+> head(miss)
+# A tibble: 2 × 1
+  pfam   
+  <chr>  
+1 PF14259
+2 PF08713
+
+> pfam %>% group_by(pfam) %>% summarize(n = n()) %>% filter(n > 1)
+# A tibble: 0 × 2
+
+> miss <- miss %>% mutate(sample_id = "G2PA.S02C1.15m.0_2um.A", tax_name = "Dinophyceae")
+
+> merg <- merg %>% bind_rows(miss)
+
+> merg <- merg %>% spread(key = pfam, value = tpm, fill = 0)
+
+> merg %>% select(1:5) %>% head()
+# A tibble: 6 × 5
+  sample_id              tax_name         PF00001 PF00002 PF00003
+  <chr>                  <chr>              <dbl>   <dbl>   <dbl>
+1 G2PA.S02C1.15m.0_2um.A Calanoida        104.          0  287.  
+2 G2PA.S02C1.15m.0_2um.A Dinophyceae        0           0    0   
+3 G2PA.S02C1.15m.0_2um.A Eukaryota          0.744       0    2.54
+4 G2PA.S02C1.15m.0_2um.A Ochrophyta         0           0   59.3 
+5 G2PA.S02C1.15m.0_2um.A Prymnesiophyceae   0           0   15.1 
+6 G2PA.S02C1.15m.0_2um.A Sar                0           0    0   
+
+> merg %>% write_csv("~/g2/G2_surface_tpm_updatedMarferret_marmicroDb2023_sampleTaxa_noOutliers_fixedTPM_fall2023_allPfams.csv")
+
+(base) Elainas-MacBook-Pro-2:g2Surface elaina$ scp -P 3004 -i ~/.ssh/id_ed25519 egthomas@frustule.ocean.washington.edu:~/g2/G2_surface_tpm_updatedMarferret_marmicroDb2023_sampleTaxa_noOutliers_fixedTPM_fall2023_allPfams.csv .
+G2_surface_tpm_updatedMarferret_marmicroDb2023_sampleTaxa_noOutliers_fixedTPM_fall2023_allPfams.csv                                                                       100%   39MB  18.1MB/s   00:02    
+
+
+> merg %>% select(sample_id:tax_name) %>% write_csv("~/g2/G2_surface_tpm_updatedMarferret_marmicroDb2023_sampleTaxa_noOutliers_fixedTPM_fall2023.csv")
+> merg %>% select(-c(sample_id:tax_name)) %>% write_csv("~/g2/G2_surface_tpm_updatedMarferret_marmicroDb2023_noOutliers_fixedTPM_fall2023.csv")
+
+> sample <- read_csv("~/g2/G2_surface_tpm_updatedMarferret_marmicroDb2023_sampleTaxa_noOutliers_fixedTPM_fall2023.csv")
+> dat <- read_csv("~/g2/G2_surface_tpm_updatedMarferret_marmicroDb2023_noOutliers_fixedTPM_fall2023.csv")
+
+> merg <- cbind(sample, dat)
+
+> merg %>% select(1:5) %>% head()
+               sample_id         tax_name     PF00001 PF00002    PF00003
+1 G2PA.S02C1.15m.0_2um.A        Calanoida 104.0918184       0 287.206441
+2 G2PA.S02C1.15m.0_2um.A      Dinophyceae   0.0000000       0   0.000000
+3 G2PA.S02C1.15m.0_2um.A        Eukaryota   0.7443662       0   2.540992
+4 G2PA.S02C1.15m.0_2um.A       Ochrophyta   0.0000000       0  59.251719
+5 G2PA.S02C1.15m.0_2um.A Prymnesiophyceae   0.0000000       0  15.139226
+6 G2PA.S02C1.15m.0_2um.A              Sar   0.0000000       0   0.000000
+
+> dim(merg)
+[1]  876 6749
+
+> merg <- merg %>% gather(3:6749, key = "pfam", value = "TPM")
+
+> head(merg)
+               sample_id         tax_name    pfam         TPM
+1 G2PA.S02C1.15m.0_2um.A        Calanoida PF00001 104.0918184
+2 G2PA.S02C1.15m.0_2um.A      Dinophyceae PF00001   0.0000000
+3 G2PA.S02C1.15m.0_2um.A        Eukaryota PF00001   0.7443662
+4 G2PA.S02C1.15m.0_2um.A       Ochrophyta PF00001   0.0000000
+5 G2PA.S02C1.15m.0_2um.A Prymnesiophyceae PF00001   0.0000000
+6 G2PA.S02C1.15m.0_2um.A              Sar PF00001   0.0000000
+
+> pfam <- read_csv("~/Extracted_Pfams_noOutliers_newContaminationMetric_xg.csv")
+
+> merg <- merg %>% semi_join(pfam, by = c("pfam"))
+
+> merg %>% distinct(pfam) %>% nrow()
+[1] 183
+> nrow(pfam)
+[1] 183
+
+> merg <- merg %>% spread(key = pfam, value = TPM, fill = 0)
+
+> merg %>% select(1:5) %>% head()
+               sample_id         tax_name    PF00003   PF00013    PF00022
+1 G2PA.S02C1.15m.0_2um.A        Calanoida 287.206441  809.0728  5286.0143
+2 G2PA.S02C1.15m.0_2um.A      Dinophyceae   0.000000  611.8264   637.3335
+3 G2PA.S02C1.15m.0_2um.A        Eukaryota   2.540992  326.4693 14767.5787
+4 G2PA.S02C1.15m.0_2um.A       Ochrophyta  59.251719 1831.2336   898.3789
+5 G2PA.S02C1.15m.0_2um.A Prymnesiophyceae  15.139226  356.9227  1885.5006
+6 G2PA.S02C1.15m.0_2um.A              Sar   0.000000  465.4248  6227.1380
+
+
+> merg %>% select(sample_id:tax_name) %>% write_csv("~/g2/G2_surface_tpm_updatedMarferret_marmicroDb2023_sampleTaxa_noOutliers_fixedTPM_fall2023.csv")
+> merg %>% select(-c(sample_id:tax_name)) %>% write_csv("~/g2/G2_surface_tpm_updatedMarferret_marmicroDb2023_noOutliers_fixedTPM_fall2023.csv")
+
+> sample <- read_csv("~/g2/G2_surface_tpm_updatedMarferret_marmicroDb2023_sampleTaxa_noOutliers_fixedTPM_fall2023.csv")
+> dat <- read_csv("~/g2/G2_surface_tpm_updatedMarferret_marmicroDb2023_noOutliers_fixedTPM_fall2023.csv")
+
+> merg <- cbind(sample, dat)
+
+> merg %>% distinct(tax_name) %>% filter(!str_detect(tax_name, " "))
+           tax_name
+1         Calanoida
+2       Dinophyceae
+3         Eukaryota
+4        Ochrophyta
+5  Prymnesiophyceae
+6               Sar
+7     Gonyaulacales
+8   Bacillariophyta
+9       Kareniaceae
+10      Neocopepoda
+11      Phaeocystis
+12       Suessiales
+13        Alveolata
+14      Bathycoccus
+15 Chrysochromulina
+16   Isochrysidales
+17      Chlorophyta
+18    Viridiplantae
+19         Podoplea
+20        Bilateria
+21        Eumetazoa
+22    Pelagophyceae
+23        Rotaliida
+24        Calanidae
+25 Dictyochophyceae
+26    Stramenopiles
+
+> merg <- merg %>% filter(str_detect(tax_name, " "))
+
+> merg %>% select(sample_id:tax_name) %>% write_csv("~/g2/G2_surface_tpm_updatedMarferret_marmicroDb2023_sampleTaxa_noOutliers_fixedTPM_fall2023.csv")
+> merg %>% select(-c(sample_id:tax_name)) %>% write_csv("~/g2/G2_surface_tpm_updatedMarferret_marmicroDb2023_noOutliers_fixedTPM_fall2023.csv")
+
+(base) Elainas-MacBook-Pro-2:g2Surface elaina$ scp -P 3004 -i ~/.ssh/id_ed25519 egthomas@frustule.ocean.washington.edu:~/g2/*_noOutliers_fixedTPM_fall2023.csv .
+G2_surface_tpm_updatedMarferret_marmicroDb2023_noOutliers_fixedTPM_fall2023.csv                                                                                           100%  556KB   5.9MB/s   00:00    
+G2_surface_tpm_updatedMarferret_marmicroDb2023_sampleTaxa_noOutliers_fixedTPM_fall2023.csv                                                                                100%   13KB 813.3KB/s   00:00    
+
+
+
+
+
+
+
+
+
+
+
+
+

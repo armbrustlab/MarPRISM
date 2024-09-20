@@ -1,0 +1,644 @@
+egthomas@grazer:/mnt/nfs/projects/ryan/NPacAssemblies_2021/joined$ stat D1PA.contig_dat_all.csv 
+  File: D1PA.contig_dat_all.csv
+  Size: 8113647153      Blocks: 5940338    IO Block: 131072 regular file
+Device: 5eh/94d Inode: 711625      Links: 1
+Access: (0655/-rw-r-xr-x)  Uid: ( 1061/rgrous83)   Gid: ( 1061/rgrous83)
+Access: 2023-09-08 18:41:47.457085729 +0000
+Modify: 2022-05-06 07:21:53.105564976 +0000
+Change: 2022-05-19 01:16:54.285730155 +0000
+ Birth: -
+ 
+#see when updated taxa annotation file was created
+egthomas@grazer:/mnt/nfs/projects/armbrust-metat/scope_diel/diel_pa_metat/assemblies/annotations/diamond/marferret_v1.1$ stat NPac.D1PA.MarFERReT_v1.1_MMDB.lca.tab
+File: NPac.D1PA.MarFERReT_v1.1_MMDB.lca.tab
+Size: 2538373639      Blocks: 1862277    IO Block: 131072 regular file
+Device: 5eh/94d Inode: 300857      Links: 1
+Access: (0664/-rw-rw-r--)  Uid: ( 1061/rgrous83)   Gid: ( 2000/     lab)
+Access: 2023-12-03 03:14:39.299833640 +0000
+Modify: 2023-12-03 09:50:31.422362342 +0000
+Change: 2023-12-04 22:32:01.500858143 +0000
+Birth: -
+
+egthomas@grazer:~$ R
+
+#reads in G1 diel polyA metaT number of transcripts mapped to each contig 
+#the taxa ids in this file were annotated with updated marferret and
+#marmicro
+> g1 <- read_csv("/mnt/nfs/projects/ryan/NPacAssemblies_2021/joined/D1PA.contig_dat_all.csv")
+
+#get rid of unnecessary variables
+> g1 <- g1 %>% select(-c(dmnd_eval, pfam_score, tax_id, pfam))
+
+> head(g1)
+# A tibble: 6 × 50
+  nt_id   length S14C1_C_2200 S11C1_A_1800 S11C1_C_1800 S14C1_B_2200 S15C1_B_200
+  <chr>    <dbl>        <dbl>        <dbl>        <dbl>        <dbl>       <dbl>
+1 D1PA_S…    351            0            0            0            0           0
+2 D1PA_S…    337            0            0            0            0          10
+3 D1PA_S…    308            0            0            0            0           0
+4 D1PA_S…    367            0            0            1            0           0
+5 D1PA_S…    604            0            0            0            0           0
+6 D1PA_S…    350            0            0            0            0           0
+# ℹ 43 more variables
+
+#load taxa annotation file that was produced with database including 
+#updated marferret (with added ncbi ids) and marmicrodb (prokaryotes)
+> tax <- read.table("/mnt/nfs/projects/armbrust-metat/scope_diel/diel_pa_metat/assemblies/annotations/diamond/marferret_v1.1/NPac.D1PA.MarFERReT_v1.1_MMDB.lca.tab")
+
+#make variable for nucleotide id
+> tax <- tax %>% mutate(nt_id = str_replace(V1, "_[0-9]{1,}$", ""))
+
+> str(tax$V2)
+ int [1:50461546] 2608131 2864 0 2759 1003176 2864 407301 412154 0 2864 ...
+
+#gets rid of rows that have an NA taxa annotation (some unannotated sequences are
+#labeled as taxa id 0)
+> tax <- tax %>% filter(!is.na(V2))
+> tax <- tax %>% filter(V2 != 0)
+
+> str(tax$V3)
+ num [1:30008442] 1.67e-25 5.33e-60 2.28e-83 1.38e-15 3.27e-22 ...
+
+> tax_best <- tax %>% group_by(nt_id) %>% arrange(V3) %>% slice(1)
+
+> tax_best %>% write_csv("~/alohaDiel/NPac.D1PA.MarFERReT_v1.1_MMDB.lca.tab_bestAnnotation_fall2023.csv")
+
+#add taxa annotations of contigs to the number of reads mapped to contig per sample
+> nrow(g1)
+[1] 48907619
+> g1_tax <- g1 %>% left_join(tax_best, by = c("nt_id"))
+> nrow(g1_tax)
+[1] 48907619
+
+#ungroup dataframe
+> g1_tax <- g1_tax %>% ungroup()
+
+> colnames(g1_tax)
+ [1] "nt_id"        "length"       "S14C1_C_2200" "S11C1_A_1800" "S11C1_C_1800"
+ [6] "S14C1_B_2200" "S15C1_B_200"  "S15C1_C_200"  "S16C1_A_600"  "S16C1_B_600"
+[11] "S17C1_A_1000" "S17C1_B_1000" "S18C1_A_1400" "S18C1_C_1400" "S19C1_A_1800"
+[16] "S19C1_C_1800" "S20C1_B_2200" "S20C1_C_2200" "S21C1_B_200"  "S21C1_C_200"
+[21] "S22C1_A_600"  "S22C1_C_600"  "S23C1_B_1000" "S23C1_C_1000" "S24C1_A_1400"
+[26] "S24C1_B_1400" "S26C1_A_1800" "S26C1_C_1800" "S28C1_B_2200" "S28C1_C_2200"
+[31] "S29C1_A_200"  "S29C1_C_200"  "S30C1_A_600"  "S30C1_C_600"  "S31C1_A_1000"
+[36] "S31C1_C_1000" "S32C1_B_1400" "S32C1_C_1400" "S33C1_A_1800" "S33C1_C_1800"
+[41] "S34C1_B_2200" "S34C1_C_2200" "S35C1_A_200"  "S35C1_C_200"  "S06C1_A_600"
+[46] "S06C1_C_600"  "S07C1_A_1000" "S07C1_B_1000" "S08C1_B_1400" "S08C1_C_1400"
+[51] "V1"           "V2"           "V3"
+
+> g1_tax_noNA <- g1_tax %>% filter(!is.na(V2))
+
+> g1_tax_noNA %>% write_csv("~/alohaDiel/abundancesWithTaxa_fall2023.csv")
+
+> tax_best %>% write_csv("~/alohaDiel/NPac.D1PA.MarFERReT_v1.1_MMDB.lca.tab_bestAnnotation_fall2023.csv")
+
+#gather dataframe with mapped reads per contig per sample, taxa annotations 
+#into long form
+> g1_gather <- g1_tax_noNA %>% gather(S14C1_C_2200:S08C1_C_1400, key = "sample", value = "est_counts")
+
+> str(g1_gather$est_counts)
+ num [1:1307045184] 0 0 1.37 1 0 ...
+
+#gets rid of rows for contigs that have 0 transcripts mapped to them in the sample
+> g1_gather <- g1_gather %>% filter(est_counts > 0)
+
+concatenate all of the pfam results for the g1 polyA metaT contigs
+#ryan sent me the location of these files over slack on 8/9/22
+egthomas@grazer:~$ for f in /mnt/nfs/projects/ryan/diel1/completed_assemblies/6tr/Pfam_34.0/*domtblout.tab; do (cat "${f}"; echo) >> ~/G1_diel_pfamAnnotations; done
+
+#loads the concatenated pfam results for the g1 polyA metaT contigs
+> res <- read.table("~/alohaDiel/G1_diel_pfamAnnotations", fill = TRUE)
+
+> colnames(res)
+ [1] "V1"  "V2"  "V3"  "V4"  "V5"  "V6"  "V7"  "V8"  "V9"  "V10" "V11" "V12"
+[13] "V13" "V14" "V15" "V16" "V17" "V18" "V19" "V20" "V21" "V22" "V23" "V24"
+[25] "V25" "V26" "V27" "V28" "V29" "V30" "V31" "V32" "V33" "V34" "V35" "V36"
+[37] "V37" "V38" "V39" "V40" "V41" "V42" "V43" "V44" "V45" "V46" "V47" "V48"
+[49] "V49" "V50" "V51" "V52" "V53" "V54" "V55" "V56" "V57" "V58" "V59" "V60"
+[61] "V61" "V62" "V63" "V64" "V65" "V66" "V67" "V68" "V69" "V70" "V71" "V72"
+[73] "V73"
+
+> str(res$V8)
+ chr [1:29801627] "60.1" "59.9" "59.9" "59.3" "59.1" "58.4" "189," "58.2" ...
+
+#is it okay that NAs are introduced??
+> res$V8 <- as.numeric(res$V8)
+
+str(res$V7)
+
+res$V7 <- as.numeric(res$V7)
+
+res <- res %>% filter(V7 < 10^(-5))
+
+
+> res %>% select(1:23) %>% head()
+                                       V1 V2  V3         V4         V5 V6
+1 D1PA_S06C1_TRINITY_DN2144361_c3_g4_i3_2  - 107 1-cysPrx_C PF10417.11 40
+2 D1PA_S06C1_TRINITY_DN2144361_c3_g5_i2_3  - 127 1-cysPrx_C PF10417.11 40
+3 D1PA_S06C1_TRINITY_DN2144361_c3_g5_i1_3  - 127 1-cysPrx_C PF10417.11 40
+4 D1PA_S06C1_TRINITY_DN2144361_c3_g2_i1_1  - 162 1-cysPrx_C PF10417.11 40
+5 D1PA_S06C1_TRINITY_DN1833095_c0_g1_i1_1  - 218 1-cysPrx_C PF10417.11 40
+6 D1PA_S06C1_TRINITY_DN2144361_c3_g4_i1_2  - 249 1-cysPrx_C PF10417.11 40
+       V7   V8  V9 V10 V11     V12     V13  V14 V15 V16 V17 V18 V19 V20 V21
+1 1.1e-13 60.1 0.0   1   1   2e-18 1.4e-13 59.8 0.0   1  40  36  71  36  71
+2 1.4e-13 59.9 0.0   1   1   3e-18 2.1e-13 59.2 0.0   1  40  51  86  51  86
+3 1.4e-13 59.9 0.0   1   1   3e-18 2.1e-13 59.2 0.0   1  40  51  86  51  86
+4 2.1e-13 59.3 0.0   1   1 4.2e-18 3.1e-13 58.7 0.0   1  40  68 103  68 103
+5 2.4e-13 59.1 0.1   1   1 6.1e-18 4.4e-13 58.2 0.1   1  40 163 198 163 198
+6 3.8e-13 58.4 0.0   1   1 8.4e-18 6.1e-13 57.8 0.0   1  40 149 184 149 184
+   V22     V23
+1 0.97 len=321
+2 0.97 len=383
+3 0.97 len=383
+4 0.97 len=485
+5 0.97 len=654
+6 0.97 len=747
+
+> #for contig reading frame, get the pfam with the highest score
+> best_pfam_dat <- res %>% group_by(V1) %>% slice(which.max(V8))
+
+#there is now only one pfam for each contig reading frame
+> #same number of rows which is good
+> res %>% distinct(V1) %>% nrow()
+[1] 19521276
+> best_pfam_dat %>% distinct(V1) %>% nrow()
+[1] 19366981
+
+#writes best pfam for each contig reading frame to a csv
+> best_pfam_dat %>% write_csv("~/G1_diel_pfamAnnotations_bestPfam.tab")
+
+egthomas@grazer:~$ stat ~/G1_diel_pfamAnnotations_bestPfam.tab
+  File: /mnt/nfs/home/egthomas/G1_diel_pfamAnnotations_bestPfam.tab
+  Size: 4628981979	Blocks: 4311994    IO Block: 131072 regular file
+Device: 3bh/59d	Inode: 467531      Links: 1
+Access: (0664/-rw-rw-r--)  Uid: ( 1086/egthomas)   Gid: ( 1086/egthomas)
+Access: 2023-09-07 20:44:29.027875605 +0000
+Modify: 2023-09-07 20:45:20.397705280 +0000
+Change: 2023-09-07 20:45:20.397705280 +0000
+ Birth: -
+
+egthomas@grazer:~$ mv ~/G1_diel_pfamAnnotations_bestPfam.tab alohaDiel/
+
+
+> best_pfam_dat <- read_csv("~/alohaDiel/G1_diel_pfamAnnotations_bestPfam.tab")
+
+#gets rid of numbers at end of pfam id
+> pfam <- best_pfam_dat %>% mutate(nt_id = str_replace(V1, "_[0-9]{1,}$", ""))
+
+#gets amino acid id per nucleotide id 
+> aa_nt_pfam <- read_csv("/mnt/nfs/projects/ryan/NPacAssemblies_2021/joined/D1PA.best_pfam.csv") %>% distinct(aa_id, nt_id, knum)
+
+#gets only the pfam annotation for the longest amino acid sequence for each 
+#nucleotide id
+> pfam_select <- pfam %>% semi_join(aa_nt_pfam, by = c("V1" = "aa_id"))
+
+#now there is only one pfam annotation for nucleotide id which is good
+> pfam_select %>% nrow()
+[1] 16111747
+> pfam_select %>% distinct(nt_id) %>% nrow()
+[1] 16111747
+
+#gets rid of unnecessary variables
+> pfam_select <- pfam_select %>% select(V1, V4, V5, nt_id)
+
+#adds best pfam annotation to each nucleotide id in counts dataframe
+> nrow(g1_gather)
+[1] 154298831
+> g1_gather_merged <- g1_gather %>% left_join(pfam_select %>% select(-V1), by = c("nt_id"))
+Adding missing grouping variables: `V1`
+> nrow(g1_gather_merged)
+[1] 154298831
+
+> head(g1_gather_merged)
+# A tibble: 6 × 9
+  nt_id               length V1        V2       V3 sample est_counts V4    V5
+  <chr>                <dbl> <chr>  <int>    <dbl> <chr>       <dbl> <chr> <chr>
+1 D1PA_S06C1_TRINITY…    359 D1PA… 632150 2.81e- 8 S14C1…       1.37 NA    NA
+2 D1PA_S06C1_TRINITY…    385 D1PA…   2864 1.75e-19 S14C1…       1    NA    NA
+3 D1PA_S06C1_TRINITY…    331 D1PA…   2864 8.80e-53 S14C1…       1    2OG-… PF13…
+4 D1PA_S06C1_TRINITY…    353 D1PA…   2864 5.65e-45 S14C1…       1    AMP-… PF00…
+5 D1PA_S06C1_TRINITY…    427 D1PA…   2830 7.94e-63 S14C1…       1.76 AAA_9 PF12…
+6 D1PA_S06C1_TRINITY…    386 D1PA…   2864 2.29e-30 S14C1…       2    NA    NA
+
+#make variable for station that reads were mapped from
+> g1_gather_merged <- g1_gather_merged %>% mutate(station = str_extract(sample, "S[0-9]{1,}C{1,}"))
+
+> g1_gather_merged %>% write_csv("~/alohaDiel/G1_diel_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_fall2023.csv")
+
+
+
+> aloha <- read_csv("~/alohaDiel/G1_diel_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_fall2023.csv")
+
+(base) Elainas-MacBook-Pro-2:alohaDiel elaina$ scp -P 3004 -i ~/.ssh/id_ed25519 g1_diel_cleanedUp.csv egthomas@frustule.ocean.washington.edu:~/alohaDiel/
+g1_diel_cleanedUp.csv                                                                                                                                                     100%   20KB 440.0KB/s   00:00    
+
+> ofInt <- read_csv("~/alohaDiel/g1_diel_cleanedUp.csv")
+
+> head(ofInt)
+# A tibble: 6 × 10
+  sample      taxa    xg_pred probability time.x stationCast date               
+  <chr>       <chr>   <chr>         <dbl>  <dbl> <chr>       <dttm>             
+1 S06C1_A_600 Azadin… Hetero…       0.814    600 S6C1        2015-07-26 00:00:00
+2 S06C1_A_600 Kareni… Hetero…       0.859    600 S6C1        2015-07-26 00:00:00
+3 S06C1_A_600 Karlod… Hetero…       0.916    600 S6C1        2015-07-26 00:00:00
+4 S06C1_A_600 Proroc… Hetero…       0.677    600 S6C1        2015-07-26 00:00:00
+5 S06C1_C_600 Azadin… Mixotr…       0.473    600 S6C1        2015-07-26 00:00:00
+6 S06C1_C_600 Kareni… Hetero…       0.818    600 S6C1        2015-07-26 00:00:00
+# ℹ 3 more variables: time.y <dttm>, fixTime <time>, group <chr>
+
+> name <- read_csv("/mnt/nfs/projects/marferret/v1/data/MarFERReT.v1.taxa.csv")
+
+> name <- name %>% select(1:4)
+
+> colnames(aloha)[4]
+[1] "V2"
+
+> colnames(aloha)[4] <- "tax_id"
+
+> nrow(aloha)
+[1] 154298831
+> aloha <- aloha %>% left_join(name, by = c("tax_id"))
+> nrow(aloha)
+[1] 154298831
+
+> ofIntSummary <- aloha %>% semi_join(ofInt, by = c("tax_name" = "taxa"))
+
+> ofInt %>% distinct(taxa) %>% nrow()
+[1] 6
+> ofIntSummary %>% distinct(tax_name) %>% nrow()
+[1] 6
+
+> notOfInt <- aloha %>% anti_join(ofInt, by = c("tax_name"  = "taxa"))
+
+> head(ofIntSummary)
+# A tibble: 6 × 13
+  nt_id       length V1    tax_id       V3 sample est_counts V4    V5    station
+  <chr>        <dbl> <chr>  <dbl>    <dbl> <chr>       <dbl> <chr> <chr> <chr>
+1 D1PA_S06C1…    359 D1PA… 632150 2.81e- 8 S14C1…       1.37 NA    NA    S14C
+2 D1PA_S06C1…    363 D1PA…  39449 5.86e-25 S14C1…       1    NA    NA    S14C
+3 D1PA_S06C1…    308 D1PA… 632150 2.44e-40 S14C1…       2    NA    NA    S14C
+4 D1PA_S06C1…    392 D1PA… 156230 1.69e-13 S14C1…       5    NA    NA    S14C
+5 D1PA_S06C1…    367 D1PA… 407301 6.33e-19 S14C1…       3    NA    NA    S14C
+6 D1PA_S06C1…    348 D1PA… 632150 1.04e-57 S14C1…       6    NA    NA    S14C
+# ℹ 3 more variables: parent_id <dbl>, rank <chr>, tax_name <chr>
+
+core <- read_csv("~/MarFERReT.v1.core_genes.csv")
+core <- core %>% filter(lineage == "Eukaryota")
+
+pfamSummary <- ofIntSummary %>% semi_join(core, by = c("V5" = "pfam_id"))
+
+nrow(pfamSummary)
+
+pfamSummary %>% filter(!is.na(V5)) %>% filter(est_counts > 0) %>% group_by(sample, tax_name) %>% distinct(V5) %>% summarize(numPfam = n()) %>% write_csv("~/alohaDiel/aloha_diel.contig_dat_all_speciesWithTrophicPredictions_numPfams.csv")
+`summarise()` has grouped output by 'sample'. You can override using the `.groups` argument.
+
+> ofIntSummary <- ofIntSummary %>% group_by(tax_name, sample) %>% summarize(est_counts = sum(est_counts))
+`summarise()` has grouped output by 'tax_name'. You can override using the `.groups` argument.
+
+> notOfIntSummary <- notOfInt %>% group_by(tax_name, sample) %>% summarize(est_counts = sum(est_counts))
+`summarise()` has grouped output by 'tax_name'. You can override using the `.groups` argument.
+
+> ofIntSummary %>% write_csv("~/alohaDiel/G1_diel_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_speciesWithTrophicPredictions_fall2023.csv")
+
+> notOfIntSummary %>% write_csv("~/alohaDiel/G1_diel_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_otherThanSpeciesWithTrophicPredictions_fall2023.csv")
+
+(base) Elainas-MacBook-Pro-2:alohaDiel elaina$ scp -P 3004 -i ~/.ssh/id_ed25519 egthomas@frustule.ocean.washington.edu:~/alohaDiel/G1_diel_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_speciesWithTrophicPredictions_fall2023.csv .
+G1_diel_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_speciesWithTrophicPredictions_fall2023.csv                                                        100%   14KB 483.3KB/s   00:00    
+(base) Elainas-MacBook-Pro-2:alohaDiel elaina$ scp -P 3004 -i ~/.ssh/id_ed25519 egthomas@frustule.ocean.washington.edu:~/alohaDiel/G1_diel_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_otherThanSpeciesWithTrophicPredictions_fall2023.csv .
+G1_diel_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_otherThanSpeciesWithTrophicPredictions_fall2023.csv                                               100% 1515KB  11.1MB/s   00:00    
+
+> g1_gather_merged <- g1_gather_merged %>% mutate(length_kb = length/1000)
+
+> g1_gather_merged <- g1_gather_merged %>% mutate(est_counts_div_length_kb = est_counts/length_kb)
+
+> g1_gather_merged %>% select(sample) %>% head()
+# A tibble: 6 × 1
+  sample      
+  <chr>       
+1 S14C1_C_2200
+2 S14C1_C_2200
+3 S14C1_C_2200
+4 S14C1_C_2200
+5 S14C1_C_2200
+6 S14C1_C_2200
+
+> mCounts <- g1_gather_merged %>% group_by(sample, V2) %>% summarize(mCount = sum(est_counts_div_length_kb)/1e6)
+`summarise()` has grouped output by 'sample'. You can override using the `.groups` argument.
+
+> mCounts <- mCounts %>% ungroup()
+
+> nrow(g1_gather_merged)
+[1] 154298831
+> g1_gather_merged <- g1_gather_merged %>% left_join(mCounts, by = c("sample", "V2"))
+> nrow(g1_gather_merged)
+[1] 154298831
+
+> head(mCounts)
+# A tibble: 6 × 3
+  sample         V2    mCount
+  <chr>       <int>     <dbl>
+1 S06C1_A_600     1 0.0438   
+2 S06C1_A_600     2 0.0556   
+3 S06C1_A_600    22 0.0000395
+4 S06C1_A_600    31 0.0000515
+5 S06C1_A_600    32 0.000107 
+6 S06C1_A_600    39 0.0000485
+
+> g1_gather_merged %>% filter(is.na(mCount))
+# A tibble: 0 × 13
+
+> g1_gather_merged <- g1_gather_merged %>% mutate(tpm = est_counts_div_length_kb/mCount)
+
+> g1_gather_merged %>% write_csv("~/alohaDiel/alohaDiel_surface_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_tpm_fall2023.csv")
+
+> g1_gather_merged %>% group_by(sample, V2) %>% summarize(tpm = sum(tpm)) %>% ungroup() %>% distinct(tpm)
+`summarise()` has grouped output by 'sample'. You can override using the `.groups` argument.
+# A tibble: 13 × 1
+        tpm
+      <dbl>
+ 1 1000000 
+ 2 1000000 
+ 3 1000000 
+ 4 1000000 
+ 5 1000000 
+ 6 1000000.
+ 7 1000000 
+ 8 1000000 
+ 9 1000000 
+10 1000000 
+11 1000000.
+12 1000000.
+13 1000000.
+
+> head(g1_gather_merged)
+# A tibble: 6 × 14
+  nt_id       length V1        V2       V3 sample est_counts V4    V5    station
+  <chr>        <dbl> <chr>  <int>    <dbl> <chr>       <dbl> <chr> <chr> <chr>  
+1 D1PA_S06C1…    359 D1PA… 632150 2.81e- 8 S14C1…       1.37 NA    NA    S14C   
+2 D1PA_S06C1…    385 D1PA…   2864 1.75e-19 S14C1…       1    NA    NA    S14C   
+3 D1PA_S06C1…    331 D1PA…   2864 8.80e-53 S14C1…       1    2OG-… PF13… S14C   
+4 D1PA_S06C1…    353 D1PA…   2864 5.65e-45 S14C1…       1    AMP-… PF00… S14C   
+5 D1PA_S06C1…    427 D1PA…   2830 7.94e-63 S14C1…       1.76 AAA_9 PF12… S14C   
+6 D1PA_S06C1…    386 D1PA…   2864 2.29e-30 S14C1…       2    NA    NA    S14C   
+# ℹ 4 more variables
+
+> g1_gather_merged <- g1_gather_merged %>% filter(!is.na(V5))
+
+> g1_gather_merged %>% write_csv("~/alohaDiel/alohaDiel_surface_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_tpm_noNAPfam_fall2023.csv")
+
+> name <- read_csv("/mnt/nfs/projects/marferret/v1/data/MarFERReT.v1.taxa.csv")
+
+> name <- name %>% select(1:4)
+
+> colnames(g1_gather_merged)[4]
+[1] "V2"
+
+> colnames(g1_gather_merged)[4] <- "tax_id"
+
+> nrow(g1_gather_merged)
+[1] 68084586
+> g1_gather_merged_name <- g1_gather_merged %>% left_join(name, by = c("tax_id"))
+> nrow(g1_gather_merged_name)
+[1] 68084586
+
+> g1_gather_merged_name_noMissingTaxa <- g1_gather_merged_name %>% filter(!is.na(tax_name))
+
+> head(g1_gather_merged_name_noMissingTaxa)
+# A tibble: 6 × 17
+  nt_id       length V1    tax_id       V3 sample est_counts V4    V5    station
+  <chr>        <dbl> <chr>  <dbl>    <dbl> <chr>       <dbl> <chr> <chr> <chr>  
+1 D1PA_S06C1…    331 D1PA…   2864 8.80e-53 S14C1…       1    2OG-… PF13… S14C   
+2 D1PA_S06C1…    353 D1PA…   2864 5.65e-45 S14C1…       1    AMP-… PF00… S14C   
+3 D1PA_S06C1…    427 D1PA…   2830 7.94e-63 S14C1…       1.76 AAA_9 PF12… S14C   
+4 D1PA_S06C1…    410 D1PA…   2864 7.17e-35 S14C1…       2    SF-a… PF06… S14C   
+5 D1PA_S06C1…    303 D1PA…   2759 3.28e-20 S14C1…       1    LMF1  PF06… S14C   
+6 D1PA_S06C1…    346 D1PA…   2759 8.10e-13 S14C1…       2    efTh… PF11… S14C   
+# ℹ 7 more variables: length_kb <dbl>, est_counts_div_length_kb <dbl>,
+#   mCount <dbl>, tpm <dbl>, parent_id <dbl>, rank <chr>, tax_name <chr>
+
+
+> g1_gather_merged_name_noMissingTaxa %>% filter(is.na(tpm))
+# A tibble: 0 × 17
+
+> g1_gather_merged_name_noMissingTaxa %>% filter(tpm == 0)
+# A tibble: 0 × 17
+
+> g1_gather_merged_name_noMissingTaxa %>% filter(is.na(V5))
+# A tibble: 0 × 17
+
+> core <- read_csv("~/MarFERReT.v1.core_genes.csv")
+
+> g1_gather_merged_name_noMissingTaxa %>% distinct(sample)
+# A tibble: 48 × 1
+   sample      
+   <chr>       
+ 1 S14C1_C_2200
+ 2 S11C1_A_1800
+ 3 S11C1_C_1800
+ 4 S14C1_B_2200
+ 5 S15C1_B_200 
+ 6 S15C1_C_200 
+ 7 S16C1_A_600 
+ 8 S16C1_B_600 
+ 9 S17C1_A_1000
+10 S17C1_B_1000
+# ℹ 38 more rows
+
+> g1_gather_merged_name_noMissingTaxa %>% filter(is.na(sample))
+# A tibble: 0 × 17
+
+> core <- core %>% filter(lineage == "Eukaryota")
+
+> head(core)
+# A tibble: 6 × 4
+  lineage   n_taxa pfam_id    frequency
+  <chr>      <dbl> <chr>          <dbl>
+1 Eukaryota    331 PF00004.31     1    
+2 Eukaryota    331 PF00005.29     1    
+3 Eukaryota    331 PF00006.27     1    
+4 Eukaryota    331 PF00009.29     1    
+5 Eukaryota    331 PF00012.22     1    
+6 Eukaryota    328 PF00013.31     0.991
+
+> head(g1_gather_merged_name_noMissingTaxa$V5)
+[1] "PF13640.8"  "PF00501.30" "PF12781.9"  "PF06705.13" "PF06762.16"
+[6] "PF11957.10"
+
+> pfamSummary <- g1_gather_merged_name_noMissingTaxa %>% semi_join(core, by = c("V5" = "pfam_id"))
+
+> pfamSummary <- pfamSummary %>% group_by(sample, tax_id, tax_name) %>% distinct(V5) %>% summarize(numCorePfams = n())
+`summarise()` has grouped output by 'sample', 'tax_id'. You can override using the `.groups` argument.
+
+> core %>% distinct(pfam_id) %>% summarize(n = n())
+# A tibble: 1 × 1
+      n
+  <int>
+1   605
+
+> pfamSummary <- pfamSummary %>% ungroup() %>% mutate(propCorePfams = numCorePfams/605)
+
+> pfamSummary %>% write_csv("~/alohaDiel/pfamSummary.csv")
+
+> pfamSummary %>% arrange(desc(propCorePfams))
+# A tibble: 31,322 × 5
+   sample       tax_id tax_name    numCorePfams propCorePfams
+   <chr>         <dbl> <chr>              <int>         <dbl>
+ 1 S08C1_B_1400   2759 Eukaryota            605         1    
+ 2 S08C1_B_1400   2864 Dinophyceae          605         1    
+ 3 S11C1_C_1800   2864 Dinophyceae          605         1    
+ 4 S18C1_A_1400   2759 Eukaryota            605         1    
+ 5 S20C1_C_2200   2759 Eukaryota            605         1    
+ 6 S20C1_C_2200   2864 Dinophyceae          605         1    
+ 7 S21C1_B_200    2864 Dinophyceae          605         1    
+ 8 S21C1_C_200    2864 Dinophyceae          605         1    
+ 9 S30C1_C_600    2864 Dinophyceae          605         1    
+10 S06C1_A_600    2864 Dinophyceae          604         0.998
+# ℹ 31,312 more rows
+
+> pfamSummary <- pfamSummary %>% filter(propCorePfams >= .7)
+
+> pfamSummary %>% ungroup() %>% distinct(tax_name) %>% nrow()
+[1] 25
+
+#gets just the counts for taxa and sample pairs that have at least 800 expressed non-NA distinct pfams
+> g1_gather_merged_name_noMissingTaxa <- g1_gather_merged_name_noMissingTaxa %>% semi_join(pfamSummary, by = c("tax_id", "sample"))
+
+> g1_gather_merged_name_noMissingTaxa %>% ungroup() %>% distinct(tax_name) %>% nrow()
+[1] 25
+
+#for each taxa, sample, and pfam combination, get the total number of counts
+> g1_summary <- g1_gather_merged_name_noMissingTaxa %>% ungroup() %>% dplyr::group_by(sample, tax_id, tax_name, V5) %>% dplyr::summarize(tpm = sum(tpm))
+`summarise()` has grouped output by 'sample', 'tax_id', 'tax_name'. You can override using the `.groups` argument.
+
+#ungroup counts summary data
+> g1_summary <- g1_summary %>% ungroup()
+
+#not one million because I already removed NA Pfams
+> g1_summary %>% group_by(sample, tax_name) %>% summarize(tpm = sum(tpm)) %>% distinct(tpm) %>% ungroup() %>% distinct(tpm)
+`summarise()` has grouped output by 'sample'. You can override using the `.groups` argument.
+# A tibble: 593 × 1
+       tpm
+     <dbl>
+ 1 202901.
+ 2 407341.
+ 3 662133.
+ 4 409868.
+ 5 425776.
+ 6 737658.
+ 7 265375.
+ 8 218081.
+ 9 192190.
+10 792803.
+# ℹ 583 more rows
+
+> colnames(g1_summary)[4]
+[1] "V5"
+
+> colnames(g1_summary)[4] <- "pfam"
+  
+> g1_summary <- g1_summary %>% mutate(shortPfam = str_replace(pfam, "\\..{1,}$", ""))
+
+> g1_summary %>% filter(is.na(shortPfam))
+# A tibble: 0 × 6
+
+> colnames(g1_summary)[1]
+[1] "sample"
+
+> colnames(g1_summary)[1] <- "sample_id"
+
+> head(g1_summary)
+# A tibble: 6 × 6
+  sample_id   tax_id tax_name  pfam          tpm shortPfam
+  <chr>        <dbl> <chr>     <chr>       <dbl> <chr>    
+1 S06C1_A_600   2759 Eukaryota PF00003.24   13.2 PF00003  
+2 S06C1_A_600   2759 Eukaryota PF00004.31 5773.  PF00004  
+3 S06C1_A_600   2759 Eukaryota PF00005.29 3260.  PF00005  
+4 S06C1_A_600   2759 Eukaryota PF00006.27 2201.  PF00006  
+5 S06C1_A_600   2759 Eukaryota PF00008.29   77.1 PF00008  
+6 S06C1_A_600   2759 Eukaryota PF00009.29 8629.  PF00009  
+
+> g1_summary_spread <- g1_summary %>% select(sample_id, tax_name, shortPfam, tpm)
+
+> g1_summary_spread <- g1_summary_spread %>% spread(key = shortPfam, value = tpm, fill = 0)
+
+> pfam <- read_csv("~/Extracted_Pfams_noOutliers_newContaminationMetric_xg.csv")
+
+> merg <- g1_summary_spread
+
+> head(pfam)
+# A tibble: 6 × 1
+  pfam   
+  <chr>  
+1 PF09286
+2 PF02514
+3 PF13925
+4 PF04133
+5 PF03645
+6 PF16158
+
+> dim(merg)
+[1]  593 6115
+
+> merg %>% select(1:5) %>% head()
+# A tibble: 6 × 5
+  sample_id   tax_name           PF00001 PF00002 PF00003
+  <chr>       <chr>                <dbl>   <dbl>   <dbl>
+1 S06C1_A_600 Azadinium spinosum      0       0      0  
+2 S06C1_A_600 Bacillariophyta         0       0   1820. 
+3 S06C1_A_600 Calanoida             153.    128.    81.8
+4 S06C1_A_600 Chrysochromulina        0       0      0  
+5 S06C1_A_600 Dinophyceae             0       0      0  
+6 S06C1_A_600 Eukaryota               0       0     13.2
+
+> merg <- merg %>% gather(3:6115, key = "pfam", value = "tpm")
+
+> head(merg)
+# A tibble: 6 × 4
+  sample_id   tax_name           pfam      tpm
+  <chr>       <chr>              <chr>   <dbl>
+1 S06C1_A_600 Azadinium spinosum PF00001    0 
+2 S06C1_A_600 Bacillariophyta    PF00001    0 
+3 S06C1_A_600 Calanoida          PF00001  153.
+4 S06C1_A_600 Chrysochromulina   PF00001    0 
+5 S06C1_A_600 Dinophyceae        PF00001    0 
+6 S06C1_A_600 Eukaryota          PF00001    0 
+
+> miss <- pfam %>% anti_join(merg, by = c("pfam"))
+
+> head(miss)
+# A tibble: 3 × 1
+  pfam   
+  <chr>  
+1 PF03040
+2 PF14259
+3 PF12329
+
+> pfam %>% group_by(pfam) %>% summarize(n = n()) %>% filter(n > 1)
+# A tibble: 0 × 2
+
+> miss <- miss %>% mutate(sample_id = "S06C1_A_600", tax_name = "Azadinium spinosum")
+
+> merg <- merg %>% bind_rows(miss)
+
+> merg <- merg %>% spread(key = pfam, value = tpm, fill = 0)
+
+> merg %>% select(1:5) %>% head()
+# A tibble: 6 × 5
+  sample_id   tax_name           PF00001 PF00002 PF00003
+  <chr>       <chr>                <dbl>   <dbl>   <dbl>
+1 S06C1_A_600 Azadinium spinosum      0       0      0  
+2 S06C1_A_600 Bacillariophyta         0       0   1820. 
+3 S06C1_A_600 Calanoida             153.    128.    81.8
+4 S06C1_A_600 Chrysochromulina        0       0      0  
+5 S06C1_A_600 Dinophyceae             0       0      0  
+6 S06C1_A_600 Eukaryota               0       0     13.2
+
+merg %>% select(sample_id:tax_name) %>% write_csv("~/alohaDiel/alohaDiel_surface_tpm_updatedMarferret_marmicroDb2023_sampleTaxa_noOutliers_fixedTPM_fall2023.csv")
+merg %>% select(-c(sample_id:tax_name)) %>% write_csv("~/alohaDiel/alohaDiel_surface_tpm_updatedMarferret_marmicroDb2023_noOutliers_fixedTPM_fall2023.csv")
+
+(base) Elainas-MacBook-Pro-2:alohaDiel elaina$ scp -P 3004 -i ~/.ssh/id_ed25519 egthomas@frustule.ocean.washington.edu:~/alohaDiel/alohaDiel*fixedTPM_fall2023.csv .
+alohaDiel_surface_tpm_updatedMarferret_marmicroDb2023_noOutliers_fixedTPM_fall2023.csv                                      100%   27MB  25.1MB/s   00:01    
+alohaDiel_surface_tpm_updatedMarferret_marmicroDb2023_sampleTaxa_noOutliers_fixedTPM_fall2023.csv                           100%   16KB 787.6KB/s   00:00    
+
+
+
