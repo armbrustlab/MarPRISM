@@ -339,7 +339,15 @@ order_noTime <- unique(order_noTime)
 order <- c("33_in situ", "33_Ctrl_0", "33_Ctrl_96", "33_LoNP_96", "33_HiNP_96", "33_NPFe_96", "37_in situ", "37_Ctrl_0", "37_Ctrl_96", "37_Fe_96", "37_NP_96", "37_NPFe_96", "41_in situ", "41_Ctrl_0", "41_Ctrl_96", "41_LFe_96", "41_HFe_96", "41_NPFe_96")
 
 merged %>% semi_join(mixed, by = c("taxa")) %>%
-  filter(taxa != "Prorocentrum minimum") %>%
+  mutate(latitude = round(latitude)) %>%
+  filter(Timepoint != 0) %>%
+  mutate(latTreat = str_c(latitude, "_", Treatment, "_", Timepoint)) %>%
+  mutate(latitude = str_c(latitude, " °N")) %>%
+  mutate(xg_pred = str_replace(xg_pred, "ic", "y")) %>%
+  group_by(taxa, latitude, Timepoint, Treatment, xg_pred, latTreat) %>%
+  summarize(n = n(), avgProb = mean(probability)) %>% ungroup() %>% arrange(desc(n))
+
+merged %>% semi_join(mixed, by = c("taxa")) %>%
   mutate(latitude = round(latitude)) %>%
   filter(Timepoint != 0) %>%
   mutate(latTreat = str_c(latitude, "_", Treatment, "_", Timepoint)) %>%
@@ -347,7 +355,6 @@ merged %>% semi_join(mixed, by = c("taxa")) %>%
   mutate(xg_pred = str_replace(xg_pred, "ic", "y")) %>%
   group_by(taxa, latitude, Timepoint, Treatment, xg_pred, latTreat) %>%
   summarize(n = n(), avgProb = mean(probability)) %>%
-  bind_rows(data.frame(latTreat = "33_Ctrl_0", n = 0, latitude = "33 °N", taxa = "Pelagodinium beii")) %>%
   bind_rows(insitu %>% semi_join(mixed, by = c("taxa"))) %>%
   mutate(latTreat = factor(latTreat, levels = order)) %>%
   mutate(taxa = factor(taxa, levels = c("Azadinium spinosum", "Karlodinium veneficum", "Pelagodinium beii", "Prorocentrum minimum"))) %>%
@@ -362,7 +369,7 @@ merged %>% semi_join(mixed, by = c("taxa")) %>%
   labs(x = "", y = "Number of predictions", fill = "Trophic mode prediction") + 
   scale_fill_manual(values = c("Phototrophy" = "deepskyblue2", "Heterotrophy" = "red", "Mixotrophy" = "black"))+
   guides(color = "none") + 
-  scale_y_continuous(limits = c(0,8), breaks = c(0,2,4,6,8))
+  scale_y_continuous(limits = c(0,6), breaks = c(0,2,4,6))
 
 ggsave("g2IncTrophicPredictions.png", dpi = 600, height = 12, width = 17)
 
@@ -390,8 +397,7 @@ merged %>% anti_join(mixed, by = c("taxa")) %>%
   theme(legend.title=element_text(size=16), legend.text=element_text(size=16)) +
   labs(x = "", y = "Number of predictions", fill = "Trophic mode prediction") + 
   scale_fill_manual(values = c("Phototrophy" = "deepskyblue2", "Heterotrophy" = "red", "Mixotrophy" = "black"))+
-  guides(color = "none") + 
-  scale_y_continuous(limits = c(0,8), breaks = c(0,2,4,6,8))
+  guides(color = "none")
 
 ggsave("g2IncTrophicPredictions_nonMixed.png", dpi = 600, height = 15, width = 14)
 
