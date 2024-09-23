@@ -1,0 +1,146 @@
+###g3 diel 
+
+egthomas@guppy:~$ stat ~/g3Diel/G3_diel_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_fall2023.csv
+  File: /mnt/nfs/home/egthomas/g3Diel/G3_diel_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_fall2023.csv
+  Size: 15061830882     Blocks: 10697560   IO Block: 131072 regular file
+Device: 37h/55d Inode: 2539862     Links: 1
+Access: (0664/-rw-rw-r--)  Uid: ( 1086/egthomas)   Gid: ( 1086/egthomas)
+Access: 2024-09-13 14:31:58.578148139 -0700
+Modify: 2024-09-13 14:32:51.400207963 -0700
+Change: 2024-09-13 14:32:51.400207963 -0700
+ Birth: -
+
+> g3Diel <- read_csv("~/g3Diel/G3_diel_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_fall2023.csv")
+
+> species <- read_csv("~/28SpeciesWithTrophicPredictions.csv")
+
+> name <- read_csv("/mnt/nfs/projects/marferret/v1/data/MarFERReT.v1.taxa.csv")
+
+> name <- name %>% select(1:4)
+
+> head(g3Diel)
+# A tibble: 6 × 9
+  nt_id               length sample est_counts V1        V2       V3 V4    V5   
+  <chr>                <dbl> <chr>       <dbl> <chr>  <dbl>    <dbl> <chr> <chr>
+1 G3PA.diel.S4C11.A_…    387 G3PA.…       7    G3PA…   2864 2.74e-44 NA    NA   
+2 G3PA.diel.S4C11.A_…    341 G3PA.…       6    G3PA…  35679 3.15e-47 NA    NA   
+3 G3PA.diel.S4C11.A_…    414 G3PA.…       4    G3PA…  33634 4.08e-39 MT    PF12…
+4 G3PA.diel.S4C11.A_…    383 G3PA.…       7    G3PA… 265572 5.84e-16 NA    NA   
+5 G3PA.diel.S4C11.A_…    315 G3PA.…      12.2  G3PA… 131567 9.51e- 7 NA    NA   
+6 G3PA.diel.S4C11.A_…    456 G3PA.…       2.93 G3PA…  89954 1.90e-50 Dyna… PF00…
+
+
+> colnames(g3Diel)[6]
+[1] "V2"
+
+> colnames(g3Diel)[6] <- "tax_id"
+
+> nrow(g3Diel)
+[1] 101790418
+> g3Diel <- g3Diel %>% left_join(name, by = c("tax_id"))
+> nrow(g3Diel)
+[1] 101790418
+
+> ofIntSummary <- g3Diel %>% semi_join(species, by = c("tax_name" = "taxa"))
+
+> ofIntSummary %>% distinct(tax_name) %>% nrow()
+[1] 28
+
+> notOfInt <- g3Diel %>% anti_join(species, by = c("tax_name"  = "taxa"))
+
+> ofIntSummary <- ofIntSummary %>% group_by(tax_name, sample) %>% summarize(est_counts = sum(est_counts))
+`summarise()` has grouped output by 'tax_name'. You can override using the `.groups` argument.
+
+> notOfIntSummary <- notOfInt %>% group_by(tax_name, sample) %>% summarize(est_counts = sum(est_counts))
+`summarise()` has grouped output by 'tax_name'. You can override using the `.groups` argument.
+
+> ofIntSummary %>% write_csv("~/g3Diel/g3_diel_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_speciesWithTrophicPredictions_fall2023_28.csv")
+
+> notOfIntSummary %>% write_csv("~/g3Diel/g3_diel_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_otherThanSpeciesWithTrophicPredictions_fall2023_28.csv")
+
+
+
+
+
+
+
+
+
+
+
+###G3 diel 
+
+#open R on grazer
+egthomas@grazer:$ R
+
+> library(tidyverse)
+
+> g3_gather_merged <- read_csv("~/g3Diel/G3_diel_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers.csv")
+
+#load name of each eukaryote in the updated marferret db with its assigned 
+#taxa id
+#ryan sent MarFERReT.v1.taxa.csv over slack in the metat channel on 10/11/22
+> name <- read_csv("~/MarFERReT.v1.taxa.csv")
+
+#get rid of unnecessary variables
+> name <- name %>% select(1:4)
+
+########################################################need to annotate here down
+
+#are all of the missing taxa id from marmicro??
+
+> nrow(g3_gather_merged)
+[1] 67356699
+> g3_gather_merged_name <- g3_gather_merged %>% left_join(name, by = c("V2.y" = "tax_id"))
+> nrow(g3_gather_merged_name)
+[1] 67356699
+
+> species <- read_csv("g3Diel/G3_trophicPredictions_cleanedUp_updatedMarferret_marmicroDb2023_diel_noOutliers.csv")
+
+> notOfInt <- g3_gather_merged_name %>% anti_join(species, by = c("tax_name" = "taxa"))
+
+> notOfInt_summary <- notOfInt %>% group_by(tax_name, sample) %>% summarize(est_counts = sum(est_counts))
+`summarise()` has grouped output by 'tax_name'. You can override using the `.groups` argument.
+
+> notOfInt_summary %>% write_csv("G3PA_diel.contig_dat_all_otherThanSpeciesWithTrophicPredictions_summary_updatedMarferret_marmicroDb2023_noOutliers.csv")
+
+> g3_gather_merged_name_noMissingTaxa <- g3_gather_merged_name %>% filter(!is.na(tax_name))
+
+> ofInt <- g3_gather_merged_name_noMissingTaxa %>% semi_join(species, by = c("tax_name" = "taxa"))
+
+> head(ofInt)
+# A tibble: 6 × 15
+  nt_id     V2.x  V3.x  V4.x V5.x  sample V1.x    V2.y    V3.y V1.y  V4.y  V5.y 
+  <chr>    <dbl> <dbl> <dbl> <chr> <chr>  <chr>  <dbl>   <dbl> <chr> <chr> <chr>
+1 G3PA.di…   430  242.  7.26 0.32… S4C11  G3PA… 2.71e6 1.9e-20 G3PA… DUF1… PF02…
+2 G3PA.di…   607  418.  5    0.12… S4C11  G3PA… 4.37e4 1.1e-58 G3PA… Endo… PF01…
+3 G3PA.di…   719  530. 19.4  0.39… S4C11  G3PA… 4.37e4 2.2e-66 G3PA… Endo… PF01…
+4 G3PA.di…   329  144.  6    0.44… S4C11  G3PA… 4.07e5 1.1e-31 NA    NA    NA   
+5 G3PA.di…   322  138. 10    0.78… S4C11  G3PA… 9.20e4 1.3e-29 NA    NA    NA   
+6 G3PA.di…   477  288.  8.75 0.32… S4C11  G3PA… 1.08e6 7  e- 8 NA    NA    NA   
+# … with 3 more variables: parent_id <dbl>, rank <chr>, tax_name <chr>
+
+core <- read_csv("~/MarFERReT.v1.core_genes.csv")
+core <- core %>% filter(lineage == "Eukaryota")
+
+pfamSummary <- ofInt %>% semi_join(core, by = c("V5.y" = "pfam_id"))
+
+nrow(pfamSummary)
+
+pfamSummary %>% filter(!is.na(V5.y)) %>% filter(V4.x > 0) %>% group_by(sample, tax_name) %>% distinct(V5.y) %>% summarize(numPfam = n()) %>% write_csv("~/g3Diel/G3PA_diel.contig_dat_all_speciesWithTrophicPredictions_numPfams.csv")
+
+
+> ofInt_summary <- ofInt %>% group_by(tax_name, sample) %>% summarize(est_counts = sum(V4.x))
+`summarise()` has grouped output by 'tax_name'. You can override using the `.groups` argument.
+
+#writes the total number of reads for the haptophytes to csv file
+> ofInt_summary %>% write_csv("~/g3Diel/G3PA_diel.contig_dat_all_speciesWithTrophicPredictions_summary_updatedMarferret_marmicroDb2023_noOutliers.csv")
+
+(base) Elainas-MacBook-Pro-2:g3 elaina$ scp -P 3004 -i ~/.ssh/id_ed25519  egthomas@frustule.ocean.washington.edu:~/prepareG3/G3PA*.contig_dat_all_speciesWithTrophicPredictions_summary_updatedMarferret_marmicroDb2023_noOutliers.csv .
+G3PA.contig_dat_all_speciesWithTrophicPredictions_summary_updatedMarferret_marmicroDb2023_noOutliers.csv                                                                  100%   58KB   1.3MB/s   00:00    
+G3PA_diel.contig_dat_all_speciesWithTrophicPredictions_summary_updatedMarferret_marmicroDb2023_noOutliers.csv                                                             100%   14KB 825.3KB/s   00:00    
+
+(base) Elainas-MacBook-Pro-2:g3 elaina$ scp -P 3004 -i ~/.ssh/id_ed25519  egthomas@frustule.ocean.washington.edu:~/prepareG3/G3PA*.contig_dat_all_otherThanSpeciesWithTrophicPredictions_summary_updatedMarferret_marmicroDb2023_noOutliers.csv .
+G3PA.contig_dat_all_otherThanSpeciesWithTrophicPredictions_summary_updatedMarferret_marmicroDb2023_noOutliers.csv                                                         100% 1674KB   5.7MB/s   00:00    
+G3PA_diel.contig_dat_all_otherThanSpeciesWithTrophicPredictions_summary_updatedMarferret_marmicroDb2023_noOutliers.csv                                                    100% 1674KB  23.6MB/s   00:00    
+

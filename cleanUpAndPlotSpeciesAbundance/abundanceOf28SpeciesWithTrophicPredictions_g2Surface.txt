@@ -1,0 +1,64 @@
+
+#open R on grazer
+egthomas@grazer:$ R
+
+> library(tidyverse)
+
+> g2_gather_merged <- read_csv("~/g2/G2_surface_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_fall2023.csv")
+
+> species <- read_csv("~/28SpeciesWithTrophicPredictions.csv")
+
+#load name of each eukaryote in the updated marferret db with its assigned 
+#taxa id
+#ryan sent MarFERReT.v1.taxa.csv over slack in the metat channel on 10/11/22
+> name <- read_csv("/mnt/nfs/projects/marferret/v1/data/MarFERReT.v1.taxa.csv")
+
+#get rid of unnecessary variables
+> name <- name %>% select(1:4)
+
+> nrow(g2_gather_merged)
+[1] 162454544
+> g2_gather_merged_name <- g2_gather_merged %>% left_join(name, by = c("V2" = "tax_id"))
+> nrow(g2_gather_merged_name)
+[1] 162454544
+
+> head(g2_gather_merged_name)
+# A tibble: 6 × 12
+  nt_id     length V1        V2       V3 var   value V4    V5    parent_id rank 
+  <chr>      <dbl> <chr>  <dbl>    <dbl> <chr> <dbl> <chr> <chr>     <dbl> <chr>
+1 G2PA.S02…    309 G2PA… 2.76e3 1.94e-34 G2PA…  6    ABC_… PF00…    131567 supe…
+2 G2PA.S02…    364 G2PA… 1.32e5 8.44e-40 G2PA…  4    Bac_… PF01…         1 root_
+3 G2PA.S02…    316 G2PA… 2.70e6 9.54e-19 G2PA…  2    NA    NA         2759 supe…
+4 G2PA.S02…    336 G2PA… 1   e0 5.14e-76 G2PA…  3    PBP_… PF12…         1 root 
+5 G2PA.S02…    466 G2PA… 2.86e3 3.63e-35 G2PA…  4.79 NA    NA        33630 class
+6 G2PA.S02…    570 G2PA… 2.70e6 2.27e-40 G2PA…  3    NA    NA        33634 supe…
+# ℹ 1 more variable: tax_name <chr>
+
+> notOfInt <- g2_gather_merged_name %>% anti_join(species, by = c("tax_name" = "taxa"))
+
+> notOfInt_summary <- notOfInt %>% group_by(tax_name, var) %>% summarize(est_counts = sum(value))
+`summarise()` has grouped output by 'tax_name'. You can override using the `.groups` argument.
+
+> notOfInt_summary %>% write_csv("~/g2/G2PA.contig_dat_all_otherThanSpeciesWithTrophicPredictions_summary_updatedMarferret_marmicroDb2023_noOutliers_fall2023_28.csv")
+
+> g2_gather_merged_name_noMissingTaxa <- g2_gather_merged_name %>% filter(!is.na(tax_name))
+
+#gets just the haptophyte data
+#are these the right strings to search for for haptophytes??
+> ofInt <- g2_gather_merged_name_noMissingTaxa %>% semi_join(species, by = c("tax_name" = "taxa"))
+
+> ofInt_summary <- ofInt %>% group_by(tax_name, var) %>% summarize(est_counts = sum(value))
+`summarise()` has grouped output by 'tax_name'. You can override using the `.groups` argument.
+
+#writes the total number of reads for the haptophytes to csv file
+> ofInt_summary %>% write_csv("~/g2/G2PA.contig_dat_all_speciesWithTrophicPredictions_summary_updatedMarferret_marmicroDb2023_noOutliers_fall2023_28.csv")
+
+
+(base) elainathomas@Elainas-MacBook-Pro-2 g2Surface % scp -P 3004 -i ~/.ssh/id_ed25519 egthomas@frustule.ocean.washington.edu:~/g2/G2PA.contig_dat_all_otherThanSpeciesWithTrophicPredictions_summary_updatedMarferret_marmicroDb2023_noOutliers_fall2023_28.csv .
+Enter passphrase for key '/Users/elainathomas/.ssh/id_ed25519': 
+G2PA.contig_dat_all_otherThanSpeciesWithTrophicPredictions_summary_updatedMarferret_marmicroDb2023_noOutliers_fall2023_28.csv                                             100% 2127KB  10.1MB/s   00:00    
+
+
+(base) elainathomas@Elainas-MacBook-Pro-2 g2Surface % scp -P 3004 -i ~/.ssh/id_ed25519 egthomas@frustule.ocean.washington.edu:~/g2/G2PA.contig_dat_all_speciesWithTrophicPredictions_summary_updatedMarferret_marmicroDb2023_noOutliers_fall2023_28.csv .
+Enter passphrase for key '/Users/elainathomas/.ssh/id_ed25519': 
+G2PA.contig_dat_all_speciesWithTrophicPredictions_summary_updatedMarferret_marmicroDb2023_noOutliers_fall2023_28.csv                                                      100%  100KB   1.2MB/s   00:00    

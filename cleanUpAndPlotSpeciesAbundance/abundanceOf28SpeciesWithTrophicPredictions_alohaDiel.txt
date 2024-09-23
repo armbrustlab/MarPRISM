@@ -1,0 +1,54 @@
+> aloha <- read_csv("~/alohaDiel/G1_diel_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_fall2023.csv")
+
+> head(aloha)
+# A tibble: 6 × 10
+  nt_id       length V1        V2       V3 sample est_counts V4    V5    station
+  <chr>        <dbl> <chr>  <dbl>    <dbl> <chr>       <dbl> <chr> <chr> <chr>
+1 D1PA_S06C1…    359 D1PA… 632150 2.81e- 8 S14C1…       1.37 NA    NA    S14C
+2 D1PA_S06C1…    385 D1PA…   2864 1.75e-19 S14C1…       1    NA    NA    S14C
+3 D1PA_S06C1…    331 D1PA…   2864 8.80e-53 S14C1…       1    2OG-… PF13… S14C
+4 D1PA_S06C1…    353 D1PA…   2864 5.65e-45 S14C1…       1    AMP-… PF00… S14C
+5 D1PA_S06C1…    427 D1PA…   2830 7.94e-63 S14C1…       1.76 AAA_9 PF12… S14C
+6 D1PA_S06C1…    386 D1PA…   2864 2.29e-30 S14C1…       2    NA    NA    S14C
+
+> species <- read_csv("~/28SpeciesWithTrophicPredictions.csv")
+
+> name <- read_csv("/mnt/nfs/projects/marferret/v1/data/MarFERReT.v1.taxa.csv")
+
+> name <- name %>% select(1:4)
+
+> colnames(aloha)[4]
+[1] "V2"
+
+> colnames(aloha)[4] <- "tax_id"
+
+> nrow(aloha)
+[1] 15> aloha <- aloha %>% left_join(name, by = c("tax_id"))
+> nrow(aloha)
+[1] 154298831
+
+> ofIntSummary <- aloha %>% semi_join(species, by = c("tax_name" = "taxa"))
+
+> ofIntSummary %>% distinct(tax_name) %>% nrow()
+[1] 28
+
+> notOfInt <- aloha %>% anti_join(species, by = c("tax_name"  = "taxa"))
+
+> ofIntSummary <- ofIntSummary %>% group_by(tax_name, sample) %>% summarize(est_counts = sum(est_counts))
+`summarise()` has grouped output by 'tax_name'. You can override using the `.groups` argument.
+
+> notOfIntSummary <- notOfInt %>% group_by(tax_name, sample) %>% summarize(est_counts = sum(est_counts))
+`summarise()` has grouped output by 'tax_name'. You can override using the `.groups` argument.
+
+> ofIntSummary %>% write_csv("~/alohaDiel/G1_diel_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_speciesWithTrophicPredictions_fall2023_28.csv")
+
+> notOfIntSummary %>% filter(!is.na(tax_name)) %>% write_csv("~/alohaDiel/G1_diel_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_otherThanSpeciesWithTrophicPredictions_fall2023_28.csv")
+
+
+(base) elainathomas@Elainas-MacBook-Pro-2 alohaDiel % scp -P 3004 -i ~/.ssh/id_ed25519 egthomas@frustule.ocean.washington.edu:~/alohaDiel/G1_diel_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_speciesWithTrophicPredictions_fall2023_28.csv .
+Enter passphrase for key '/Users/elainathomas/.ssh/id_ed25519': 
+G1_diel_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_speciesWithTrophicPredictions_fall2023_28.csv                                                     100%   69KB   2.9MB/s   00:00    
+
+(base) elainathomas@Elainas-MacBook-Pro-2 alohaDiel % scp -P 3004 -i ~/.ssh/id_ed25519 egthomas@frustule.ocean.washington.edu:~/alohaDiel/G1_diel_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_otherThanSpeciesWithTrophicPredictions_fall2023_28.csv .
+Enter passphrase for key '/Users/elainathomas/.ssh/id_ed25519': 
+G1_diel_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_otherThanSpeciesWithTrophicPredictions_fall2023_28.csv                                            100% 1459KB  11.2MB/s   00:00    
