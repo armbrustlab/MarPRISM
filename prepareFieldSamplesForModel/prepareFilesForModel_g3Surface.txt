@@ -1,4 +1,6 @@
-###g3: find best pfam for each contig
+###g3 surface 
+
+##find best pfam for each contig
 
 egthomas@grazer:/mnt/nfs/projects/ryan/Gradients3/PA/assemblies/raw/Pfam34$ mkdir ~/prepareG3
 
@@ -317,8 +319,6 @@ g3 <- g3 %>% semi_join(tax_best, by = c("target_id" = "nt_id"))
 
 
 
-
-
 egthomas@grazer:~/g3$ R
 
 > g3_gather_merged <- read_csv("~/g3/G3_surface_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_tpm_noNAPfam_fall2023.csv")
@@ -326,13 +326,6 @@ egthomas@grazer:~/g3$ R
 > pfam <- read_csv("~/Extracted_Pfams_noOutliers_newContaminationMetric_xg.csv")
 
 > g3_gather_merged <- g3_gather_merged %>% mutate(pfam = str_replace(V5, "\\..{1,}$", ""))
-
-> g3_gather_merged %>% semi_join(pfam, by = c("pfam")) %>% write_csv("~/g3/G3_surface_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_tpm_pfamsOfInt.csv")
-
-(base) elainathomas@Elainas-MacBook-Pro-2 g3 % scp -r -P 3004 -i ~/.ssh/id_ed25519  egthomas@frustule.ocean.washington.edu:~/g3/G3_surface_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_tpm_pfamsOfInt.csv .
-Enter passphrase for key '/Users/elainathomas/.ssh/id_ed25519': 
-G3_surface_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_tpm_pfamsOfInt.csv                                                                             100%  923MB  18.7MB/s   00:49    
-
 
 > name <- read_csv("/mnt/nfs/projects/marferret/v1/data/MarFERReT.v1.taxa.csv")
 

@@ -1,4 +1,6 @@
-###g3 diel: find best pfam for each contig
+###g3 diel 
+
+##find best pfam for each contig
 
 #concatenate all of the pfam results for the g3 polyA metaT contigs
 #ryan sent me the location of these files over slack on 7/29/22
@@ -231,113 +233,6 @@ g3_tax <- read_csv("~/g3Diel/G3_diel_mappedReadAbundance_noZeroes_withTaxa_fall2
 4 G3PA.diel.S4C11.A_…    383 G3PA.…       7    G3PA… 265572 5.84e-16 NA    NA   
 5 G3PA.diel.S4C11.A_…    315 G3PA.…      12.2  G3PA… 131567 9.51e- 7 NA    NA   
 6 G3PA.diel.S4C11.A_…    456 G3PA.…       2.93 G3PA…  89954 1.90e-50 Dyna… PF00…
-
-> g3Diel <- g3_gather_merged
-
-> g3Diel <- read_csv("~/g3Diel/G3_diel_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_fall2023.csv")
-
-(base) elainathomas@Elainas-MacBook-Pro-2 g3Diel % scp -P 3004 -i ~/.ssh/id_ed25519 G3_trophicPredictions_cleanedUp_updatedMarferret_marmicroDb2023_diel_noOutliers.csv egthomas@frustule.ocean.washington.edu:~/g3Diel/
-Enter passphrase for key '/Users/elainathomas/.ssh/id_ed25519': 
-G3_trophicPredictions_cleanedUp_updatedMarferret_marmicroDb2023_diel_noOutliers.csv                                                                                       100%   16KB  23.2KB/s   00:00    
-
-> ofInt <- read_csv("~/g3Diel/G3_trophicPredictions_cleanedUp_updatedMarferret_marmicroDb2023_diel_noOutliers.csv")
-
-> head(ofInt)
-# A tibble: 6 × 16
-  sample  taxa      xg_pred probability Sample.ID Cruise Cruise.ID Type  Station
-  <chr>   <chr>     <chr>         <dbl> <chr>     <chr>  <chr>     <chr>   <dbl>
-1 S4C11.A Bathycoc… Photot…       0.976 S4C11.A   Gradi… km1906    polyA       4
-2 S4C11.A Karlodin… Hetero…       0.888 S4C11.A   Gradi… km1906    polyA       4
-3 S4C11.A Triparma… Photot…       0.999 S4C11.A   Gradi… km1906    polyA       4
-4 S4C11.B Bathycoc… Photot…       0.976 S4C11.B   Gradi… km1906    polyA       4
-5 S4C11.B Karlodin… Hetero…       0.880 S4C11.B   Gradi… km1906    polyA       4
-6 S4C11.B Triparma… Photot…       0.999 S4C11.B   Gradi… km1906    polyA       4
-# ℹ 7 more variables: Cast <dbl>, Filter <dbl>, Depth <dbl>, Time <time>,
-#   Latitude <dbl>, Longitude <dbl>, Exp <chr>
-
-> name <- read_csv("/mnt/nfs/projects/marferret/v1/data/MarFERReT.v1.taxa.csv")
-
-> name <- name %>% select(1:4)
-
-> head(g3Diel)
-# A tibble: 6 × 9
-  nt_id               length sample est_counts V1        V2       V3 V4    V5   
-  <chr>                <dbl> <chr>       <dbl> <chr>  <dbl>    <dbl> <chr> <chr>
-1 G3PA.diel.S4C11.A_…    387 G3PA.…       7    G3PA…   2864 2.74e-44 NA    NA   
-2 G3PA.diel.S4C11.A_…    341 G3PA.…       6    G3PA…  35679 3.15e-47 NA    NA   
-3 G3PA.diel.S4C11.A_…    414 G3PA.…       4    G3PA…  33634 4.08e-39 MT    PF12…
-4 G3PA.diel.S4C11.A_…    383 G3PA.…       7    G3PA… 265572 5.84e-16 NA    NA   
-5 G3PA.diel.S4C11.A_…    315 G3PA.…      12.2  G3PA… 131567 9.51e- 7 NA    NA   
-6 G3PA.diel.S4C11.A_…    456 G3PA.…       2.93 G3PA…  89954 1.90e-50 Dyna… PF00…
-
-> colnames(g3Diel)[6]
-[1] "V2"
-
-> colnames(g3Diel)[6] <- "tax_id"
-
-> nrow(g3Diel)
-[1] 101790418
-> g3Diel <- g3Diel %>% left_join(name, by = c("tax_id"))
-> nrow(g3Diel)
-[1] 101790418
-
-> ofIntSummary <- g3Diel %>% semi_join(ofInt, by = c("tax_name" = "taxa"))
-
-> ofInt %>% distinct(taxa) %>% nrow()
-[1] 4
-> ofIntSummary %>% distinct(tax_name) %>% nrow()
-[1] 4
-
-> notOfInt <- g3Diel %>% anti_join(ofInt, by = c("tax_name"  = "taxa"))
-
-> head(ofIntSummary)
-# A tibble: 6 × 14
-  nt_id          V2.x  V3.x  V4.x V5.x  sample V1    tax_id     V3.y V4.y  V5.y 
-  <chr>         <dbl> <dbl> <dbl> <chr> <chr>  <chr>  <dbl>    <dbl> <chr> <chr>
-1 G3PA.diel.S4…   329  144.   6   0.44… S4C11… G3PA… 4.07e5 1.29e-40 NA    NA   
-2 G3PA.diel.S4…   322  138.  10   0.78… S4C11… G3PA… 9.20e4 2.02e-35 NA    NA   
-3 G3PA.diel.S4…   412  224.   9   0.43… S4C11… G3PA… 4.07e5 1.11e-47 NA    NA   
-4 G3PA.diel.S4…   506  317.  18.4 0.62… S4C11… G3PA… 4.07e5 1.70e-30 NA    NA   
-5 G3PA.diel.S4…   811  622.  12   0.20… S4C11… G3PA… 1.17e6 9.93e-43 NA    NA   
-6 G3PA.diel.S4…   333  148.   2   0.14… S4C11… G3PA… 4.07e5 2.01e-21 RRM_1 PF00…
-# ℹ 3 more variables: parent_id <dbl>, rank <chr>, tax_name <chr>
-
-> colnames(ofIntSummary)[4] <- "est_counts"
-
-> head(ofIntSummary$sample)
-[1] "S4C11.A" "S4C11.A" "S4C11.A" "S4C11.A" "S4C11.A" "S4C11.A"
-
-
-core <- read_csv("~/MarFERReT.v1.core_genes.csv")
-core <- core %>% filter(lineage == "Eukaryota")
-
-pfamSummary <- ofIntSummary %>% semi_join(core, by = c("V5.y" = "pfam_id"))
-
-
-> pfamSummary %>% filter(!is.na(V5.y)) %>% filter(est_counts > 0) %>% group_by(sample, tax_name) %>% distinct(V5.y) %>% summarize(numPfam = n()) %>% write_csv("~/g3Diel/g3_diel.contig_dat_all_speciesWithTrophicPredictions_numPfams.csv")
-`summarise()` has grouped output by 'sample'. You can override using the `.groups` argument.
-
-
-> ofIntSummary <- ofIntSummary %>% group_by(tax_name, sample) %>% summarize(est_counts = sum(est_counts))
-`summarise()` has grouped output by 'tax_name'. You can override using the `.groups` argument.
-
-> colnames(notOfInt)[4] <- "est_counts"
-
-> notOfIntSummary <- notOfInt %>% group_by(tax_name, sample) %>% summarize(est_counts = sum(est_counts))
-`summarise()` has grouped output by 'tax_name'. You can override using the `.groups` argument.
-
-> ofIntSummary %>% write_csv("~/g3Diel/g3_diel_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_speciesWithTrophicPredictions_fall2023.csv")
-
-> notOfIntSummary %>% write_csv("~/g3Diel/g3_diel_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_otherThanSpeciesWithTrophicPredictions_fall2023.csv")
-
-(base) elainathomas@Elainas-MacBook-Pro-2 g3Diel % scp -P 3004 -i ~/.ssh/id_ed25519 egthomas@frustule.ocean.washington.edu:~/g3Diel/g3_diel_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_speciesWithTrophicPredictions_fall2023.csv .
-Enter passphrase for key '/Users/elainathomas/.ssh/id_ed25519': 
-g3_diel_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_speciesWithTrophicPredictions_fall2023.csv                                                        100% 7429    10.9KB/s   00:00    
-
-(base) elainathomas@Elainas-MacBook-Pro-2 g3Diel % scp -P 3004 -i ~/.ssh/id_ed25519 egthomas@frustule.ocean.washington.edu:~/g3Diel/g3_diel_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_otherThanSpeciesWithTrophicPredictions_fall2023.csv .
-Enter passphrase for key '/Users/elainathomas/.ssh/id_ed25519': 
-g3_diel_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_otherThanSpeciesWithTrophicPredictions_fall2023.csv                                               100% 1133KB   1.3MB/s   00:00    
-
 
 > head(g3_gather_merged)
 # A tibble: 6 × 9

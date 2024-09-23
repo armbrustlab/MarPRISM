@@ -1,4 +1,6 @@
-###translate and get longest reading frame of reads
+###g3 depth
+
+##translate and get longest reading frame of reads
 
 #make directory for the six-frame translation files
 egthomas@grazer:~/g3Depth$ mkdir 6tr
@@ -79,7 +81,6 @@ egthomas@grazer:~/g3Depth/6tr$ cp G3_depth_assembledReads.id99.fasta /mnt/nfs/pr
 ###get nucleotide sequences for the longest amino acid reading frames that 
 ###are cluster representatives
 
-egthomas@grazer:~/g3Depth$ l
 
 egthomas@grazer:/scratch/g3Depth$ gunzip *
 
@@ -399,7 +400,7 @@ egthomas@grazer:~/g3Depth/func$ R
 
 
 
-###sacha mapped unstranded
+###sacha mapped unstranded because assembly was created unstranded
 egthomas@guppy:/scratch/elaina$ cp /mnt/nfs/projects/armbrust-metat/gradients3/g3_depth_pa_metat/kallisto/unstranded/G3PA_depth.raw.est_counts_unstranded.csv.gz .
 egthomas@guppy:/scratch/elaina$ gunzip *
 egthomas@guppy:/scratch/elaina$ mv G3PA_depth.raw.est_counts_unstranded.csv ~/g3Depth/mappedShortReads/

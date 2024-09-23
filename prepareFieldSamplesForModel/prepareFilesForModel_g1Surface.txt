@@ -289,11 +289,6 @@ egthomas@grazer:~/g1$ R
 
 > g1_gather_merged <- g1_gather_merged %>% mutate(pfam = str_replace(V5, "\\..{1,}$", ""))
 
-> g1_gather_merged %>% semi_join(pfam, by = c("pfam")) %>% write_csv("~/g1/G1_surface_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_tpm_pfamsOfInt.csv")
-
-(base) Elainas-MacBook-Pro-2:g1Surface elaina$ scp -r -P 3004 -i ~/.ssh/id_ed25519  egthomas@frustule.ocean.washington.edu:~/g1/G1_surface_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_tpm_pfamsOfInt.csv .
-G1_surface_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_tpm_pfamsOfInt.csv                                                                             100%  679MB   7.4MB/s   01:32    
-
 > name <- read_csv("/mnt/nfs/projects/marferret/v1/data/MarFERReT.v1.taxa.csv")
 
 > name <- name %>% select(1:4)
@@ -647,74 +642,6 @@ Extracted_Pfams_noOutliers_newContaminationMetric_xg.csv                        
 (base) Elainas-MacBook-Pro-2:g1Surface elaina$ scp -P 3004 -i ~/.ssh/id_ed25519 egthomas@frustule.ocean.washington.edu:~/g1/*fixedTPM_fall2023.csv .
 G1_surface_tpm_updatedMarferret_marmicroDb2023_noOutliers_fixedTPM_fall2023.csv                                                                                           100%   49MB  26.9MB/s   00:01    
 G1_surface_tpm_updatedMarferret_marmicroDb2023_sampleTaxa_noOutliers_fixedTPM_fall2023.csv                                                                                100%   27KB   1.8MB/s   00:00    
-
-
-
-###need to fix here down
-
-
-> name <- read_csv("~/MarFERReT.v1.taxa.csv")
-
-> name %>% filter(tax_name %in% c("Micromonas <green algae>", "unclassified Acanthoeca", "unclassified Chrysochromulina", "unclassified Micromonas", "unclassified Phaeocystis"))
-# A tibble: 5 × 68
-   tax_id parent_id rank   tax_name       root  root_ superkingdom superkingdom_
-    <dbl>     <dbl> <chr>  <chr>         <dbl>  <dbl>        <dbl>         <dbl>
-1   38832     41873 genus  Micromonas <…     1 131567         2759            NA
-2 2509521     38832 genus_ unclassified…     1 131567         2759            NA
-3 2636333     33656 genus_ unclassified…     1 131567         2759       2608109
-4 2647842     35140 genus_ unclassified…     1 131567         2759       2608109
-5 2618734     81532 genus_ unclassified…     1 131567         2759         33154
-# … with 60 more variables
-
-> g1_gather_merged <- read_csv("~/G1_surface_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers.csv")
-
-> name <- name %>% select(1:4)
-
-#are all of the missing taxa id from marmicro??
-> g1_gather_merged %>% anti_join(name, by = c("V2" = "tax_id")) %>% distinct(V2) %>% nrow()
-[1] 4204
-
-> nrow(g1_gather_merged)
-[1] 105058983
-> g1_gather_merged_name <- g1_gather_merged %>% left_join(name, by = c("V2" = "tax_id"))
-> nrow(g1_gather_merged_name)
-[1] 105058983
-
-> g1_gather_merged_name_noMissingTaxa <- g1_gather_merged_name %>% filter(!is.na(tax_name))
-
-> g1_gather_merged_name_noMissingTaxa %>% filter(est_counts == 0) 
-# A tibble: 0 × 13
-
-> head(g1_gather_merged_name_noMissingTaxa)
-# A tibble: 6 × 13
-  nt_id        length V1        V2      V3 sample est_counts V4    V5    station
-  <chr>         <dbl> <chr>  <dbl>   <dbl> <chr>       <dbl> <chr> <chr> <chr>
-1 G1PA_S02C1_…    304 G1PA… 2.70e6 1.5e-34 S02C1…          4 NA    NA    S02C
-2 G1PA_S02C1_…    351 G1PA… 2.86e3 4.9e-40 S02C1…          1 HECT  PF00… S02C
-3 G1PA_S02C1_…    310 G1PA… 1.09e5 5.6e-16 S02C1…          7 NA    NA    S02C
-4 G1PA_S02C1_…    322 G1PA… 2.76e3 2.4e-33 S02C1…          7 NA    NA    S02C
-5 G1PA_S02C1_…    309 G1PA… 6.84e3 1.6e-15 S02C1…         16 NA    NA    S02C
-6 G1PA_S02C1_…    325 G1PA… 2.76e3 6.8e-20 S02C1…          2 NAC   PF01… S02C
-# … with 3 more variables: parent_id <dbl>, rank <chr>, tax_name <chr> 
-
-> g1_gather_merged_name_noMissingTaxa_noMissingPfam <- g1_gather_merged_name_noMissingTaxa %>% filter(!is.na(V5))
-
-> g1_gather_merged_name_noMissingTaxa_noMissingPfam <- g1_gather_merged_name_noMissingTaxa_noMissingPfam %>% filter(str_detect(tax_name, " ")) 
-
-> g1_gather_merged_name_noMissingTaxa_noMissingPfam <- g1_gather_merged_name_noMissingTaxa_noMissingPfam %>% filter(tax_name != "cellular organisms")
-
-> #Pleuromamma xiphias is a copepod 
-> g1_gather_merged_name_noMissingTaxa_noMissingPfam <- g1_gather_merged_name_noMissingTaxa_noMissingPfam %>% filter(tax_name != "Pleuromamma xiphias")
-
-> g1_gather_merged_name_noMissingTaxa_noMissingPfam <- g1_gather_merged_name_noMissingTaxa_noMissingPfam %>% filter(!(tax_name %in% c("Micromonas <green algae>", "unclassified Acanthoeca", "unclassified Chrysochromulina", "unclassified Micromonas", "unclassified Phaeocystis")))
-
-> g1_gather_merged_name_noMissingTaxa_noMissingPfam <- g1_gather_merged_name_noMissingTaxa_noMissingPfam %>% distinct(sample, V1, V5, station, tax_name)
-
-> g1_gather_merged_name_noMissingTaxa_noMissingPfam %>% write_csv("~/G1_surface_allSamples_processed_updatedMarferret_marmicroDb2023_2_noOutliers.csv")
-
-(base) Elainas-MacBook-Pro-2:g1Surface elaina$ scp -P 3004 -i ~/.ssh/id_ed25519 egthomas@frustule.ocean.washington.edu:~/G1_surface_allSamples_processed_updatedMarferret_marmicroDb2023_2_noOutliers.csv .
-G1_surface_allSamples_processed_updatedMarferret_marmicroDb2023_2.csv                                                                                                     100% 1361MB   9.7MB/s   02:20    
-
 
 
 

@@ -1,4 +1,6 @@
-###g2 surface: find best pfam for each contig
+###g2 surface
+
+##find best pfam for each contig
 
 #concatenate all of the pfam results for the g2 polyA metaT contigs
 #ryan sent me the location of these files over slack on 7/29/22
@@ -302,12 +304,6 @@ egthomas@grazer:~/g2$ R
 > pfam <- read_csv("~/Extracted_Pfams_noOutliers_newContaminationMetric_xg.csv")
 
 > g2_gather_merged <- g2_gather_merged %>% mutate(pfam = str_replace(V5, "\\..*", ""))
-
-> g2_gather_merged %>% semi_join(pfam, by = c("pfam")) %>% write_csv("~/g2/G2_surface_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_tpm_pfamsOfInt.csv")
-
-(base) Elainas-MacBook-Pro-2:g2Surface elaina$ scp -r -P 3004 -i ~/.ssh/id_ed25519  egthomas@frustule.ocean.washington.edu:~/g2/G2_surface_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_tpm_pfamsOfInt.csv .
-G2_surface_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_tpm_pfamsOfInt.csv                                                                             100% 1229MB   7.5MB/s   02:43    
-
 
 
 > name <- read_csv("/mnt/nfs/projects/marferret/v1/data/MarFERReT.v1.taxa.csv")

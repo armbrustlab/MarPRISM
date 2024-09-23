@@ -1,3 +1,5 @@
+###aloha diel
+
 egthomas@grazer:/mnt/nfs/projects/ryan/NPacAssemblies_2021/joined$ stat D1PA.contig_dat_all.csv 
   File: D1PA.contig_dat_all.csv
   Size: 8113647153      Blocks: 5940338    IO Block: 131072 regular file
@@ -225,87 +227,6 @@ Adding missing grouping variables: `V1`
 
 > g1_gather_merged %>% write_csv("~/alohaDiel/G1_diel_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_fall2023.csv")
 
-
-
-> aloha <- read_csv("~/alohaDiel/G1_diel_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_fall2023.csv")
-
-(base) Elainas-MacBook-Pro-2:alohaDiel elaina$ scp -P 3004 -i ~/.ssh/id_ed25519 g1_diel_cleanedUp.csv egthomas@frustule.ocean.washington.edu:~/alohaDiel/
-g1_diel_cleanedUp.csv                                                                                                                                                     100%   20KB 440.0KB/s   00:00    
-
-> ofInt <- read_csv("~/alohaDiel/g1_diel_cleanedUp.csv")
-
-> head(ofInt)
-# A tibble: 6 × 10
-  sample      taxa    xg_pred probability time.x stationCast date               
-  <chr>       <chr>   <chr>         <dbl>  <dbl> <chr>       <dttm>             
-1 S06C1_A_600 Azadin… Hetero…       0.814    600 S6C1        2015-07-26 00:00:00
-2 S06C1_A_600 Kareni… Hetero…       0.859    600 S6C1        2015-07-26 00:00:00
-3 S06C1_A_600 Karlod… Hetero…       0.916    600 S6C1        2015-07-26 00:00:00
-4 S06C1_A_600 Proroc… Hetero…       0.677    600 S6C1        2015-07-26 00:00:00
-5 S06C1_C_600 Azadin… Mixotr…       0.473    600 S6C1        2015-07-26 00:00:00
-6 S06C1_C_600 Kareni… Hetero…       0.818    600 S6C1        2015-07-26 00:00:00
-# ℹ 3 more variables: time.y <dttm>, fixTime <time>, group <chr>
-
-> name <- read_csv("/mnt/nfs/projects/marferret/v1/data/MarFERReT.v1.taxa.csv")
-
-> name <- name %>% select(1:4)
-
-> colnames(aloha)[4]
-[1] "V2"
-
-> colnames(aloha)[4] <- "tax_id"
-
-> nrow(aloha)
-[1] 154298831
-> aloha <- aloha %>% left_join(name, by = c("tax_id"))
-> nrow(aloha)
-[1] 154298831
-
-> ofIntSummary <- aloha %>% semi_join(ofInt, by = c("tax_name" = "taxa"))
-
-> ofInt %>% distinct(taxa) %>% nrow()
-[1] 6
-> ofIntSummary %>% distinct(tax_name) %>% nrow()
-[1] 6
-
-> notOfInt <- aloha %>% anti_join(ofInt, by = c("tax_name"  = "taxa"))
-
-> head(ofIntSummary)
-# A tibble: 6 × 13
-  nt_id       length V1    tax_id       V3 sample est_counts V4    V5    station
-  <chr>        <dbl> <chr>  <dbl>    <dbl> <chr>       <dbl> <chr> <chr> <chr>
-1 D1PA_S06C1…    359 D1PA… 632150 2.81e- 8 S14C1…       1.37 NA    NA    S14C
-2 D1PA_S06C1…    363 D1PA…  39449 5.86e-25 S14C1…       1    NA    NA    S14C
-3 D1PA_S06C1…    308 D1PA… 632150 2.44e-40 S14C1…       2    NA    NA    S14C
-4 D1PA_S06C1…    392 D1PA… 156230 1.69e-13 S14C1…       5    NA    NA    S14C
-5 D1PA_S06C1…    367 D1PA… 407301 6.33e-19 S14C1…       3    NA    NA    S14C
-6 D1PA_S06C1…    348 D1PA… 632150 1.04e-57 S14C1…       6    NA    NA    S14C
-# ℹ 3 more variables: parent_id <dbl>, rank <chr>, tax_name <chr>
-
-core <- read_csv("~/MarFERReT.v1.core_genes.csv")
-core <- core %>% filter(lineage == "Eukaryota")
-
-pfamSummary <- ofIntSummary %>% semi_join(core, by = c("V5" = "pfam_id"))
-
-nrow(pfamSummary)
-
-pfamSummary %>% filter(!is.na(V5)) %>% filter(est_counts > 0) %>% group_by(sample, tax_name) %>% distinct(V5) %>% summarize(numPfam = n()) %>% write_csv("~/alohaDiel/aloha_diel.contig_dat_all_speciesWithTrophicPredictions_numPfams.csv")
-`summarise()` has grouped output by 'sample'. You can override using the `.groups` argument.
-
-> ofIntSummary <- ofIntSummary %>% group_by(tax_name, sample) %>% summarize(est_counts = sum(est_counts))
-`summarise()` has grouped output by 'tax_name'. You can override using the `.groups` argument.
-
-> notOfIntSummary <- notOfInt %>% group_by(tax_name, sample) %>% summarize(est_counts = sum(est_counts))
-`summarise()` has grouped output by 'tax_name'. You can override using the `.groups` argument.
-
-> ofIntSummary %>% write_csv("~/alohaDiel/G1_diel_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_speciesWithTrophicPredictions_fall2023.csv")
-
-> notOfIntSummary %>% write_csv("~/alohaDiel/G1_diel_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_otherThanSpeciesWithTrophicPredictions_fall2023.csv")
-
-(base) Elainas-MacBook-Pro-2:alohaDiel elaina$ scp -P 3004 -i ~/.ssh/id_ed25519 egthomas@frustule.ocean.washington.edu:~/alohaDiel/G1_diel_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_speciesWithTrophicPredictions_fall2023.csv .
-G1_diel_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_speciesWithTrophicPredictions_fall2023.csv                                                        100%   14KB 483.3KB/s   00:00    
-(base) Elainas-MacBook-Pro-2:alohaDiel elaina$ scp -P 3004 -i ~/.ssh/id_ed25519 egthomas@frustule.ocean.washington.edu:~/alohaDiel/G1_diel_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_otherThanSpeciesWithTrophicPredictions_fall2023.csv .
-G1_diel_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_otherThanSpeciesWithTrophicPredictions_fall2023.csv                                               100% 1515KB  11.1MB/s   00:00    
 
 > g1_gather_merged <- g1_gather_merged %>% mutate(length_kb = length/1000)
 

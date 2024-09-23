@@ -229,11 +229,6 @@ egthomas@grazer:/scratch/elaina/g2Inc/mapped$ R
 
 > dat_tax_noNA_merged <- dat_tax_noNA_merged %>% mutate(pfam = str_replace(V5, "\\..*", ""))
 
-> dat_tax_noNA_merged %>% semi_join(pfam, by = c("pfam")) %>% write_csv("/scratch/elaina/g2Inc/g2Inc_taxa_pfams_tpm_noNAPfam_pfamsOfInt.csv")
-
-
-
-
 
 
 > name <- read_csv("/mnt/nfs/projects/marferret/v1/data/MarFERReT.v1.taxa.csv")
