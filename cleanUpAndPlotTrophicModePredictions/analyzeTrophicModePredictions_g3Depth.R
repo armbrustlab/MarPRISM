@@ -137,7 +137,7 @@ all %>% group_by(latitude, depth, taxa, xg_pred) %>%
   summarize(n = n()) %>% arrange(desc(n))
 
 all %>% semi_join(mixedPreds, by = c("taxa")) %>% 
-  filter(taxa != "Prorocentrum minimum") %>%
+  filter(taxa == "Karlodinium veneficum") %>%
   mutate(xg_pred = str_replace(xg_pred, "ic", "y")) %>%
   group_by(latitude, depth, taxa, xg_pred) %>%
   summarize(n = n()) %>%
@@ -161,5 +161,5 @@ all %>% semi_join(mixedPreds, by = c("taxa")) %>%
   scale_x_continuous(limits = c(25,43), breaks = c(25,30,35,40)) + 
   guides(color = FALSE)
 
-ggsave("g3DepthAndSurface_allOrganismsTrophicPredictions_dotPlot_updatedMarferret_marmicroDb2023_notGroupedBySize_noOutliers_depths.png", height = 9, width = 14.5)
+ggsave("g3DepthAndSurface_allOrganismsTrophicPredictions_dotPlot_updatedMarferret_marmicroDb2023_notGroupedBySize_noOutliers_depths.png", height = 9, width = 9)
 
