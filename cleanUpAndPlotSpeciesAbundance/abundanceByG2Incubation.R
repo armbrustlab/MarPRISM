@@ -197,8 +197,8 @@ dat_summary %>% filter(!is.na(diff)) %>%
   theme(legend.text = element_text(size = 20, color = 'black')) +
   theme(legend.title = element_text(size = 22, color = 'black')) +
   theme(axis.title.x = element_text(size = 26, color = 'black')) +  
-  labs(x = "Treatment", y = "Mean ratio of transcripts in treatment:control", shape = "", color = "") %>% 
-  scale_y_continuous(breaks = c(0,1,5,10,15,20,25), limits = c(0,27.5))
+  scale_y_continuous(breaks = c(0,1,5,10,15,20,25), limits = c(0,27.5)) + 
+  labs(x = "Treatment", y = "Mean ratio of transcripts in treatment:control", shape = "", color = "")
 
 ggsave("responseBySpecies.png", dpi = 300, height = 7, width = 12)
 
