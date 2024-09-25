@@ -349,7 +349,6 @@ merged %>% semi_join(mixed, by = c("taxa")) %>%
 
 merged %>% semi_join(mixed, by = c("taxa")) %>%
   mutate(latitude = round(latitude)) %>%
-  filter(Timepoint != 0) %>%
   mutate(latTreat = str_c(latitude, "_", Treatment, "_", Timepoint)) %>%
   mutate(latitude = str_c(latitude, " °N")) %>%
   mutate(xg_pred = str_replace(xg_pred, "ic", "y")) %>%
@@ -376,7 +375,6 @@ ggsave("g2IncTrophicPredictions.png", dpi = 600, height = 12, width = 17)
 
 merged %>% anti_join(mixed, by = c("taxa")) %>%
   mutate(latitude = round(latitude)) %>%
-  filter(Timepoint != 0) %>%
   mutate(latTreat = str_c(latitude, "_", Treatment)) %>%
   mutate(latitude = str_c(latitude, " °N")) %>%
   mutate(xg_pred = str_replace(xg_pred, "ic", "y")) %>%
