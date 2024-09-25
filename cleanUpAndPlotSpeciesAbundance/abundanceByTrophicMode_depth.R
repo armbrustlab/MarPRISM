@@ -284,7 +284,7 @@ dat %>% filter(cruise == "Gradients3: 2019") %>%
   
   scale_x_reverse(limits = c(150,0)) +
   facet_wrap(~Latitude, nrow = 1) + 
-  scale_y_continuous(sec.axis = sec_axis(trans=~./5, name="Fluorescence (mg/m^3)"))
+  scale_y_continuous(sec.axis = sec_axis(trans=~./5, name = expression("Fluorescence (mg/m"^3*")")))
 
 ggsave("g1G2G3/abundanceBySpeciesType_depth_fluor.svg", dpi = 600, height = 5, width = 14)
 
@@ -324,10 +324,11 @@ dat %>% filter(cruise == "Gradients3: 2019") %>%
 ggsave("g1G2G3/abundanceBySpeciesType_depth_par.svg", dpi = 600, height = 5, width = 14)
 
 
-g3_nut %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot") %>% 
-  ggplot() +
-  geom_point(aes(x = depth, y = NO2), color = 'blue', se = FALSE, size = .6)+ 
-  geom_line(aes(x = depth, y = NO2), color = 'blue', se = FALSE)+ 
+
+dat %>% filter(cruise == "Gradients3: 2019") %>% 
+  mutate(type = factor(type, levels = c("phot", "mixed", "het"))) %>%
+  mutate(Latitude = str_c(as.character(Latitude), " °N")) %>%
+  ggplot(aes(x = depthNum, y = absoluteCounts/1e9, fill = type)) + 
   coord_flip() + 
   theme_classic() +
   theme_bw() +
@@ -340,14 +341,20 @@ g3_nut %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(t
   theme(legend.text = element_text(size = 18, color = 'black')) +
   theme(legend.title = element_text(size = 18, color = 'black')) +
   theme(axis.title.x = element_text(size = 18, color = 'black')) +  
-  labs(y = "NO3_NO2 (μmol/L)", x = "Depth (m)") +
-
-  geom_point(data = g3_par %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = percPAR/70), color = 'red', se = FALSE, size = .6) +
-  geom_line(data = g3_par %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = percPAR/70), color = 'red', se = FALSE) +
-    scale_x_reverse(limits = c(130,0), breaks = c(125,100,75,50,25,0)) +
-  scale_y_continuous(breaks = c(0,5,10,15,20,25), limits = c(0,25)) +
+  labs(y = "", x = "Depth (m)") +
+  scale_fill_manual(values = c("forestgreen", "purple", "orange")) + 
+  geom_point(data = g3_nut %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = NO2*10), color = 'blue', se = FALSE, size = .6)+ 
+  geom_point(data = g3_par %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = percPAR/5), color = 'red', se = FALSE, size = .6) +
+  geom_line(data = g3_nut %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = NO2*10), color = 'blue', se = FALSE)+ 
+  geom_line(data = g3_par %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = percPAR/5), color = 'red', se = FALSE) +
+  
+  geom_point(data = g3_fluor %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = Fluor*5), color = 'lightgreen', se = FALSE, size = .6) +
+  geom_line(data = g3_fluor %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = Fluor*5), color = 'lightgreen', se = FALSE) +
+  
+  scale_x_reverse(limits = c(130,0), breaks = c(130,125,75,55,50,41,15,0)) +
   facet_wrap(~Latitude, nrow = 1) + 
-  scale_y_continuous(limits = c(0,1.5), sec.axis = sec_axis(trans=~.*70, name="% surface PAR"))
+  theme(legend.position = "NA")
 
-ggsave("g1G2G3/abundanceBySpeciesType_depth_parNut.svg", dpi = 600, height = 9, width = 4)
+ggsave("g1G2G3/abundanceBySpeciesType_depth_parNutFluor.png", dpi = 600, height = 9, width = 5)
+ggsave("g1G2G3/abundanceBySpeciesType_depth_parNutFluor.svg", dpi = 600, height = 9, width = 5)
 
