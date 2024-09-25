@@ -347,6 +347,12 @@ merged %>% semi_join(mixed, by = c("taxa")) %>%
   group_by(taxa, latitude, Timepoint, Treatment, xg_pred, latTreat) %>%
   summarize(n = n(), avgProb = mean(probability)) %>% ungroup() %>% arrange(desc(n))
 
+
+merged %>% semi_join(mixed, by = c("taxa")) %>%
+  mutate(latitude = round(latitude)) %>%
+  mutate(latTreat = str_c(latitude, "_", Treatment, "_", Timepoint)) %>% 
+  filter(latTreat == "33_Ctrl_0")
+
 merged %>% semi_join(mixed, by = c("taxa")) %>%
   mutate(latitude = round(latitude)) %>%
   mutate(latTreat = str_c(latitude, "_", Treatment, "_", Timepoint)) %>%
@@ -355,6 +361,7 @@ merged %>% semi_join(mixed, by = c("taxa")) %>%
   group_by(taxa, latitude, Timepoint, Treatment, xg_pred, latTreat) %>%
   summarize(n = n(), avgProb = mean(probability)) %>%
   bind_rows(insitu %>% semi_join(mixed, by = c("taxa"))) %>%
+  bind_rows(data.frame(latTreat = "33_Ctrl_0", n = 0, taxa = "Azadinium spinosum", latitude = "33 °N", xg_pred = "Heterotrophy")) %>%
   mutate(latTreat = factor(latTreat, levels = order)) %>%
   mutate(taxa = factor(taxa, levels = c("Azadinium spinosum", "Karlodinium veneficum", "Pelagodinium beii", "Prorocentrum minimum"))) %>%
   ggplot(aes(x = latTreat, y = n, fill = xg_pred)) + geom_bar(stat = 'identity') +  
