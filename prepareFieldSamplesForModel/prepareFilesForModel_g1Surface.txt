@@ -312,6 +312,54 @@ egthomas@grazer:~/g1$ R
 
 > g1_gather_merged_name_noMissingTaxa <- g1_gather_merged_name %>% filter(!is.na(tax_name))
 
+> dat <- g1_gather_merged_name_noMissingTaxa %>% filter(str_detect(tax_name, " "))
+
+> dat <- dat %>% dplyr::group_by(var, tax_id, tax_name, V5) %>% dplyr::summarize(tpm = sum(tpm))
+`summarise()` has grouped output by 'var', 'tax_id', 'tax_name'. You can override using the `.groups` argument.
+
+> head(dat)
+# A tibble: 6 × 5
+# Groups:   var, tax_id, tax_name [1]
+  var          tax_id tax_name            V5            tpm
+  <chr>         <dbl> <chr>               <chr>       <dbl>
+1 S02C1_0.2umA   2762 Cyanophora paradoxa PF00026.25 12692.
+2 S02C1_0.2umA   2762 Cyanophora paradoxa PF00036.34  3971.
+3 S02C1_0.2umA   2762 Cyanophora paradoxa PF00069.27  4949.
+4 S02C1_0.2umA   2762 Cyanophora paradoxa PF00072.26  1314.
+5 S02C1_0.2umA   2762 Cyanophora paradoxa PF00076.24 10175.
+6 S02C1_0.2umA   2762 Cyanophora paradoxa PF00168.32  4538.
+
+> dat <- dat %>% mutate(shortPfam = str_replace(V5, "\\..{1,}$", ""))
+
+> dat <- dat %>% ungroup() %>% select(-tax_id, -V5) %>% spread(key = shortPfam, value = tpm, fill = 0)
+
+> head(dat)
+# A tibble: 6 × 7,939
+  var   tax_name PF00001 PF00002 PF00003 PF00004 PF00005 PF00006 PF00007 PF00008
+  <chr> <chr>      <dbl>   <dbl>   <dbl>   <dbl>   <dbl>   <dbl>   <dbl>   <dbl>
+1 S02C… Abedini…       0      0        0       0      0        0       0       0
+2 S02C… Abedini…       0      0        0       0      0        0       0       0
+3 S02C… Acartia…       0    260.       0       0      0        0       0       0
+4 S02C… Acytost…       0      0        0       0      0        0       0       0
+5 S02C… Adineta…       0      0        0       0      0        0       0       0
+6 S02C… Alexand…       0      0        0       0    327.       0       0       0
+# ℹ 7,929 more variables: PF00009 <dbl>, PF00010 <dbl>, PF00011 <dbl>,
+#   PF00012 <dbl>, PF00013 <dbl>, PF00014 <dbl>, PF00015 <dbl>, PF00016 <dbl>,
+#   PF00017 <dbl>, PF00018 <dbl>, PF00019 <dbl>, PF00020 <dbl>, PF00021 <dbl>,
+#   PF00022 <dbl>, PF00023 <dbl>, PF00024 <dbl>, PF00025 <dbl>, PF00026 <dbl>,
+#   PF00027 <dbl>, PF00028 <dbl>, PF00029 <dbl>, PF00030 <dbl>, PF00031 <dbl>,
+#   PF00032 <dbl>, PF00033 <dbl>, PF00034 <dbl>, PF00035 <dbl>, PF00036 <dbl>,
+#   PF00037 <dbl>, PF00038 <dbl>, PF00040 <dbl>, PF00041 <dbl>, …
+# ℹ Use `colnames()` to see all variable names
+
+
+> dat %>% write_csv("~/g1/G1_surface_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_tpm_noNAPfam_fall2023_noNATaxa.csv")
+
+(base) elainathomas@Elainas-MacBook-Pro-2 g1Surface % scp -P 3004 -i ~/.ssh/id_ed25519  egthomas@frustule.ocean.washington.edu:~/g1/G1_surface_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_tpm_noNAPfam_fall2023_noNATaxa.csv .
+Enter passphrase for key '/Users/elainathomas/.ssh/id_ed25519': 
+G1_surface_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_tpm_noNAPfam_fall2023_noNATaxa.csv                                                             100%  398MB  29.4MB/s   00:13    
+
+
 > head(g1_gather_merged_name_noMissingTaxa)
 # A tibble: 6 × 14
   nt_id   length var   value tax_id V4    V5    length_kb est_counts_div_lengt…¹
@@ -421,13 +469,13 @@ pfamSummary_boot_lambert <- map_df(boot_nums, ~ pfamSummary_boot_lambert %>% mut
 > 9008011*30
 [1] 270240330
 
-(trophic-mode-working-test-updated) elainathomas@Elainas-MacBook-Pro-2 g1Surface % scp -P 3004 -i ~/.ssh/id_ed25519 bootstrapPfamsExcluded.csv egthomas@frustule.ocean.washington.edu:~/g1/       
+(base) elainathomas@Elainas-MacBook-Pro-2 g1Surface % scp -P 3004 -i ~/.ssh/id_ed25519 bootstrapPfamsExcluded.csv egthomas@frustule.ocean.washington.edu:~/g1/   
 Enter passphrase for key '/Users/elainathomas/.ssh/id_ed25519': 
-bootstrapPfamsExcluded.csv                                                                                                                                                100% 4535   242.1KB/s   00:00    
+bootstrapPfamsExcluded.csv                                                                                                                                                100%  189KB   5.4MB/s   00:00                                                                                                                                                  100% 4535   242.1KB/s   00:00    
 
-(trophic-mode-working-test-updated) elainathomas@Elainas-MacBook-Pro-2 g1Surface %  scp -P 3004 -i ~/.ssh/id_ed25519 bootstrapPfamsExcluded_lambert.csv egthomas@frustule.ocean.washington.edu:~/g1/   
+(base) elainathomas@Elainas-MacBook-Pro-2 g1Surface % scp -P 3004 -i ~/.ssh/id_ed25519 bootstrapPfamsExcluded_lambert.csv egthomas@frustule.ocean.washington.edu:~/g1/   
 Enter passphrase for key '/Users/elainathomas/.ssh/id_ed25519': 
-bootstrapPfamsExcluded_lambert.csv                                                                                                                                        100%   25KB 757.5KB/s   00:00    
+bootstrapPfamsExcluded_lambert.csv                                                                                                                                        100%  189KB   5.1MB/s   00:00    
 
 > pfam <- read_csv("~/g1/bootstrapPfamsExcluded.csv")
 
@@ -462,15 +510,13 @@ bootstrapPfamsExcluded_lambert.csv                                              
 
 > pfamSummary_boot_lambert %>% write_csv("~/g1/corePfamSummary_boot_lambert.csv")
 
-(trophic-mode-working-test-updated) elainathomas@Elainas-MacBook-Pro-2 g1Surface % scp -P 3004 -i ~/.ssh/id_ed25519  egthomas@frustule.ocean.washington.edu:~/g1/corePfamSummary_boot.csv . 
+(base) elainathomas@Elainas-MacBook-Pro-2 g1Surface % scp -P 3004 -i ~/.ssh/id_ed25519  egthomas@frustule.ocean.washington.edu:~/g1/corePfamSummary_boot.csv . 
 Enter passphrase for key '/Users/elainathomas/.ssh/id_ed25519': 
-corePfamSummary_boot.csv                                                                                                                                                  100%  751KB   4.9MB/s   00:00    
+corePfamSummary_boot.csv                                                                                                                                                  100%  522KB 755.6KB/s   00:00    
 
-(trophic-mode-working-test-updated) elainathomas@Elainas-MacBook-Pro-2 g1Surface % scp -P 3004 -i ~/.ssh/id_ed25519  egthomas@frustule.ocean.washington.edu:~/g1/corePfamSummary_boot_lambert.csv . 
+(base) elainathomas@Elainas-MacBook-Pro-2 g1Surface % scp -P 3004 -i ~/.ssh/id_ed25519  egthomas@frustule.ocean.washington.edu:~/g1/corePfamSummary_boot_lambert.csv . 
 Enter passphrase for key '/Users/elainathomas/.ssh/id_ed25519': 
-corePfamSummary_boot_lambert.csv                                                                                                                                          100%  671KB   4.5MB/s   00:00    
-
-
+corePfamSummary_boot_lambert.csv                                                                                                                                          100%  530KB 916.9KB/s   00:00    
 
 
 > pfamSummary <- pfamSummary %>% group_by(var, tax_id, tax_name) %>% distinct(V5) %>% summarize(numCorePfams = n())
@@ -513,7 +559,7 @@ corePfamSummary.csv                                                             
 > pfamSummary %>% ungroup() %>% distinct(tax_name) %>% nrow()
 [1] 53
 
-#gets just the counts for taxa and sample pairs that have at least 800 expressed non-NA distinct pfams
+#gets just the counts for taxa and sample pairs that have at least 70% CTGs expressed
 > g1_gather_merged_name_noMissingTaxa <- g1_gather_merged_name_noMissingTaxa %>% semi_join(pfamSummary, by = c("tax_id", "var"))
 
 > g1_gather_merged_name_noMissingTaxa %>% ungroup() %>% distinct(tax_name) %>% nrow()
