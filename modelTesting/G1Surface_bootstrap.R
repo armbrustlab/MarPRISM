@@ -9,11 +9,17 @@ meta <- read_csv("G1_surface_tpm_updatedMarferret_marmicroDb2023_sampleTaxa_noOu
 
 merged <- cbind(meta, trop)
 
-res <- read_csv("bootstrapPredictions.csv")
+#from G1_surface_bootstrapPfams.ipynb
+boot_trop <- read_csv("bootstrapPredictions.csv") %>% select(-`...1`)
+boot_meta <- read_csv("G1_surface_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_tpm_noNAPfam_fall2023_noNATaxa.csv")
 
-merged <- cbind(merged, res)
+boot <- cbind(boot_meta %>% select(1,2), boot_trop)
 
-merged <- merged %>% select(-`...1`)
+merged %>% anti_join(boot, by = c("sample_id" = "var", "tax_name")) %>% distinct(tax_name)
+
+nrow(merged)
+merged <- merged %>% left_join(boot, by = c("sample_id" = "var", "tax_name"))
+nrow(merged)
 
 #Mix, Het, Phot
 #1, 0, 2,
@@ -72,18 +78,9 @@ merged %>% distinct(boot_xg_pred)
 
 head(merged)
 
-exclude <- merged %>% filter(boot_xg_pred %in% c("Phototrophic", "Heterotrophic")) %>% group_by(LATITUDE, tax_name, bootNum) %>% 
-  distinct(boot_xg_pred) %>% summarize(n = n()) %>% filter(n == 2)
-exclude <- exclude %>% ungroup() 
-exclude
-
-merged <- merged %>% anti_join(exclude, by = c("LATITUDE", "tax_name", "bootNum"))
-
-#get rid of predictions for transcriptomes with less than 70% of core Pfams expressed
-
-#689/8121 (8.48%)
+#784/6453 (%12.15)
 head(merged)
-100*(merged %>% filter(xg_pred != boot_xg_pred) %>% nrow())/(merged %>% nrow())
+round(100*(merged %>% filter(xg_pred != boot_xg_pred) %>% nrow())/(merged %>% nrow()),2)
 (merged %>% filter(xg_pred != boot_xg_pred) %>% nrow())
 (merged %>% nrow())
 
@@ -91,19 +88,23 @@ merged %>% group_by(xg_pred, boot_xg_pred) %>% summarize(n = n()) %>%
   mutate(prop = n/(merged %>% nrow())*100)
 
 
-##ben's model 
+##lambert et al. 2022
 
 trop <- read_csv("G1_trophicModePredictions_surface_updatedMarferret_marmicroDb2023_noOutliers_fall2023_lambert")
 meta <- read_csv("G1_surface_tpm_updatedMarferret_marmicroDb2023_sampleTaxa_noOutliers_fixedTPM_fall2023.csv")
 
 merged <- cbind(meta, trop)
 
-pfam <- read_csv("bootstrapPfams_lambert.csv")
-res <- read_csv("bootstrapPredictions_lambert.csv")
+#from G1_surface_bootstrapPfams_lambertModel.ipynb
+boot_trop <- read_csv("bootstrapPredictions.csv") %>% select(-`...1`)
 
-merged <- cbind(merged, res)
+boot <- cbind(boot_meta %>% select(1,2), boot_trop)
 
-merged <- merged %>% select(-`...1`)
+merged %>% anti_join(boot, by = c("sample_id" = "var", "tax_name")) %>% distinct(tax_name)
+
+nrow(merged)
+merged <- merged %>% left_join(boot, by = c("sample_id" = "var", "tax_name"))
+nrow(merged)
 
 #Mix, Het, Phot
 #1, 0, 2,
@@ -144,7 +145,7 @@ nrow(merged)
 merged <- merged %>% left_join(sample, by = c("sample_id" = "SAMPLE_ID"))
 nrow(merged)
 
-pfamsExcluded <- read_csv("bootstrapPfamsExcluded.csv")
+pfamsExcluded <- read_csv("bootstrapPfamsExcluded_lambert.csv")
 
 head(pfamsExcluded)
 
@@ -153,7 +154,7 @@ pfamsExcluded <- pfamsExcluded %>% gather(col0:col29, key = "boot", value = "exc
 
 merged <- merged %>% gather(col0:col29, key = "bootNum", value = "boot_xg_pred")
 
-
+merged <- merged %>% mutate(boot_xg_pred = ifelse(boot_xg_pred == 1, "Mix", ifelse(boot_xg_pred == 0, "Het", "Phot")))
 
 inc <- read_csv("corePfamSummary_boot_lambert.csv")
 
@@ -162,7 +163,6 @@ head(inc)
 
 merged <- merged %>% semi_join(inc, by = c("sample_id" = "var", "tax_name", "bootNum"))
 
-
 merged %>% distinct(boot_xg_pred)
 merged <- merged %>% mutate(boot_xg_pred = str_c(boot_xg_pred, "otrophic"))
 merged <- merged %>% mutate(boot_xg_pred = str_replace(boot_xg_pred, "Hetotrophic", "Heterotrophic"))
@@ -170,18 +170,9 @@ merged %>% distinct(boot_xg_pred)
 
 head(merged)
 
-exclude <- merged %>% filter(boot_xg_pred %in% c("Phototrophic", "Heterotrophic")) %>% group_by(LATITUDE, tax_name, bootNum) %>% 
-  distinct(boot_xg_pred) %>% summarize(n = n()) %>% filter(n == 2)
-exclude <- exclude %>% ungroup() 
-exclude
-
-merged <- merged %>% anti_join(exclude, by = c("LATITUDE", "tax_name", "bootNum"))
-
-#get rid of predictions for transcriptomes with less than 70% of core Pfams expressed
-
-#1056/7520 (14.04255)
+#1628/6558 (24.82%)
 head(merged)
-100*(merged %>% filter(xg_pred != boot_xg_pred) %>% nrow())/(merged %>% nrow())
+round(100*(merged %>% filter(xg_pred != boot_xg_pred) %>% nrow())/(merged %>% nrow()),2)
 (merged %>% filter(xg_pred != boot_xg_pred) %>% nrow())
 (merged %>% nrow())
 
