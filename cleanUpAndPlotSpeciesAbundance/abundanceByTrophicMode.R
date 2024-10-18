@@ -220,6 +220,8 @@ g <- bind_rows(g, g2Inc)
 g <- g %>% arrange(Cruise)
 
 g %>% 
+  mutate(Cruise = str_replace(Cruise, "Aloha", "ALOHA")) %>% 
+  mutate(Cruise = str_replace(Cruise, "G", "Gradients")) %>% 
   select(Cruise, Species, Latitude, `Depth (m)`, Time, Treatment, `Timepoint (hr)`, 6, Replicate, 8) %>%
   write_csv("~/Dropbox/grad/research/speciesWithTrophicModePredictionsAbundance_supplementaryTable.csv")
 
