@@ -118,6 +118,8 @@ g %>% write_csv("g1G2G3/allSpeciesTrophicModePredictions_depthDielIncubations.cs
 
 g %>% distinct(taxa) %>% write_csv("g1G2G3/28SpeciesWithTrophicPredictions.csv")
 
+g %>% distinct(sample) %>% nrow()
+
 ##plot 
 
 g %>% filter(is.na(group))
@@ -216,7 +218,7 @@ mixedPreds %>%
   anti_join(reps %>% group_by(taxa) %>% distinct(xg_pred) %>% summarize(n = n()) %>% 
               filter(n > 1), by = c("taxa"))
 
-mixedPreds <- mixedPreds %>% 
+ mixedPreds <- mixedPreds %>% 
   ungroup() %>%
   distinct(taxa) %>%
   semi_join(reps %>% group_by(taxa) %>% distinct(xg_pred) %>% summarize(n = n()) %>% 
@@ -494,7 +496,10 @@ colnames(table2) <- c("Cruise", "Species", "Taxonomic group", "Number of trophic
 
 table2 %>% distinct(Cruise)
 
-table2 %>% arrange(Cruise, desc(`Number of trophic predictions`)) %>%
+table2 %>% 
+  mutate(Cruise = str_replace(Cruise, "G", "Gradients")) %>% 
+  mutate(Cruise = str_replace(Cruise, "Aloha", "ALOHA")) %>%
+  arrange(Cruise, desc(`Number of trophic predictions`)) %>%
   write_csv("g1G2G3/speciesInCruiseSupplementaryTable.csv")
 
 table %>% ungroup() %>% 

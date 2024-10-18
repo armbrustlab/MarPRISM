@@ -230,12 +230,15 @@ colnames(all)
 all <- all %>% select(-c(sample, station))
 
 all <- all %>% 
-  mutate(cruise = ifelse(cruise == "alohaDiel", "Aloha diel", cruise)) %>% 
-  mutate(cruise = ifelse(cruise == "g1", "G1", cruise)) %>% 
-  mutate(cruise = ifelse(cruise == "g2", "G2", cruise)) %>% 
-  mutate(cruise = ifelse(cruise == "g3", "G3", cruise)) %>% 
-  mutate(cruise = ifelse(cruise == "g3Diel", "G3 diel", cruise)) %>% 
-  mutate(cruise = ifelse(cruise == "g3Depth", "G3 depth", cruise))
+  mutate(cruise = ifelse(cruise == "alohaDiel", "ALOHA diel", cruise)) %>% 
+  mutate(cruise = ifelse(cruise == "g1", "Gradients1", cruise)) %>% 
+  mutate(cruise = ifelse(cruise == "g2", "Gradients2", cruise)) %>% 
+  mutate(cruise = ifelse(cruise == "g3", "Gradients3", cruise)) %>% 
+  mutate(cruise = ifelse(cruise == "g3Diel", "Gradients3 diel", cruise)) %>% 
+  mutate(cruise = ifelse(cruise == "g3Depth", "Gradients3 depth", cruise)) %>% 
+  mutate(cruise = ifelse(cruise == "G2 incubations", "Gradients2 incubations", cruise))
+
+all %>% distinct(cruise)
 
 all %>% filter(is.na(latitude)) %>% distinct(cruise)
 
@@ -250,7 +253,7 @@ all <- all %>% select(Cruise, Species, `Taxonomic group`, Date, Time, Latitude, 
 
 all <- all %>% arrange(Cruise, Species, `Taxonomic group`, Date, Time, Latitude, Longitude, `Depth (m)`, `Filter (µm)`)
 
-all <- all %>% filter(Cruise != "G2 incubations")
+all <- all %>% filter(Cruise != "Gradients2 incubations")
 
 g2Inc <- read_csv("~/Dropbox/grad/research/g2Incubation/g2Inc_trophicPredictions_cleanedUp_updatedMarferret_marmicroDb2023_noOutliers.csv")
 
@@ -277,7 +280,7 @@ g2Inc %>% filter(is.na(group))
 colnames(all)
 head(g2Inc)
 
-g2Inc <- g2Inc %>% mutate(Cruise = "G2 incubations")
+g2Inc <- g2Inc %>% mutate(Cruise = "Gradients2 incubations")
 
 g2Inc <- g2Inc %>% mutate(Latitude = ifelse(Expt == "REXP1", 41.42, NA))
 g2Inc <- g2Inc %>% mutate(Latitude = ifelse(Expt == "REXP2", 37.00, Latitude))
@@ -303,8 +306,8 @@ all <- all %>% select(Cruise, Species, `Taxonomic group`, Date, Time, Latitude, 
 
 all <- all %>% arrange(Cruise, Species, Date, Time)
 
-all %>% filter(Cruise == "G2 incubations")
-all <- all %>% mutate(`Depth (m)` = ifelse(Cruise == "G2 incubations", 15, `Depth (m)`))
+all %>% filter(Cruise == "Gradients2 incubations")
+all <- all %>% mutate(`Depth (m)` = ifelse(Cruise == "Gradients2 incubations", 15, `Depth (m)`))
 
 g2IncMeta <- read_csv("g2Incubation/Gradients2_discrete_samples - RNA_exp.csv")
 
@@ -323,7 +326,7 @@ g2IncMeta <- g2IncMeta %>% mutate(latitude = ifelse(str_detect(Experiment, "REXP
 g2IncMeta <- g2IncMeta %>% mutate(latitude = ifelse(str_detect(Experiment, "REXP2"), 37.00, latitude))
 g2IncMeta <- g2IncMeta %>% mutate(latitude = ifelse(str_detect(Experiment, "REXP3"), 32.93, latitude))
 
-all %>% filter(Cruise == "G2 incubations") %>% head()
+all %>% filter(Cruise == "Gradients2 incubations") %>% head()
 head(g2IncMeta)
 
 g2IncMeta <- g2IncMeta %>% mutate(timepoint = as.numeric(timepoint))
@@ -337,8 +340,8 @@ nrow(all)
 all <- all %>% left_join(g2IncMeta, by = c("Latitude" = "latitude", "Incubation treatment" = "treatment", "Incubation time" = "timepoint", "Filter (µm)" = "Size"))
 nrow(all)
 
-all <- all %>% mutate(Date.x = ifelse(Cruise == "G2 incubations", Date.y, Date.x))
-all <- all %>% mutate(Time = ifelse(Cruise == "G2 incubations", `Time Start`, Time))
+all <- all %>% mutate(Date.x = ifelse(Cruise == "Gradients2 incubations", Date.y, Date.x))
+all <- all %>% mutate(Time = ifelse(Cruise == "Gradients2 incubations", `Time Start`, Time))
 
 all <- all %>% select(-c(Experiment, Date.y, `Time Start`))
 
@@ -361,7 +364,8 @@ all %>% distinct(`Filter (µm)`)
 all %>% filter(is.na(`Trophic mode prediction`))
 all %>% filter(is.na(`Trophic mode prediction probability`))
 
-all %>% write_csv("~/Dropbox/grad/research/trophicModePredictionsSupplementaryTable.csv")
+all %>%
+ write_csv("~/Dropbox/grad/research/trophicModePredictionsSupplementaryTable.csv")
 
 all %>% mutate(Time = round(Time, -2)) %>% filter(!str_detect(Cruise, "diel")) %>% 
   group_by(Cruise, Time) %>% summarize(n = n()) %>% arrange(Cruise, desc(n))
