@@ -65,6 +65,10 @@ bySpecies <- bySpecies %>% mutate(se = sd/sqrt(numSamples))
 
 bySpecies <- bySpecies %>% mutate(depth_tax_name = str_c(depthNum, "  ", tax_name))
 
+bySpecies %>% filter(Latitude > 36, Latitude < 38) %>% filter(type == "phot") %>% select(Latitude, depthNum, tax_name, absoluteCounts) %>% 
+  mutate(absoluteCounts = absoluteCounts/1e8) %>%
+  spread(key = depthNum, value = absoluteCounts) %>% filter(`55`<`15`, `125`<`55`)
+
 bySpecies %>% filter(Latitude > 40) %>% filter(type == "phot") %>% select(Latitude, depthNum, tax_name, absoluteCounts) %>% 
   mutate(absoluteCounts = absoluteCounts/1e8) %>%
   spread(key = depthNum, value = absoluteCounts) %>% filter(`50`<`15`, `75`<`50`)
@@ -120,6 +124,19 @@ bySpecies %>% filter(cruise == "Gradients3: 2019") %>%
 ggsave("g1G2G3/abundanceByDepthTrophicMode_species.png", dpi = 300, height = 14, width = 30)
 
 g3_par <- read_csv("2019 SCOPE Gradients Downcast CTD Data/KM1906_Gradients3_CTD.csv")
+
+g3_par %>% mutate(lat = round(lat, 5)) %>% filter(lat %in% c(31.09583, 36.91750, 41.66917, 42.33361)) %>% 
+  select(time, lat, lon, depth, Temperature, Salinity) %>%
+  gather(Temperature:Salinity, key = "var", value = "value") %>%
+  ggplot(aes(y = depth, x = value, color = var)) + 
+  geom_point() + facet_wrap(~lat, scales = 'free') +
+  scale_y_reverse()
+
+#MLD
+#31.09583 around 125 m
+#36.91750 around 125 m
+#41.66917 around 150 m
+#42.33361 around 125 m
 
 g3_nut <- read_csv("g3/Gradients 3 KM1906 Organic and Inorganic Nutrients/Gradients 3 KM1906 Organic and Inorganic Nutrients.csv")
 
@@ -205,9 +222,9 @@ dat %>% filter(cruise == "Gradients3: 2019") %>%
   theme(axis.title.x = element_text(size = 26, color = 'black')) +  
   labs(y = "Billion transcripts per liter", x = "Depth (m)") +
   scale_fill_manual(values = c("forestgreen", "purple", "orange")) + 
-  geom_point(data = g3_nut %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = NO2*10), color = 'blue', se = FALSE, size = .6)+ 
+  geom_point(data = g3_nut %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = NO2*30), color = 'blue', se = FALSE, size = .6)+ 
   geom_point(data = g3_par %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = percPAR/5), color = 'red', se = FALSE, size = .6) +
-  geom_line(data = g3_nut %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = NO2*10), color = 'blue', se = FALSE)+ 
+  geom_line(data = g3_nut %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = NO2*30), color = 'blue', se = FALSE)+ 
   geom_line(data = g3_par %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = percPAR/5), color = 'red', se = FALSE) +
   
   geom_point(data = g3_fluor %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = Fluor*5), color = 'lightgreen', se = FALSE, size = .6) +
@@ -238,9 +255,9 @@ dat %>% filter(cruise == "Gradients3: 2019") %>%
   theme(axis.title.x = element_text(size = 26, color = 'black')) +  
   labs(y = "Billion transcripts per liter", x = "Depth (m)") +
   scale_fill_manual(values = c("forestgreen", "purple", "orange")) + 
-  geom_point(data = g3_nut %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = NO2*10), color = 'blue', se = FALSE, size = .6)+ 
+  geom_point(data = g3_nut %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = NO2*30), color = 'blue', se = FALSE, size = .6)+ 
   geom_point(data = g3_par %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = percPAR/5), color = 'red', se = FALSE, size = .6) +
-  geom_line(data = g3_nut %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = NO2*10), color = 'blue', se = FALSE)+ 
+  geom_line(data = g3_nut %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = NO2*30), color = 'blue', se = FALSE)+ 
   geom_line(data = g3_par %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = percPAR/5), color = 'red', se = FALSE) +
   
   geom_point(data = g3_fluor %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = Fluor*5), color = 'lightgreen', se = FALSE, size = .6) +
@@ -248,7 +265,7 @@ dat %>% filter(cruise == "Gradients3: 2019") %>%
   
   scale_x_reverse(limits = c(150,0)) +
   facet_wrap(~Latitude, nrow = 1) + 
-  scale_y_continuous(sec.axis = sec_axis(trans=~./10, name = expression(NO[3] * "_" * NO[2]~(μmol/L))))
+  scale_y_continuous(sec.axis = sec_axis(trans=~./30, name = expression(NO[3] * "_" * NO[2]~(μmol/L))))
 
 ggsave("g1G2G3/abundanceBySpeciesType_depth_nut.svg", dpi = 600, height = 6, width = 14)
 
@@ -274,9 +291,9 @@ dat %>% filter(cruise == "Gradients3: 2019") %>%
   theme(axis.title.x = element_text(size = 26, color = 'black')) +  
   labs(y = "Billion transcripts per liter", x = "Depth (m)") +
   scale_fill_manual(values = c("forestgreen", "purple", "orange")) + 
-  geom_point(data = g3_nut %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = NO2*10), color = 'blue', se = FALSE, size = .6)+ 
+  geom_point(data = g3_nut %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = NO2*30), color = 'blue', se = FALSE, size = .6)+ 
   geom_point(data = g3_par %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = percPAR/5), color = 'red', se = FALSE, size = .6) +
-  geom_line(data = g3_nut %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = NO2*10), color = 'blue', se = FALSE)+ 
+  geom_line(data = g3_nut %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = NO2*30), color = 'blue', se = FALSE)+ 
   geom_line(data = g3_par %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = percPAR/5), color = 'red', se = FALSE) +
   
   geom_point(data = g3_fluor %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = Fluor*5), color = 'lightgreen', se = FALSE, size = .6) +
@@ -309,9 +326,9 @@ dat %>% filter(cruise == "Gradients3: 2019") %>%
   theme(axis.title.x = element_text(size = 26, color = 'black')) +  
   labs(y = "Billion transcripts per liter", x = "Depth (m)") +
   scale_fill_manual(values = c("forestgreen", "purple", "orange")) + 
-  geom_point(data = g3_nut %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = NO2*10), color = 'blue', se = FALSE, size = .6)+ 
+  geom_point(data = g3_nut %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = NO2*30), color = 'blue', se = FALSE, size = .6)+ 
   geom_point(data = g3_par %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = percPAR/5), color = 'red', se = FALSE, size = .6) +
-  geom_line(data = g3_nut %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = NO2*10), color = 'blue', se = FALSE)+ 
+  geom_line(data = g3_nut %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = NO2*30), color = 'blue', se = FALSE)+ 
   geom_line(data = g3_par %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = percPAR/5), color = 'red', se = FALSE) +
   
   geom_point(data = g3_fluor %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = Fluor*5), color = 'lightgreen', se = FALSE, size = .6) +
@@ -343,9 +360,9 @@ dat %>% filter(cruise == "Gradients3: 2019") %>%
   theme(axis.title.x = element_text(size = 18, color = 'black')) +  
   labs(y = "", x = "Depth (m)") +
   scale_fill_manual(values = c("forestgreen", "purple", "orange")) + 
-  geom_point(data = g3_nut %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = NO2*10), color = 'blue', se = FALSE, size = .6)+ 
+  geom_point(data = g3_nut %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = NO2*30), color = 'blue', se = FALSE, size = .6)+ 
   geom_point(data = g3_par %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = percPAR/5), color = 'red', se = FALSE, size = .6) +
-  geom_line(data = g3_nut %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = NO2*10), color = 'blue', se = FALSE)+ 
+  geom_line(data = g3_nut %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = NO2*30), color = 'blue', se = FALSE)+ 
   geom_line(data = g3_par %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = percPAR/5), color = 'red', se = FALSE) +
   
   geom_point(data = g3_fluor %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = Fluor*5), color = 'lightgreen', se = FALSE, size = .6) +
