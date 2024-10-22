@@ -279,25 +279,25 @@ dashed <- dashed %>% filter(cruise == "Gradients1: 2016")
 dat %>% distinct(taxa)
 
 dat$taxa <- factor(dat$taxa, levels = 
-                     c("Bolidomonas\nsp. 1657", 
+                     c("Karlodinium\nveneficum",
+                       "Prorocentrum\nminimum", 
+                       "Bolidomonas\nsp. 1657", 
+                       "Chrysochromulina\nsp. KB-HA01", 
+                       "Pelagodinium\nbeii",   
                      "Azadinium\nspinosum",
-                     "Karlodinium\nveneficum",
-                     "Pelagodinium\nbeii",   
-                     "Prorocentrum\nminimum", 
                      "Scrippsiella\ntrochoidea", 
                      "Tripos\nfusus", 
-                     "Chrysochromulina\nsp. KB-HA01", 
                      "Prymnesium\npolylepis"))
 
 dashed$taxa <- factor(dashed$taxa, levels = 
-                        c("Bolidomonas\nsp. 1657", 
-                          "Azadinium\nspinosum",
-                          "Karlodinium\nveneficum",
-                          "Pelagodinium\nbeii",   
+                        c("Karlodinium\nveneficum",
                           "Prorocentrum\nminimum", 
+                          "Bolidomonas\nsp. 1657", 
+                          "Chrysochromulina\nsp. KB-HA01", 
+                          "Pelagodinium\nbeii",   
+                          "Azadinium\nspinosum",
                           "Scrippsiella\ntrochoidea", 
                           "Tripos\nfusus", 
-                          "Chrysochromulina\nsp. KB-HA01", 
                           "Prymnesium\npolylepis"))
 
 dat %>% arrange(desc(numPredictions)) %>% head()
@@ -389,7 +389,8 @@ dat <- g %>% group_by(taxa, station, cruise, xg_pred) %>% summarize(n = n()) %>%
   slice(1)
 
 dat %>% 
-  ggplot(aes(y = prop, x = cruise)) + geom_boxplot(fill = NA) +
+  ggplot(aes(y = prop, x = cruise)) + 
+  geom_boxplot(fill = NA) +
   labs(y = "Proportion of predictions in agreement\nwith top trophic mode prediction", x = "") +
   theme_classic() +
   theme_bw() +
