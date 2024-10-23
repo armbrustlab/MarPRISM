@@ -80,12 +80,18 @@ merged %>% filter(Date == "4/17/19") %>% head()
 merged <- merged %>% mutate(justHour = ifelse(Date == "4/17/19", justHour + 24, justHour))
 merged <- merged %>% mutate(justHour = ifelse(Date == "4/18/19", justHour + 24 + 24, justHour))
 
+
+merged %>% 
+  group_by(justHour, taxa, xg_pred) %>%
+  summarize(n = n()) %>% ungroup() %>% arrange(desc(n))
+
 #for shading purposes the night of G3-diel goes from 7PM-6AM, for Diel1-2015 the night is 6PM-6AM
 merged %>% 
   group_by(justHour, taxa, xg_pred) %>%
   summarize(n = n()) %>%
-  mutate(taxa = str_replace(taxa, "Stramenopiles sp. ", "Stramenopiles sp.\n")) %>%
-  mutate(taxa = str_replace(taxa, "Gymnodinium catenatum ", "Gymnodinium catenatum\n")) %>%
+  mutate(taxa = factor(taxa, levels = c("Bathycoccus prasinos", "Triparma pacifica",
+                                        "Oxytricha trifallax", 
+                                        "Karlodinium veneficum"))) %>%
   mutate(xg_pred = str_replace(xg_pred, "ic", "y")) %>%
   ggplot(aes(x = justHour, y = xg_pred)) + 
   geom_point(aes(size = n, color = xg_pred)) +  
