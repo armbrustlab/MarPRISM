@@ -113,7 +113,7 @@ merged$fixTime <- factor(merged$fixTime, levels = order$fixTime)
 merged %>% 
   group_by(fixTime, taxa, xg_pred) %>%
   summarize(n = n(), avgProb = mean(probability)) %>% ungroup() %>% 
-  arrange(n)
+  arrange(desc(n))
 
 merged <- merged %>% mutate(time.x = time.x/100)
 
@@ -124,8 +124,8 @@ merged %>%
   group_by(time.x, taxa, xg_pred) %>%
   summarize(n = n()) %>%
   arrange(time.x) %>%
-  mutate(taxa = str_replace(taxa, "Chrysochromulina sp. ", "Chrysochromulina sp.\n")) %>%
-  mutate(taxa = str_replace(taxa, "Gymnodinium catenatum ", "Gymnodinium catenatum\n")) %>%
+  mutate(taxa = factor(taxa, levels = c("Karenia brevis", "Karlodinium veneficum", "Azadinium spinosum", "Prorocentrum minimum", 
+                                        "Scrippsiella trochoidea", "Prymnesium polylepis"))) %>%
   ggplot(aes(x = time.x, y = xg_pred)) + 
   annotate("rect", xmin = 5.9, xmax = 6, ymin = -Inf, ymax = Inf, fill = "grey", alpha = 0.4) +
   annotate("rect", xmin = 18, xmax = 30, ymin = -Inf, ymax = Inf, fill = "grey", alpha = 0.4) +
