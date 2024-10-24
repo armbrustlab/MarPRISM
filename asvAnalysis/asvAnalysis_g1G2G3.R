@@ -734,4 +734,5 @@ all3 %>% filter(depth <= 15) %>%
   geom_vline(data=filter(dashed %>% mutate(cruise = "Gradients3: 2019"), cruise=="Gradients3: 2019"), aes(xintercept=32.45), colour="red", linetype="dashed") + 
   geom_vline(data=filter(dashed %>% mutate(cruise = "Gradients3: 2019"), cruise=="Gradients3: 2019"), aes(xintercept=35), colour="black", linetype="dashed")
 
-ggsave("asvAnalysis/speciesWithTrophicModePredictions_ASVAbundanceOverG1G2G3_surface_differentTrophicModes_noOutliers.png", dpi = 600, width = 15, height = 8)
+ggsave("asvAnalysis/speciesWithTrophicModePredictions_ASVAbundanceOverG1G2G3_surface_differentTrophicModes_noOutliers.png", dpi = 600, width = 13, height = 9)
+ggsave("asvAnalysis/speciesWithTrophicModePredictions_ASVAbundanceOverG1G2G3_surface_differentTrophicModes_noOutliers.svg", dpi = 600, width = 13, height = 9)

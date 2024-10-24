@@ -792,76 +792,19 @@ g3Depth %>% mutate(latitude = round(latitude)) %>%
   theme_classic() +
   theme_bw() +
   theme(strip.background =element_rect(fill="white")) +
-  theme(strip.text.x = element_text(size = 34, color = 'black')) + 
-  theme(strip.text.y = element_text(size = 34, color = 'black')) + 
+  theme(strip.text.x = element_text(size = 26, color = 'black')) + 
+  theme(strip.text.y = element_text(size = 18, color = 'black')) + 
   theme(axis.text.x = element_text(size = 22, color = 'black'))  + 
   theme(axis.text.y = element_text(size = 18, color = 'black')) + 
   theme(axis.title.y = element_text(size = 26, color = 'black')) + 
   theme(legend.text = element_text(size = 20, color = 'black')) +
   theme(legend.title = element_text(size = 22, color = 'black')) +
   theme(axis.title.x = element_text(size = 26, color = 'black')) + 
-  labs(color = "Taxa", y = "Relative abundance", x = "Latitude") +
+  labs(color = "Taxa", y = "Relative abundance", x = "Latitude (°N)") +
   facet_grid(rows = vars(depth), cols = vars(oldSpecies), scales = "free_y") + 
   theme(legend.position = 'none') + 
-  scale_x_continuous(limits = c(20,45), breaks = c(20,25,30,35,40,45)) + 
+  scale_x_continuous(breaks = c(20,25,30,35,40)) +  
   scale_y_continuous(breaks=pretty_breaks(n = 2))
 
-ggsave("asvAnalysis/speciesWithTrophicModePredictions_ASVAbundanceOverG3_depth_noOutliers_karlodiniumVeneficum.png", height = 9, width = 7)
-
-g3Depth %>% mutate(latitude = round(latitude)) %>%
-  mutate(depth = ifelse(depth <= 15, "Surface", depth)) %>%
-  mutate(depth = factor(depth, levels = c("Surface", "45", "60", "75", "90", "100", "125"))) %>%
-  filter(oldSpecies == "Tripos fusus") %>%
-  group_by(latitude, oldSpecies, featureID, asvNum, depth) %>%
-  summarize(sd = sd(counts), counts = sum(counts), n = n()) %>%
-  ggplot(aes(x = latitude, y = counts, fill = asvNum)) +
-  geom_bar(stat = 'identity', width = .75, color = 'black') +
-  geom_vline(aes(xintercept=32.45), colour="red", linetype="dashed") + 
-  geom_vline(aes(xintercept=35), colour="black", linetype="dashed") + 
-  theme_classic() +
-  theme_bw() +
-  theme(strip.background =element_rect(fill="white")) +
-  theme(strip.text.x = element_text(size = 34, color = 'black')) + 
-  theme(strip.text.y = element_text(size = 34, color = 'black')) + 
-  theme(axis.text.x = element_text(size = 22, color = 'black'))  + 
-  theme(axis.text.y = element_text(size = 18, color = 'black')) + 
-  theme(axis.title.y = element_text(size = 26, color = 'black')) + 
-  theme(legend.text = element_text(size = 20, color = 'black')) +
-  theme(legend.title = element_text(size = 22, color = 'black')) +
-  theme(axis.title.x = element_text(size = 26, color = 'black')) + 
-  labs(color = "Taxa", y = "Relative abundance", x = "Latitude") +
-  facet_grid(rows = vars(depth), cols = vars(oldSpecies), scales = "free_y") + 
-  theme(legend.position = 'none') + 
-  scale_x_continuous(limits = c(20,45), breaks = c(20,25,30,35,40,45)) + 
-  scale_y_continuous(breaks=pretty_breaks(n = 3))
-
-ggsave("asvAnalysis/speciesWithTrophicModePredictions_ASVAbundanceOverG3_depth_noOutliers_triposFusus.png", height = 12, width = 7)
-
-g3Depth %>% mutate(latitude = round(latitude)) %>%
-  mutate(depth = ifelse(depth <= 15, "Surface", depth)) %>%
-  mutate(depth = factor(depth, levels = c("Surface", "45", "60", "75", "90", "100", "125"))) %>%
-  filter(oldSpecies == "Pelagodinium beii") %>%
-  group_by(latitude, oldSpecies, featureID, asvNum, depth) %>%
-  summarize(sd = sd(counts), counts = sum(counts), n = n()) %>%
-  ggplot(aes(x = latitude, y = counts, fill = asvNum)) +
-  geom_bar(stat = 'identity', width = .75, color = 'black') +
-  geom_vline(aes(xintercept=32.45), colour="red", linetype="dashed") + 
-  geom_vline(aes(xintercept=35), colour="black", linetype="dashed") + 
-  theme_classic() +
-  theme_bw() +
-  theme(strip.background =element_rect(fill="white")) +
-  theme(strip.text.x = element_text(size = 34, color = 'black')) + 
-  theme(strip.text.y = element_text(size = 34, color = 'black')) + 
-  theme(axis.text.x = element_text(size = 22, color = 'black'))  + 
-  theme(axis.text.y = element_text(size = 18, color = 'black')) + 
-  theme(axis.title.y = element_text(size = 26, color = 'black')) + 
-  theme(legend.text = element_text(size = 20, color = 'black')) +
-  theme(legend.title = element_text(size = 22, color = 'black')) +
-  theme(axis.title.x = element_text(size = 26, color = 'black')) + 
-  labs(color = "Taxa", y = "Relative abundance", x = "Latitude") +
-  facet_grid(rows = vars(depth), cols = vars(oldSpecies), scales = "free_y") + 
-  theme(legend.position = 'none') + 
-  scale_x_continuous(limits = c(20,45), breaks = c(20,25,30,35,40,45)) + 
-  scale_y_continuous(breaks=pretty_breaks(n = 3))
-
-ggsave("asvAnalysis/speciesWithTrophicModePredictions_ASVAbundanceOverG3_depth_noOutliers_pelagodiniumBeii.png", height = 12, width = 7)
+ggsave("asvAnalysis/speciesWithTrophicModePredictions_ASVAbundanceOverG3_depth_noOutliers_karlodiniumVeneficum.png", height = 10, width = 6.1)
+ggsave("asvAnalysis/speciesWithTrophicModePredictions_ASVAbundanceOverG3_depth_noOutliers_karlodiniumVeneficum.svg", height = 10, width = 6.1)
