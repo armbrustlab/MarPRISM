@@ -23,7 +23,7 @@ Birth: -
 
 egthomas@grazer:~$ R
 
-#reads in G1 diel polyA metaT number of transcripts mapped to each contig 
+#reads in aloha diel polyA metaT number of transcripts mapped to each contig 
 #the taxa ids in this file were annotated with updated marferret and
 #marmicro
 > g1 <- read_csv("/mnt/nfs/projects/ryan/NPacAssemblies_2021/joined/D1PA.contig_dat_all.csv")
@@ -104,7 +104,7 @@ egthomas@grazer:~$ R
 #gets rid of rows for contigs that have 0 transcripts mapped to them in the sample
 > g1_gather <- g1_gather %>% filter(est_counts > 0)
 
-concatenate all of the pfam results for the g1 polyA metaT contigs
+concatenate all of the pfam results for the aloha diel polyA metaT contigs
 #ryan sent me the location of these files over slack on 8/9/22
 egthomas@grazer:~$ for f in /mnt/nfs/projects/ryan/diel1/completed_assemblies/6tr/Pfam_34.0/*domtblout.tab; do (cat "${f}"; echo) >> ~/G1_diel_pfamAnnotations; done
 
@@ -563,3 +563,4 @@ alohaDiel_surface_tpm_updatedMarferret_marmicroDb2023_sampleTaxa_noOutliers_fixe
 
 
 
+scp -P 3004 -i ~/.ssh/id_ed25519 egthomas@frustule.ocean.washington.edu:~/alohaDiel/pfamSummary.csv .
