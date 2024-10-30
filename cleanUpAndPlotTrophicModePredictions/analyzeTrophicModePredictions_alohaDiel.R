@@ -16,8 +16,8 @@ merged <- merged %>% mutate(xg_pred = ifelse(xg_pred == 1, "Mix", ifelse(xg_pred
 colnames(merged)[2]
 colnames(merged)[2] <- "taxa"
 
-merged <- merged %>% mutate(xg_pred = str_c(xg_pred, "otrophic"))
-merged <- merged %>% mutate(xg_pred = str_replace(xg_pred, "Hetotrophic", "Heterotrophic"))
+merged <- merged %>% mutate(xg_pred = str_c(xg_pred, "otrophy"))
+merged <- merged %>% mutate(xg_pred = str_replace(xg_pred, "Hetotrophy", "Heterotrophy"))
 merged %>% distinct(xg_pred)
 
 merged <- merged %>% filter(str_detect(taxa, " "))
@@ -117,12 +117,15 @@ merged %>%
 
 merged <- merged %>% mutate(time.x = time.x/100)
 
-merged$xg_pred <- factor(merged$xg_pred, levels = c("Heterotrophic", "Mixotrophic", "Phototrophic"))
+merged$xg_pred <- factor(merged$xg_pred, levels = c("Heterotrophy", "Mixotrophy", "Phototrophy"))
+
 
 #for shading purposes the night of G3-diel goes from 7PM-6AM, for Diel1-2015 the night is 6PM-6AM
 merged %>% 
   group_by(time.x, taxa, xg_pred) %>%
-  summarize(n = n()) %>%
+  summarize(n = n(), prob = round(mean(probability), 1)) %>%
+  mutate(prob = as.character(prob)) %>% 
+  mutate(prob = str_replace(prob, "0", "")) %>%
   arrange(time.x) %>%
   mutate(taxa = factor(taxa, levels = c("Karenia brevis", "Karlodinium veneficum", "Azadinium spinosum", "Prorocentrum minimum", 
                                         "Scrippsiella trochoidea", "Prymnesium polylepis"))) %>%
@@ -147,7 +150,7 @@ merged %>%
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + 
   guides(size = guide_legend(order = 1)) +
   scale_x_continuous(limits = c(5.9, 98), breaks = seq(6, 98, by = 4)) +
-  scale_color_manual(values = c("Phototrophic" = "deepskyblue2", "Heterotrophic" = "red", "Mixotrophic" = "black")) +
+  scale_color_manual(values = c("Phototrophy" = "deepskyblue2", "Heterotrophy" = "red", "Mixotrophy" = "black")) +
   guides(color = "none")
 
 ggsave("g1_allOrganismsTrophicPredictions_dotPlot_updatedMarferret_marmicroDb2023_notGroupedBySize_diel_noOutliers.png", height = 5, width = 22)
