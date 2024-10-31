@@ -3,9 +3,9 @@ library(readxl)
 
 setwd("~/Dropbox/grad/research/alohaDiel")
 
-trop_diel <- read_csv("G1_diel_trophicModePredictions_updatedMarferret_marmicroDb2023_noOutliers_fall2023")
+trop_diel <- read_csv("aloha_diel_trophicModePredictions_updatedMarferret_marmicroDb2023_noOutliers_fall2023")
 meta_diel <- read_csv("alohaDiel_surface_tpm_updatedMarferret_marmicroDb2023_sampleTaxa_noOutliers_fixedTPM_fall2023.csv")
-prob_diel <- read_csv("G1_diel_trophicModePredictionsProbabilities_updatedMarferret_marmicroDb2023_noOutliers_fall2023")
+prob_diel <- read_csv("aloha_diel_trophicModePredictionsProbabilities_updatedMarferret_marmicroDb2023_noOutliers_fall2023")
 
 merged <- cbind(meta_diel, trop_diel, prob_diel)
 
@@ -153,4 +153,4 @@ merged %>%
   scale_color_manual(values = c("Phototrophy" = "deepskyblue2", "Heterotrophy" = "red", "Mixotrophy" = "black")) +
   guides(color = "none")
 
-ggsave("g1_allOrganismsTrophicPredictions_dotPlot_updatedMarferret_marmicroDb2023_notGroupedBySize_diel_noOutliers.png", height = 5, width = 22)
+ggsave("aloha_diel_allOrganismsTrophicPredictions_dotPlot_updatedMarferret_marmicroDb2023_notGroupedBySize_noOutliers.png", height = 5, width = 22)
