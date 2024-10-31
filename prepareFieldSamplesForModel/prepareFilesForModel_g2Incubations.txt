@@ -1,26 +1,14 @@
-egthomas@grazer:/mnt/nfs/projects/armbrust-metat/gradients2/g2_dcm_rr_pa_metat/paired_end$ mkdir ~/g2Incubations
+###g2 incubations 
 
+#make list of samples
 egthomas@grazer:/mnt/nfs/projects/armbrust-metat/gradients2/g2_dcm_rr_pa_metat/paired_end$ ls *MS*.1* > ~/g2Incubations/samples
-
-
-
-egthomas@grazer:/mnt/nfs/projects/armbrust-metat/gradients2/g2_dcm_rr_pa_metat/paired_end$ ls *MS*
-
-
 egthomas@grazer:~/g2Incubations$ sed 's/.1.paired.trim.fastq.gz//g' samples > samplesEdited
-
-egthomas@grazer:/mnt/nfs/projects/armbrust-metat/gradients2/g2_station_pa_metat/assemblies/annotations/kallisto$ mkdir /scratch/elaina/g2Inc
-
-#index seemed to be wrong version
-/mnt/nfs/projects/armbrust-metat/gradients2/g2_station_pa_metat/assemblies/annotations/kallisto/NPac.G2PA.bf100.id99.nt.idx
-
 
 egthomas@grazer:/scratch/elaina/g2Inc$ cp /mnt/nfs/projects/armbrust-metat/gradients2/g2_station_pa_metat/assemblies/clustered/NPac.G2PA.bf100.id99.nt.fasta.gz .
 
+#index g2 surface assemblies before mapping
+#this is what I am mapping g2 incubation reads against
 egthomas@grazer:/scratch/elaina/g2Inc$ kallisto index -i NPac.G2PA.bf100.id99.nt.idx NPac.G2PA.bf100.id99.nt.fasta
-
-
-
 
 #make function for running kallisto alignment
 function run_kallisto {
@@ -85,38 +73,22 @@ egthomas@grazer:/scratch/elaina/g2Inc/mapped$ for file in *_modified.tsv; do gre
 #concatenate all of the g2 dcm polyA metaT mapping abundance files
 egthomas@grazer:/scratch/elaina/g2Inc/mapped$ for file in *tsv_filtered.tsv; do (cat "${file}"; echo) >> G2Inc_mappedReadAbundance.tsv; done
 
-egthomas@grazer:/scratch/elaina/g2Inc/mapped$ R
+ R
 
 #read in the concatenated g2 incubation polyA metaT mapping abundance file
 > dat <- read_tsv("G2Inc_mappedReadAbundance.tsv")
 
-> head(dat)
-# A tibble: 6 × 5
-  target_id                         length eff_length est_counts `tpm|name_file`
-  <chr>                              <dbl>      <dbl>      <dbl> <chr>          
-1 G2PA.S02C1.15m.0_2um_TRINITY_DN1…    307       138.       1    0.194984|G2PA.…
-2 G2PA.S02C1.15m.0_2um_TRINITY_DN1…    326       156.       5.19 0.89816|G2PA.M…
-3 G2PA.S02C1.15m.0_2um_TRINITY_DN2…    332       161.       1    0.16714|G2PA.M…
-4 G2PA.S02C1.15m.0_2um_TRINITY_DN3…    487       312.       2    0.172724|G2PA.…
-5 G2PA.S02C1.15m.0_2um_TRINITY_DN4…    441       266.       1.73 0.17493|G2PA.M…
-6 G2PA.S02C1.15m.0_2um_TRINITY_DN4…    329       158.       2.00 0.340126|G2PA.…
-#fix column nates
-
+#fix sample name variable
 > dat <- dat %>% mutate(sample = str_extract(`tpm|name_file`, "\\|.*"))
 > dat <- dat %>% mutate(sample = str_replace(sample, "\\|", ""))
 
+#loads best taxa annotation for each g2 surface contig
 > tax_best <- read_csv("~/g2/NPac.G2PA.MarFERReT_MarMicroDB.lca_bestAnnotation_fall2023.csv")
 
 > tax_best %>% nrow()
 [1] 26043159
 > tax_best %>% distinct(nt_id) %>% nrow()
 [1] 26043159
-
-#are these the contigs that didn't get taxa annotations?
-> dat[1:100,] %>% anti_join(tax_best, by = c("target_id" = "nt_id")) %>% distinct(target_id) %>% nrow()
-[1] 55
-> dat[1:100,] %>% semi_join(tax_best, by = c("target_id" = "nt_id")) %>% distinct(target_id) %>% nrow()
-[1] 45
 
 #add taxa annotations of contigs to the number of reads mapped to contig per sample
 > nrow(dat)
@@ -125,40 +97,24 @@ egthomas@grazer:/scratch/elaina/g2Inc/mapped$ R
 > nrow(dat_tax)
 [1] 234281792
 
-> head(dat_tax)
-# A tibble: 6 × 9
-  target_id    length eff_length est_counts `tpm|name_file` sample V1         V2
-  <chr>         <dbl>      <dbl>      <dbl> <chr>           <chr>  <chr>   <dbl>
-1 G2PA.S02C1.…    307       138.       1    0.194984|G2PA.… G2PA.… G2PA…    2864
-2 G2PA.S02C1.…    326       156.       5.19 0.89816|G2PA.M… G2PA.… NA         NA
-3 G2PA.S02C1.…    332       161.       1    0.16714|G2PA.M… G2PA.… G2PA… 2608131
-4 G2PA.S02C1.…    487       312.       2    0.172724|G2PA.… G2PA.… G2PA…    2759
-5 G2PA.S02C1.…    441       266.       1.73 0.17493|G2PA.M… G2PA.… NA         NA
-6 G2PA.S02C1.…    329       158.       2.00 0.340126|G2PA.… G2PA.… NA         NA
-# ℹ 1 more variable: V3 <dbl>
-
+#get rid of contigs without taxa annotations
 > dat_tax_noNA <- dat_tax %>% filter(!is.na(V2))
 
 > dat_tax_noNA %>% write_csv("/scratch/elaina/g2Inc/g2Inc_mappedReadAbundance_noZeroes.csv")
 
-#loads best pfam annotation for each contig reading frame
+#loads best pfam annotation for each g2 surface contig reading frame
 > pfam <- read_csv("~/g2DCM/G2_surface/G2_surface_pfamAnnotations_bestPfam.tab")
 
 #make variable for the nucleotide id 
 > pfam <- pfam %>% mutate(nt_id = str_replace(V1, "_[0-9]{1,}$", ""))
 
+#more than one pfam annotation per nucleotide id
 > pfam %>% nrow()
 [1] 15241470
 > pfam %>% distinct(nt_id) %>% nrow()
 [1] 15124459
 
-#can't find this
-#gets amino acid id (longest reading frame) per nucleotide id 
-> aa_nt_pfam <- read_csv("/mnt/nfs/projects/ryan/NPacAssemblies_2021/joined/G2PA.best_pfam.csv") %>% distinct(aa_id, nt_id, knum)
-
-#so I'll do this instead 
-
-#for each cluster representative contig, get the pfam with the highest score
+#so for each cluster representative contig, get the pfam with the highest score
 > pfam <- pfam %>% group_by(nt_id) %>% slice(which.max(V8))
 
 > nrow(pfam)
@@ -171,26 +127,14 @@ egthomas@grazer:/scratch/elaina/g2Inc/mapped$ R
 > nrow(dat_tax_noNA_merged)
 [1] 140625859
 
-> head(dat_tax_noNA_merged)
-# A tibble: 6 × 11
-  target_id     length eff_length est_counts `tpm|name_file` sample V1        V2
-  <chr>          <dbl>      <dbl>      <dbl> <chr>           <chr>  <chr>  <dbl>
-1 G2PA.S02C1.1…    307       138.      1     0.194984|G2PA.… G2PA.… G2PA… 2.86e3
-2 G2PA.S02C1.1…    332       161.      1     0.16714|G2PA.M… G2PA.… G2PA… 2.61e6
-3 G2PA.S02C1.1…    487       312.      2     0.172724|G2PA.… G2PA.… G2PA… 2.76e3
-4 G2PA.S02C1.1…    375       202.      0.257 0.0342409|G2PA… G2PA.… G2PA… 1.20e6
-5 G2PA.S02C1.1…    618       442.      1     0.0608488|G2PA… G2PA.… G2PA… 4.41e4
-6 G2PA.S02C1.1…    371       198.      1     0.136059|G2PA.… G2PA.… G2PA… 1.96e6
-# ℹ 3 more variables: V3 <dbl>, V4 <chr>, V5 <chr>
-
 #write data with number of mapped reads per contig per sample, with the contig's 
 #pfam and taxa annotation to csv file
 > dat_tax_noNA_merged %>% write_csv("/scratch/elaina/g2Inc/g2Inc_taxa_pfams.csv")
 
+##calculate transcripts per million
 > dat_tax_noNA_merged <- dat_tax_noNA_merged %>% mutate(length_kb = length/1000)
 
 > dat_tax_noNA_merged <- dat_tax_noNA_merged %>% mutate(est_counts_div_length_kb = est_counts/length_kb)
-
 
 > mCounts <- dat_tax_noNA_merged %>% group_by(sample, V2) %>% summarize(mCount = sum(est_counts_div_length_kb)/1e6)
 `summarise()` has grouped output by 'sample'. You can override using the `.groups` argument.
@@ -203,422 +147,125 @@ egthomas@grazer:/scratch/elaina/g2Inc/mapped$ R
 > nrow(dat_tax_noNA_merged)
 [1] 140625859
 
-> dat_tax_noNA_merged %>% filter(is.na(mCount))
-# A tibble: 0 × 15
-
 > dat_tax_noNA_merged <- dat_tax_noNA_merged %>% mutate(tpm = est_counts_div_length_kb/mCount)
 
 > dat_tax_noNA_merged %>% write_csv("/scratch/elaina/g2Inc/g2Inc_taxa_pfams_tpm.csv")
 
-> dat_tax_noNA_merged %>% select(V5) %>% head()
-# A tibble: 6 × 1
-  V5        
-  <chr>     
-1 NA        
-2 PF13774.8 
-3 PF00520.33
-4 NA        
-5 NA        
-6 NA 
-
+#after calculating tpm, get rid of contigs without pfam annotations
 > dat_tax_noNA_merged <- dat_tax_noNA_merged %>% filter(!is.na(V5))
 
 > dat_tax_noNA_merged %>% write_csv("/scratch/elaina/g2Inc/g2Inc_taxa_pfams_tpm_noNAPfam.csv")
 
+#loads feature pfams
 > pfam <- read_csv("~/Extracted_Pfams_noOutliers_newContaminationMetric_xg.csv")
 
+#make pfam variable without digits after decimal
 > dat_tax_noNA_merged <- dat_tax_noNA_merged %>% mutate(pfam = str_replace(V5, "\\..*", ""))
 
-
-
+#load taxa names associated with each taxa id in marferret
 > name <- read_csv("/mnt/nfs/projects/marferret/v1/data/MarFERReT.v1.taxa.csv")
 
+#get rid of unnecessary variables
 > name <- name %>% select(1:4)
 
-> colnames(dat_tax_noNA_merged)[8]
-[1] "V2"
-
+#name taxa id variable
 > colnames(dat_tax_noNA_merged)[8] <- "tax_id"
 
-#are all of the missing taxa id from marmicro??
-> dat_tax_noNA_merged %>% anti_join(name, by = c("tax_id")) %>% distinct(tax_id) %>% nrow()
-[1] 3084
-> dat_tax_noNA_merged %>% semi_join(name, by = c("tax_id")) %>% distinct(tax_id) %>% nrow()
-[1] 684
-
+#add taxa names to counts data
 > nrow(dat_tax_noNA_merged)
 [1] 62358245
 dat_tax_noNA_merged_name <- dat_tax_noNA_merged %>% left_join(name, by = c("tax_id"))
 > nrow(dat_tax_noNA_merged_name)
 [1] 62358245
 
+#get rid of contigs without taxa names
 > dat_tax_noNA_merged_name_noMissingTaxa <- dat_tax_noNA_merged_name %>% filter(!is.na(tax_name))
 
-> head(dat_tax_noNA_merged_name_noMissingTaxa)
-# A tibble: 6 × 19
-  target_id     length eff_length est_counts `tpm|name_file` sample V1    tax_id
-  <chr>          <dbl>      <dbl>      <dbl> <chr>           <chr>  <chr>  <dbl>
-1 G2PA.S02C1.1…    332       161.          1 0.16714|G2PA.M… G2PA.… G2PA… 2.61e6
-2 G2PA.S02C1.1…    487       312.          2 0.172724|G2PA.… G2PA.… G2PA… 2.76e3
-3 G2PA.S02C1.1…    304       135.          1 0.198712|G2PA.… G2PA.… G2PA… 2.61e6
-4 G2PA.S02C1.1…    455       280.          1 0.0961228|G2PA… G2PA.… G2PA… 2.86e3
-5 G2PA.S02C1.1…    303       135.          1 0.200002|G2PA.… G2PA.… G2PA… 1.74e6
-6 G2PA.S02C1.1…    401       227.          1 0.118695|G2PA.… G2PA.… G2PA… 2.76e3
-# ℹ 11 more variables: V3 <dbl>, V4 <chr>, V5 <chr>, length_kb <dbl>,
-#   est_counts_div_length_kb <dbl>, mCount <dbl>, tpm <dbl>, pfam <chr>,
-#   parent_id <dbl>, rank <chr>, tax_name <chr>
-
-> dat_tax_noNA_merged_name_noMissingTaxa %>% filter(is.na(est_counts))
-# A tibble: 0 × 19
-
-> dat_tax_noNA_merged_name_noMissingTaxa %>% filter(est_counts == 0)
-# A tibble: 0 × 19
-
-> dat_tax_noNA_merged_name_noMissingTaxa %>% filter(is.na(pfam))
-# A tibble: 0 × 19
-
+#load core transcribed genes (CTGS) identified 
+#from 10.1038/s41597-023-02842-4
 > core <- read_csv("~/MarFERReT.v1.core_genes.csv")
 
-> dat_tax_noNA_merged_name_noMissingTaxa %>% distinct(sample)
-# A tibble: 81 × 1
-   sample                  
-   <chr>                   
- 1 G2PA.MS01.abundance.tsv 
- 2 G2PA.MS02.abundance.tsv 
- 3 G2PA.MS04.abundance.tsv 
- 4 G2PA.MS09.abundance.tsv 
- 5 G2PA.MS10.abundance.tsv 
- 6 G2PA.MS100.abundance.tsv
- 7 G2PA.MS101.abundance.tsv
- 8 G2PA.MS102.abundance.tsv
- 9 G2PA.MS103.abundance.tsv
-10 G2PA.MS104.abundance.tsv
-# ℹ 71 more rows
-# ℹ Use `print(n = ...)` to see more rows
-
-> dat_tax_noNA_merged_name_noMissingTaxa %>% filter(is.na(sample))
-# A tibble: 0 × 19
-
+#get just ctgs grouped at level of eukaryotes
 > core <- core %>% filter(lineage == "Eukaryota")
 
+#make a dataframe to count the number of ctgs in each species bin by sample
 > pfamSummary <- dat_tax_noNA_merged_name_noMissingTaxa %>% semi_join(core, by = c("V5" = "pfam_id"))
 
+#calculate number of ctgs in each species bin by sample
 > pfamSummary <- pfamSummary %>% group_by(sample, tax_id, tax_name) %>% distinct(V5) %>% summarize(numCorePfams = n())
 `summarise()` has grouped output by 'sample', 'tax_id'. You can override using the `.groups` argument.
 
-> head(pfamSummary)
-# A tibble: 6 × 4
-# Groups:   sample, tax_id [6]
-  sample                  tax_id tax_name             numCorePfams
-  <chr>                    <dbl> <chr>                       <int>
-1 G2PA.MS01.abundance.tsv      1 root                           82
-2 G2PA.MS01.abundance.tsv   2759 Eukaryota                     604
-3 G2PA.MS01.abundance.tsv   2762 Cyanophora paradoxa            27
-4 G2PA.MS01.abundance.tsv   2763 Rhodophyta                     10
-5 G2PA.MS01.abundance.tsv   2769 Chondrus crispus                2
-6 G2PA.MS01.abundance.tsv   2786 Porphyra umbilicalis            1
-
+#there are a total of 605 eukaryote ctgs
+#calculate proportion of ctgs in each species bin by sample
 > pfamSummary <- pfamSummary %>% ungroup() %>% mutate(propCorePfams = numCorePfams/605)
 
 > pfamSummary %>% write_csv("/scratch/elaina/g2Inc/pfamSummary.csv")
 
+#get species bins/samples that have at least 70% of ctgs detected
 > pfamSummary <- pfamSummary %>% filter(propCorePfams >= .7)
 
-> pfamSummary %>% ungroup() %>% distinct(tax_name) %>% nrow()
-[1] 32
-
-dat_tax_noNA_merged_name_noMissingTaxa_allSamples <- dat_tax_noNA_merged_name_noMissingTaxa
-
-#gets just the counts for taxa and sample pairs that have at least 800 expressed non-NA distinct pfams
+#gets just the counts for taxa and sample pairs that have at least 70% ctg coverage
 > dat_tax_noNA_merged_name_noMissingTaxa <- dat_tax_noNA_merged_name_noMissingTaxa %>% semi_join(pfamSummary, by = c("tax_id", "sample"))
 
-> dat_tax_noNA_merged_name_noMissingTaxa %>% ungroup() %>% distinct(tax_name) %>% nrow()
-[1] 32
-
-> dat_tax_noNA_merged_name_noMissingTaxa_allSamples %>% ungroup() %>% distinct(tax_name) %>% nrow()
-[1] 684
-
-
-
-
-#for each taxa, sample, and pfam combination, get the total number of counts
+#for each taxa, sample, and pfam combination, get the total tpm
 > g2Inc_summary <- dat_tax_noNA_merged_name_noMissingTaxa %>% ungroup() %>% dplyr::group_by(sample, tax_id, tax_name, V5) %>% dplyr::summarize(tpm = sum(tpm))
-`summarise()` has grouped output by 'sample', 'tax_id', 'tax_name'. You can override using the `.groups` argument.
-
-> allSamples_estCounts <- dat_tax_noNA_merged_name_noMissingTaxa_allSamples %>% ungroup() %>% dplyr::group_by(sample, tax_id, tax_name, V5) %>% dplyr::summarize(est_counts = sum(est_counts))
 `summarise()` has grouped output by 'sample', 'tax_id', 'tax_name'. You can override using the `.groups` argument.
 
 #ungroup counts summary data
 > g2Inc_summary <- g2Inc_summary %>% ungroup()
 
-> allSamples_estCounts <- allSamples_estCounts %>% ungroup()
-
-#not one million because I already removed NA Pfams
-> g2Inc_summary %>% group_by(sample, tax_name) %>% summarize(tpm = sum(tpm)) %>% distinct(tpm) %>% ungroup() %>% distinct(tpm)
-`summarise()` has grouped output by 'sample'. You can override using the `.groups` argument.
-# A tibble: 820 × 1
-       tpm
-     <dbl>
- 1 530013.
- 2 754702.
- 3 466214.
- 4 509727.
- 5 416951.
- 6 757430.
- 7 632566.
- 8 676963.
- 9 430987.
-10 596507.
-# ℹ 810 more rows
-# ℹ Use `print(n = ...)` to see more rows
-
-
-> colnames(g2Inc_summary)[4]
-[1] "V5"
-
-> colnames(allSamples_estCounts)[4]
-[1] "V5"
-
+#rename pfam variable
 > colnames(g2Inc_summary)[4] <- "pfam"
 
-> colnames(allSamples_estCounts)[4] <- "pfam"
-  
+#make pfam variable without digits after decimal
 > g2Inc_summary <- g2Inc_summary %>% mutate(shortPfam = str_replace(pfam, "\\..{1,}$", ""))
 
-> allSamples_estCounts <- allSamples_estCounts %>% mutate(shortPfam = str_replace(pfam, "\\..{1,}$", ""))
-
-> g2Inc_summary %>% filter(is.na(shortPfam))
-# A tibble: 0 × 6
-
-> allSamples_estCounts %>% filter(is.na(shortPfam))
-# A tibble: 0 × 6
-
-
-
-
+#gets rid of unnecessary variables
 > g2Inc_summary_spread <- g2Inc_summary %>% select(sample, tax_name, shortPfam, tpm)
 
-> allSamples_estCounts <- allSamples_estCounts %>% select(sample, tax_name, shortPfam, est_counts)
-
+#spread data, filling in missing pfams with tpm 0
 > g2Inc_summary_spread <- g2Inc_summary_spread %>% spread(key = shortPfam, value = tpm, fill = 0)
 
-> allSamples_estCounts <- allSamples_estCounts %>% spread(key = shortPfam, value = est_counts, fill = 0)
-
+#load feature pfams
 > pfam <- read_csv("~/Extracted_Pfams_noOutliers_newContaminationMetric_xg.csv")
 
 > merg <- g2Inc_summary_spread
 
 > dim(merg)
-[1]  820 6150
 
-> merg %>% select(1:5) %>% head()
-# A tibble: 6 × 5
-  sample                  tax_name                    PF00001 PF00002 PF00003
-  <chr>                   <chr>                         <dbl>   <dbl>   <dbl>
-1 G2PA.MS01.abundance.tsv Aureococcus anophagefferens     0         0   0    
-2 G2PA.MS01.abundance.tsv Bathycoccus                     0         0   0    
-3 G2PA.MS01.abundance.tsv Bathycoccus prasinos           74.9       0   0    
-4 G2PA.MS01.abundance.tsv Dictyocha speculum              0         0  31.1  
-5 G2PA.MS01.abundance.tsv Dinophyceae                     0         0   0    
-6 G2PA.MS01.abundance.tsv Eukaryota                       0         0   0.359
-
-
-> merg %>% distinct(tax_name) %>% filter(str_detect(tax_name, " "))
-# A tibble: 13 × 1
-   tax_name                   
-   <chr>                      
- 1 Aureococcus anophagefferens
- 2 Bathycoccus prasinos       
- 3 Dictyocha speculum         
- 4 Oxytricha trifallax        
- 5 Pelagomonas calceolata     
- 6 Karlodinium veneficum      
- 7 Pelagodinium beii          
- 8 Prasinoderma singulare     
- 9 Azadinium spinosum         
-10 Prorocentrum minimum       
-11 Karenia brevis             
-12 Triparma pacifica          
-13 Emiliania huxleyi 
-
-
+#gather counts data into long form
 > merg <- merg %>% gather(3:6150, key = "pfam", value = "tpm")
 
-> dim(allSamples_estCounts)
-[1] 53620  7304
-
-> allSamples_estCounts %>% select(1:5) %>% head()
-# A tibble: 6 × 5
-  sample                  tax_name                 PF00001 PF00002 PF00003
-  <chr>                   <chr>                      <dbl>   <dbl>   <dbl>
-1 G2PA.MS01.abundance.tsv Abedinium                      0       0       0
-2 G2PA.MS01.abundance.tsv Abedinium dasypus              0       0       0
-3 G2PA.MS01.abundance.tsv Abedinium folium               0       0       0
-4 G2PA.MS01.abundance.tsv Acartia tonsa                  0       0       0
-5 G2PA.MS01.abundance.tsv Acytostelium subglobosum       0       0       0
-6 G2PA.MS01.abundance.tsv Adineta ricciae                0       0       0
-
-> allSamples_estCounts <- allSamples_estCounts %>% gather(3:7304, key = "pfam", value = "est_counts")
-
-> allSamples_estCounts %>% write_csv("/scratch/elaina/g2Inc/g2Inc_updatedMarferret_marmicroDb2023_sampleTaxa_noOutliers_fall2023_allPfams_allSamples_estCounts.csv")
-
-
-^C(base) Elainas-MacBook-Pro-2:g2Incubation elaina$ scp -P 3004 -i ~/.ssh/id_ed25519 g2Inc_trophicPredictions_cleanedUp_updatedMarferret_marmicroDb2023_noOutliers.csv egthomas@frustule.ocean.washington.ed/scratch/elaina/g2Inc/ 
-g2Inc_trophicPredictions_cleanedUp_updatedMarferret_marmicroDb2023_noOutliers.csv                                                                                         100%   23KB   1.6MB/s   00:00    
-
-
-
-
-g2Inc_trophicPredictions_cleanedUp_updatedMarferret_marmicroDb2023_noOutliers.csv
-
-
-
-> species <- read_csv("/scratch/elaina/g2Inc/g2Inc_trophicPredictions_cleanedUp_updatedMarferret_marmicroDb2023_noOutliers.csv")
-
-> species <- species %>% distinct(tax_name)
-
-> allSamples_estCounts %>% semi_join(species, by = c("tax_name" = "taxa")) %>% 
-+ write_csv("/scratch/elaina/g2Inc/g2Inc_updatedMarferret_marmicroDb2023_sampleTaxa_noOutliers_fall2023_allPfams_allSamples_estCounts_speciesWithTP.csv")
-
-
-(base) Elainas-MacBook-Pro-2:g2Incubation elaina$ scp -P 3004 -i ~/.ssh/id_ed25519  egthomas@frustule.ocean.washington.edu:/scratch/elaina/g2Inc/g2Inc_updatedMarferret_marmicroDb2023_sampleTaxa_noOutliers_fall2023_allPfams_allSamples_estCounts_speciesWithTP.csv .
-g2Inc_updatedMarferret_marmicroDb2023_sampleTaxa_noOutliers_fall2023_allPfams_allSamples_estCounts_speciesWithTP.csv                                                      100%  406MB  20.2MB/s   00:20    
-
-
-> allSamples_estCounts %>% semi_join(species, by = c("tax_name" = "taxa")) %>% distinct(tax_name) %>% nrow()
-[1] 13
-> species %>% distinct(taxa) %>% nrow()
-[1] 13
-
-
-
+#get feature pfams missing from counts data
 > miss <- pfam %>% anti_join(merg, by = c("pfam"))
 
-> head(miss)
-# A tibble: 2 × 1
-  pfam   
-  <chr>  
-1 PF14259
-2 PF08713
-
-> pfam %>% group_by(pfam) %>% summarize(n = n()) %>% filter(n > 1)
-# A tibble: 0 × 2
-
-> pfam %>% group_by(pfam) %>% summarize(n = n()) %>% filter(n > 1)
-# A tibble: 0 × 2
-# ℹ 2 variables: pfam <chr>, n <int>
-> head(merg$sample)
-[1] "G2PA.MS01.abundance.tsv" "G2PA.MS01.abundance.tsv"
-[3] "G2PA.MS01.abundance.tsv" "G2PA.MS01.abundance.tsv"
-[5] "G2PA.MS01.abundance.tsv" "G2PA.MS01.abundance.tsv"
-
-> head(merg$tax_name)
-[1] "Aureococcus anophagefferens" "Bathycoccus"                
-[3] "Bathycoccus prasinos"        "Dictyocha speculum"         
-[5] "Dinophyceae"                 "Eukaryota"
-
+#add these missing feature pfams to counts dataand give them tpm of 0
 > miss <- miss %>% mutate(sample = "G2PA.MS01.abundance.tsv", tax_name = "Bathycoccus")
 
 > merg <- merg %>% bind_rows(miss)
 
-> head(merg)
-# A tibble: 6 × 4
-  sample                  tax_name                    pfam      tpm
-  <chr>                   <chr>                       <chr>   <dbl>
-1 G2PA.MS01.abundance.tsv Aureococcus anophagefferens PF00001   0  
-2 G2PA.MS01.abundance.tsv Bathycoccus                 PF00001   0  
-3 G2PA.MS01.abundance.tsv Bathycoccus prasinos        PF00001  74.9
-4 G2PA.MS01.abundance.tsv Dictyocha speculum          PF00001   0  
-5 G2PA.MS01.abundance.tsv Dinophyceae                 PF00001   0  
-6 G2PA.MS01.abundance.tsv Eukaryota                   PF00001   0
-
+#spread data, filling in missing pfams with tpm 0
 > merg <- merg %>% spread(key = pfam, value = tpm, fill = 0)
-
-> merg %>% select(1:5) %>% head()
-# A tibble: 6 × 5
-  sample                  tax_name                    PF00001 PF00002 PF00003
-  <chr>                   <chr>                         <dbl>   <dbl>   <dbl>
-1 G2PA.MS01.abundance.tsv Aureococcus anophagefferens     0         0   0    
-2 G2PA.MS01.abundance.tsv Bathycoccus                     0         0   0    
-3 G2PA.MS01.abundance.tsv Bathycoccus prasinos           74.9       0   0    
-4 G2PA.MS01.abundance.tsv Dictyocha speculum              0         0  31.1  
-5 G2PA.MS01.abundance.tsv Dinophyceae                     0         0   0    
-6 G2PA.MS01.abundance.tsv Eukaryota                       0         0   0.359
-
 
 > merg %>% write_csv("/scratch/elaina/g2Inc/g2Inc_tpm_updatedMarferret_marmicroDb2023_sampleTaxa_noOutliers_fixedTPM_fall2023_allPfams.csv")
 
-> merg %>% select(sample:tax_name) %>% write_csv("/scratch/elaina/g2Inc/g2Inc_tpm_updatedMarferret_marmicroDb2023_sampleTaxa_noOutliers_fixedTPM_fall2023.csv")
-> merg %>% select(-c(sample:tax_name)) %>% write_csv("/scratch/elaina/g2Inc/g2Inc_tpm_updatedMarferret_marmicroDb2023_noOutliers_fixedTPM_fall2023.csv")
-
-> merg %>% select(1:5) %>% head()
-# A tibble: 6 × 5
-  sample                  tax_name                    PF00001 PF00002 PF00003
-  <chr>                   <chr>                         <dbl>   <dbl>   <dbl>
-1 G2PA.MS01.abundance.tsv Aureococcus anophagefferens     0         0   0    
-2 G2PA.MS01.abundance.tsv Bathycoccus                     0         0   0    
-3 G2PA.MS01.abundance.tsv Bathycoccus prasinos           74.9       0   0    
-4 G2PA.MS01.abundance.tsv Dictyocha speculum              0         0  31.1  
-5 G2PA.MS01.abundance.tsv Dinophyceae                     0         0   0    
-6 G2PA.MS01.abundance.tsv Eukaryota                       0         0   0.359
-
-> dim(merg)
-[1]  820 6152
-
+#gather into long form
 > merg <- merg %>% gather(3:6152, key = "pfam", value = "TPM")
 
-> pfam <- read_csv("~/Extracted_Pfams_noOutliers_newContaminationMetric_xg.csv")
-
+#get just the counts data for the feature pfams
 > merg <- merg %>% semi_join(pfam, by = c("pfam"))
 
-> merg %>% distinct(pfam) %>% nrow()
-[1] 183
-
-
+#spread data
 > merg <- merg %>% spread(key = pfam, value = TPM, fill = 0)
 
-> merg %>% select(sample:tax_name) %>% write_csv("/scratch/elaina/g2Inc/g2Inc_tpm_updatedMarferret_marmicroDb2023_sampleTaxa_noOutliers_fixedTPM_fall2023.csv")
-> merg %>% select(-c(sample:tax_name)) %>% write_csv("/scratch/elaina/g2Inc/g2Inc_tpm_updatedMarferret_marmicroDb2023_noOutliers_fixedTPM_fall2023.csv")
-
-> merg %>% distinct(tax_name) %>% filter(!str_detect(tax_name, " "))
-# A tibble: 19 × 1
-   tax_name        
-   <chr>           
- 1 Bathycoccus     
- 2 Dinophyceae     
- 3 Eukaryota       
- 4 Ochrophyta      
- 5 Phaeocystis     
- 6 Prymnesiophyceae
- 7 Sar             
- 8 Bacillariophyta 
- 9 Chrysochromulina
-10 Isochrysidales  
-11 Rotaliida       
-12 Chlorophyta     
-13 Suessiales      
-14 Gonyaulacales   
-15 Bilateria       
-16 Eumetazoa       
-17 Neocopepoda     
-18 Kareniaceae     
-19 Pelagophyceae 
-
+#get just taxa name with spaces, ie the species because only 
+#species bins are desired
 > merg <- merg %>% filter(str_detect(tax_name, " "))
 
 > merg %>% select(sample:tax_name) %>% write_csv("/scratch/elaina/g2Inc/g2Inc_tpm_updatedMarferret_marmicroDb2023_sampleTaxa_noOutliers_fixedTPM_fall2023.csv")
 > merg %>% select(-c(sample:tax_name)) %>% write_csv("/scratch/elaina/g2Inc/g2Inc_tpm_updatedMarferret_marmicroDb2023_noOutliers_fixedTPM_fall2023.csv")
 
-(base) Elainas-MacBook-Pro-2:g2Incubation elaina$ scp -P 3004 -i ~/.ssh/id_ed25519 egthomas@frustule.ocean.washington.edu:/scratch/elaina/g2Inc/g2Inc_tpm*_noOutliers_fixedTPM_fall2023.csv .
-g2Inc_tpm_updatedMarferret_marmicroDb2023_noOutliers_fixedTPM_fall2023.csv                                                                                                100%  458KB   9.6MB/s   00:00    
-g2Inc_tpm_updatedMarferret_marmicroDb2023_sampleTaxa_noOutliers_fixedTPM_fall2023.csv                                                                                     100%   11KB   1.7MB/s   00:00    
-
 ##moved G2Inc_mappedReadAbundance.tsv from scratch to /mnt/nfs/projects/armbrust-metat/gradients2/g2_dcm_rr_pa_metat/kallisto/
-
-elainathomas@Elainas-MacBook-Pro-2 g2Incubation % scp -P 3004 -i ~/.ssh/id_ed25519 egthomas@frustule.ocean.washington.edu:/scratch/elaina/g2Inc/pfamSummary.csv .
-
-Enter passphrase for key '/Users/elainathomas/.ssh/id_ed25519': 
-pfamSummary.csv                               100% 3747KB  14.1MB/s   00:00    
 
 
 

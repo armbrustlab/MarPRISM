@@ -1,11 +1,8 @@
 ###g3 depth
 
-##translate and get longest reading frame of reads
+##translate and get longest amino acid reading frame of contigs
 
-#make directory for the six-frame translation files
-egthomas@grazer:~/g3Depth$ mkdir 6tr
-
-##the following code for getting the six-frame translations is from ryan: 
+##the following code for getting the six-frame translations is from:
 ##https://github.com/armbrustlab/NPac_euk_gene_catalog/blob/main/translation_frame_selection.sh
 
 ##the following six-frame translation code was conducted on the assemblies 
@@ -27,14 +24,15 @@ function translate_6tr {
 	gzip 6tr/${PREFIX}.Trinity.6tr.fasta
 }
 
+#get list of assemblies to translate
 egthomas@grazer:~/g3Depth$ ls *Trinity.fasta.gz > samples.txt
-
 egthomas@grazer:~/g3Depth$ sed -i 's/.Trinity.fasta.gz//g' samples.txt
 
-#I downloaded this script (keep_longest_frame.py3) which selects just the longest translation 
-#to keep from ryan here:
+#I downloaded this script (keep_longest_frame.py3) which selects the longest translation 
+#to keep from here:
 #https://github.com/armbrustlab/NPac_euk_gene_catalog/blob/main/keep_longest_frame.py3
 
+#function to get longest reading frame per contig for 6 frame translation
 egthomas@grazer:~/g3Depth$ for SAMPLE in $(cat sampleGroups); do
 > # Create a defline prefix for the contig defline using G2_PA_DCM and ${SAMPLE} used to create a unique ID
 > DEFLINE_PREFIX=${SAMPLE}
@@ -50,20 +48,20 @@ egthomas@grazer:~/g3Depth$ for SAMPLE in $(cat sampleGroups); do
 > #gzip ${PREFIX}.Trinity.6tr.bf100.fasta
 > done
 
-#unzip the translated files
-egthomas@grazer:~/g3Depth$ gunzip 6tr/*fasta.gz
-
-#gets the longest translation for each contig
+#gets the longest reading frame for each contig
 #-l 100 sets the minimum contig length as 100
 for file in *fasta; do python3 ~/g2DCM/keep_longest_frame.py3 -l 100 $file; done 
 
+#concatenate longest reading frame across all contigs, samples
 egthomas@grazer:~/g3Depth/6tr$ for f in *bf100.fasta; do (cat "${f}"; echo) >> G3_depth_assembledReads.fasta; done
 
-###cluster longest protein sequences
+###cluster longest reading frame sequences at 99% identity
 
+#create databse before clustering
 egthomas@grazer:~/g3Depth/6tr$ ~/mmseqs/bin/mmseqs createdb G3_depth_assembledReads.fasta G3_depth_assembledReads.db
 createdb G3_depth_assembledReads.fasta G3_depth_assembledReads.db
 
+#cluster longest reading frame sequences at 99% identity
 egthomas@grazer:~/g3Depth/6tr$ MIN_SEQ_ID=0.99
 egthomas@grazer:~/g3Depth/6tr$ mkdir tmp/
 egthomas@grazer:~/g3Depth/6tr$ function run_linclust {
@@ -73,87 +71,36 @@ egthomas@grazer:~/g3Depth/6tr$ function run_linclust {
 }
 egthomas@grazer:~/g3Depth/6tr$ run_linclust
 
-
-egthomas@grazer:~/g3Depth/6tr$ mkdir /mnt/nfs/projects/gradients-metat/G3/g3_lightdarkdepth_pa_metat/depth/assemblies/clustered
 egthomas@grazer:~/g3Depth/6tr$ cp G3_depth_assembledReads.id99.fasta /mnt/nfs/projects/gradients-metat/G3/g3_lightdarkdepth_pa_metat/depth/assemblies/clustered/
-
 
 ###get nucleotide sequences for the longest amino acid reading frames that 
 ###are cluster representatives
 
-
-egthomas@grazer:/scratch/g3Depth$ gunzip *
-
+#add file/sample name to each nucleotide contig name 
 egthomas@grazer:/scratch/g3Depth$ for f in *.Trinity.fasta; do sed -i "s/^>/>${f}_/" "$f"; done
 
+#concatenate nucleotide assemblies
 egthomas@grazer:/scratch/g3Depth$ cat *fasta > g3DepthAssemblies.fasta
 
+#get longest reading frame names for cluster representative contigs
 egthomas@grazer:~/g3Depth/6tr$ grep ">" G3_depth_assembledReads.id99.fasta > aminoAcidClusterSequences
 
+R
 
-egthomas@grazer:~/g3Depth/6tr$ R
-
+#loads longest reading frame names for cluster representative contigs
 > aa <- read.table("aminoAcidClusterSequences")
 
-> head(aa)
-                                       V1     V2
-1 >442881_S32_TRINITY_DN136246_c0_g1_i1_2 len142
-2 >442881_S32_TRINITY_DN136302_c0_g1_i1_4 len383
-3 >442881_S32_TRINITY_DN136258_c0_g2_i2_5 len461
-4 >442881_S32_TRINITY_DN136205_c0_g1_i2_4 len157
-5 >442881_S32_TRINITY_DN136294_c2_g1_i1_3 len240
-6 >442881_S32_TRINITY_DN136250_c0_g1_i5_5 len298
-
+#makes variable for nucleotide id of cluster representatives
 > aa <- aa %>% mutate(nt_id = str_replace(V1, ">", ""))
-
 > aa <- aa %>% mutate(nt_id = str_replace(nt_id, "_[0-9]{1,}$", ""))
 
-> aa %>% select(nt_id) %>% head()
-                                  nt_id
-1 S6C7_75m_B_TRINITY_DN1562619_c0_g1_i1
-2 S6C7_75m_B_TRINITY_DN1526198_c0_g1_i1
-3 S6C7_75m_B_TRINITY_DN1538274_c1_g1_i3
-4 S6C7_75m_B_TRINITY_DN1538257_c2_g1_i1
-5 S6C7_75m_B_TRINITY_DN1521688_c1_g1_i2
-6 S6C7_75m_B_TRINITY_DN1538864_c0_g1_i1
-
-> aa %>% distinct(nt_id) %>% nrow()
-[1] 32307804
-> aa %>% nrow()
-[1] 35165701
-
-> aa %>% filter(is.na(nt_id)) %>% nrow()
-[1] 0
-
+#writes nucleotide ids of longest reading frame names for cluster representative contigs to csv file
 > aa %>% distinct(nt_id) %>% write.table("nucleotideClusterSequences", quote = FALSE, row.names = FALSE, col.names = FALSE)
 
-egthomas@grazer:~/g3Depth/6tr$ head nucleotideClusterSequences
-S6C7_75m_B_TRINITY_DN1562619_c0_g1_i1
-S6C7_75m_B_TRINITY_DN1526198_c0_g1_i1
-S6C7_75m_B_TRINITY_DN1538274_c1_g1_i3
-S6C7_75m_B_TRINITY_DN1538257_c2_g1_i1
-S6C7_75m_B_TRINITY_DN1521688_c1_g1_i2
-S6C7_75m_B_TRINITY_DN1538864_c0_g1_i1
-S6C7_75m_B_TRINITY_DN1531139_c1_g1_i1
-S6C7_75m_B_TRINITY_DN1528516_c0_g2_i2
-S6C7_75m_B_TRINITY_DN1536627_c0_g1_i1
-S6C7_75m_B_TRINITY_DN1572172_c0_g1_i1
-
-egthomas@grazer:/scratch/g3Depth$ grep ">" g3DepthAssemblies.fasta | head
->S4C6_B_15m.Trinity.fasta_TRINITY_DN3635042_c0_g1_i1 len=534 path=[0:0-533]
->S4C6_B_15m.Trinity.fasta_TRINITY_DN3635058_c0_g1_i1 len=870 path=[0:0-869]
->S4C6_B_15m.Trinity.fasta_TRINITY_DN3635120_c0_g1_i1 len=328 path=[0:0-327]
->S4C6_B_15m.Trinity.fasta_TRINITY_DN3635116_c0_g1_i1 len=395 path=[0:0-394]
->S4C6_B_15m.Trinity.fasta_TRINITY_DN3635074_c0_g1_i1 len=402 path=[0:0-401]
->S4C6_B_15m.Trinity.fasta_TRINITY_DN3635085_c0_g1_i1 len=576 path=[0:0-575]
->S4C6_B_15m.Trinity.fasta_TRINITY_DN3635045_c0_g1_i1 len=315 path=[0:0-314]
->S4C6_B_15m.Trinity.fasta_TRINITY_DN3635127_c0_g1_i1 len=486 path=[0:0-365 1:366-441 3:442-442 4:443-485]
->S4C6_B_15m.Trinity.fasta_TRINITY_DN3635127_c0_g1_i2 len=902 path=[0:0-365 1:366-441 2:442-901]
->S4C6_B_15m.Trinity.fasta_TRINITY_DN3635111_c0_g1_i1 len=374 path=[0:0-373]
-
-
+#gets rid of .Trinity.fasta in contig names in nucleotide assemblly file 
 egthomas@grazer:/scratch/g3Depth$ sed 's,.Trinity.fasta,,g' -i g3DepthAssemblies.fasta
 
+#get nucleotide sequences of longest reading frame cluster representatives
 egthomas@grazer:/scratch/g3Depth$ seqtk subseq g3DepthAssemblies.fasta ~/g3Depth/6tr/nucleotideClusterSequences > nucleotideClusterSequences.fasta
 
 egthomas@grazer:/scratch/g3Depth$ wc -l ~/g3Depth/6tr/nucleotideClusterSequences
@@ -166,18 +113,19 @@ egthomas@grazer:/scratch/g3Depth$ rm *Trinity.fasta
 
 ###trim reads
 
+#make function for concatenating different sequencing lanes from the same sample, paired end direction
 egthomas@grazer:/mnt/nfs/projects/gradients-metat/G3/g3_lightdarkdepth_pa_metat/raw_fastq$ function concat {
 cat ${SAMPLE}_L001_R1_001.fastq.gz ${SAMPLE}_L002_R1_001.fastq.gz > ~/g3Depth/trimmedReads/${SAMPLE}_R1.fastq.gz
 cat ${SAMPLE}_L001_R2_001.fastq.gz ${SAMPLE}_L002_R2_001.fastq.gz > ~/g3Depth/trimmedReads/${SAMPLE}_R2.fastq.gz 
 }
 
+#point to list of samples
 egthomas@grazer:/mnt/nfs/projects/gradients-metat/G3/g3_lightdarkdepth_pa_metat/raw_fastq$ SAMPLE_LIST_C="/mnt/nfs/home/egthomas/g3Depth/sampleList"
 
+#concatenate different sequencing lanes of raw reads
 egthomas@grazer:/mnt/nfs/projects/gradients-metat/G3/g3_lightdarkdepth_pa_metat/raw_fastq$ for SAMPLE in $(cat ${SAMPLE_LIST_C}); do concat; done
 
-egthomas@grazer:~/g3Depth/trimmedReads$ mkdir -p qc_data/logs
-
-
+##trim raw reads
 RAWDIR="/mnt/nfs/projects/gradients-metat/G3/g3_lightdarkdepth_pa_metat/raw_fastq"
 #METADATA="sample_metadata.csv"
 ADAPTERS="/mnt/nfs/projects/armbrust-metat/gradients3/g3_station_ns_metat/TruSeq2-PE.fa"
@@ -216,27 +164,16 @@ for fw_reads in `ls *R1.fastq.gz`; do
         fi
     done
 
-
-
-
-
-# make qc report directories
-mkdir -p reports/pre-trim
-mkdir -p reports/post-trim
-
-# run fastqc on pre-trim fastq files
+#run fastqc on pre-trim fastq files
 egthomas@grazer:~/g3Depth/trimmedReads$ singularity exec --bind $(pwd) /mnt/nfs/projects/armbrust-metat/workflow_images/fastq_preprocess/fastq-preprocess.sif \
         fastqc `ls *.fastq.gz` -t 2 -o qc_data/reports/pre-trim
-        
+     
+#run fastqc on post-trim fastq files
 egthomas@grazer:~/g3Depth/trimmedReads$ singularity exec --bind $(pwd) /mnt/nfs/projects/armbrust-metat/workflow_images/fastq_preprocess/fastq-preprocess.sif \
 	fastqc `ls qc_data/*.fastq` -t 2 -o qc_data/reports/post-trim
 
 
-
-######################################
-# 5. Combine QC reports with MultiQC #
-######################################
-
+##Combine QC reports with MultiQC #
 # compile pre-trim report with multiqc
 # docker run -v ${MOUNT_DIR}:/home fastq-preprocess \
 #     multiqc qc_data/reports/pre-trim -o qc_data/reports/pre-trim
@@ -248,14 +185,15 @@ multiqc qc_data/reports/pre-trim -o qc_data/reports/pre-trim
 egthomas@grazer:~/g3Depth/trimmedReads$ singularity exec --bind $(pwd) /mnt/nfs/projects/armbrust-metat/workflow_images/fastq_preprocess/fastq-preprocess.sif \
 multiqc qc_data/reports/post-trim -o qc_data/reports/post-trim
 
+##taxonomically annotate transcripts
 
+#diamond blast last common ancestor annotate contigs using marferret and 
+#marmicrodb
+egthomas@grazer:~/g3Depth$ diamond blastp --no-unlink -t ~/ -b 100 -c 1 -p 32 -d /mnt/nfs/projects/marferret/v1/data/marmicrodb/dmnd/MarFERReT.v1.1.MMDB.combined.dmnd -e 1e-5 --top 10 -f 102 -q 6tr/G3_depth_assembledReads.id99.fasta -o tax/G3_depth_assembledReads.id99.vs_MarFERReT.v1.1.MMDB.combined_noOutliers.lca.tab_fall2023
 
+##functionally annotate contigs with pfam
 
-###functionally annotate transcripts
-
-egthomas@grazer:~/g3Depth$ mkdir func
-
-#functionally annotate the clustered amino acid sequences of the contigs with pfam database
+#functionally annotate longest reading frame clustered amino acid sequences of contigs with pfam database
 #this code is shortened from
 #https://github.com/armbrustlab/marine_eukaryote_sequence_database/blob/main/pfam_annotation.sh
 egthomas@grazer:~/g3Depth/6tr$ hmmsearch --cut_tc --domtblout ../func/G3_depth_assembledReads.id99.PFAM34.0.domtblout.tab /mnt/nfs/projects/ryan/PFAM/Pfam_34.0/Pfam-A.hmm G3_depth_assembledReads.id99.fasta
@@ -263,94 +201,12 @@ egthomas@grazer:~/g3Depth/6tr$ hmmsearch --cut_tc --domtblout ../func/G3_depth_a
 egthomas@grazer:~/g3Depth/func$ cp G3_depth_assembledReads.id99.PFAM34.0.domtblout.tab /mnt/nfs/projects/gradients-metat/G3/g3_lightdarkdepth_pa_metat/depth/assemblies/func/
 
 
+##find best pfam for each contig
 
-egthomas@grazer:/scratch/g3Depth$ head -n 100 nucleotideClusterSequences.fasta > nucleotideClusterSequences_100rows.fasta
-
-egthomas@grazer:/scratch/g3Depth$ bowtie2-build nucleotideClusterSequences_100rows.fasta nucleotideClusterSequences_100rows.fasta
-
-egthomas@grazer:/scratch/g3Depth$ bowtie2 -p 10 -q --no-unal -k 20 -x nucleotideClusterSequences_100rows.fasta -1 ~/g3Depth/trimmedReads/qc_data/442874_S25.R1.fastq -2 ~/g3Depth/trimmedReads/qc_data/442874_S25.R2.fastq -S nucleotideClusterSequences_100rows.sam | samtools view -@10 -Sb -o nucleotideClusterSequences_100rows.bam
-
-egthomas@grazer:/scratch/g3Depth$ samtools sort nucleotideClusterSequences_100rows.sam -o nucleotideClusterSequences_100rows_sorted.sam
-
-egthomas@grazer:/scratch/g3Depth$ samtools view -bS nucleotideClusterSequences_100rows_sorted.sam > nucleotideClusterSequences_100rows_sorted.bam
-
-egthomas@grazer:/scratch/g3Depth$ samtools index *bam
-
-
-
-
-egthomas@grazer:/scratch/g3Depth$ seqtk subseq nucleotideClusterSequences.fasta nucleotideClusterSequences_50.txt > nucleotideClusterSequences_50.fasta
-
-egthomas@grazer:/scratch/g3Depth$ bowtie2-build nucleotideClusterSequences_50.fasta nucleotideClusterSequences_50.fasta
-
-egthomas@grazer:/scratch/g3Depth$ bowtie2 -p 10 -q --no-unal -k 20 -x nucleotideClusterSequences_50.fasta -1 ~/g3Depth/trimmedReads/qc_data/442874_S25.R1.fastq -2 ~/g3Depth/trimmedReads/qc_data/442874_S25.R2.fastq -S nucleotideClusterSequences_50.sam
-
-samtools sort nucleotideClusterSequences_50.sam -o nucleotideClusterSequences_50_sorted.sam
-
-samtools view -bS nucleotideClusterSequences_50_sorted.sam > nucleotideClusterSequences_50_sorted.bam
-
-samtools index nucleotideClusterSequences_50_sorted.bam
-
-
-###taxonomically annotate transcripts
-
-egthomas@grazer:~/g3Depth$ mkdir tax
-
-egthomas@grazer:~/g3Depth$ stat 6tr/G3_depth_assembledReads.id99.fasta
-  File: 6tr/G3_depth_assembledReads.id99.fasta
-  Size: 8804367403      Blocks: 15054405   IO Block: 131072 regular file
-Device: 3bh/59d Inode: 2521227     Links: 1
-Access: (0664/-rw-rw-r--)  Uid: ( 1086/egthomas)   Gid: ( 1086/egthomas)
-Access: 2024-01-02 20:11:32.627082515 +0000
-Modify: 2023-11-28 19:50:10.055014158 +0000
-Change: 2023-11-28 19:50:10.055014158 +0000
- Birth: -
- 
-egthomas@grazer:~/g3Depth$ diamond blastp --no-unlink -t ~/ -b 100 -c 1 -p 32 -d /mnt/nfs/projects/marferret/v1/data/marmicrodb/dmnd/MarFERReT.v1.1.MMDB.combined.dmnd -e 1e-5 --top 10 -f 102 -q 6tr/G3_depth_assembledReads.id99.fasta -o tax/G3_depth_assembledReads.id99.vs_MarFERReT.v1.1.MMDB.combined_noOutliers.lca.tab_fall2023
-
-egthomas@grazer:~/g3Depth/tax$ mkdir -p /mnt/nfs/projects/gradients-metat/G3/g3_lightdarkdepth_pa_metat/depth/assemblies/annotations/diamond/
-
-
-###get nucleotide cluster sequences for sacha to index and then use for 
-###unstranded kallisto mapping
-
-egthomas@guppy:~/g3Depth$ mkdir mappedShortReads
-
-egthomas@grazer:/scratch/g3Depth$ mv nucleotideClusterSequences.fasta ~/g3Depth/
-
-
-###g3 depth: find best pfam for each contig
-
-#loads R on grazer
-egthomas@grazer:~/g3Depth/func$ R
-
-> library(tidyverse)
+R
 
 #loads the concatenated pfam results for the g3 depth polyA metaT contigs
 > res <- read.table("G3_depth_assembledReads.id99.PFAM34.0.domtblout.tab")
-
-> head(res)
-                                       V1 V2  V3         V4         V5 V6
-1   S4C6_B_DCM_TRINITY_DN15900_c0_g1_i1_1  - 838 1-cysPrx_C PF10417.11 40
-2   S4C6_B_DCM_TRINITY_DN15900_c0_g1_i1_1  - 838 1-cysPrx_C PF10417.11 40
-3   S4C6_B_DCM_TRINITY_DN15900_c0_g1_i1_1  - 838 1-cysPrx_C PF10417.11 40
-4   S8C2_15m_A_TRINITY_DN65558_c0_g1_i2_2  - 591 1-cysPrx_C PF10417.11 40
-5   S8C2_15m_A_TRINITY_DN65558_c0_g1_i2_2  - 591 1-cysPrx_C PF10417.11 40
-6 S4C6_B_DCM_TRINITY_DN3692545_c0_g1_i1_1  - 533 1-cysPrx_C PF10417.11 40
-       V7   V8  V9 V10 V11     V12     V13  V14 V15 V16 V17 V18 V19 V20 V21
-1 1.3e-25 99.5 1.0   1   3 3.9e-09 6.8e-05 33.2   0   1  39 193 231 193 231
-2 1.3e-25 99.5 1.0   2   3 3.9e-09 6.8e-05 33.2   0   1  39 438 476 438 476
-3 1.3e-25 99.5 1.0   3   3 3.7e-08 6.5e-04 30.0   0   1  34 683 716 683 721
-4 6.0e-20 81.3 2.1   1   2 2.6e-09 4.5e-05 33.7   0   1  39 234 272 234 272
-5 6.0e-20 81.3 2.1   2   2 2.4e-08 4.3e-04 30.6   0   1  34 479 512 479 517
-6 7.7e-18 74.6 0.2   1   2 2.6e-09 4.6e-05 33.7   0   1  39 196 234 196 235
-   V22    V23
-1 0.95 len728
-2 0.95 len728
-3 0.92 len728
-4 0.95 len546
-5 0.92 len546
-6 0.94 len521
 
 > str(res$V8)
  num [1:15299212] 99.5 99.5 99.5 81.3 81.3 74.6 74.6 73.3 73.3 72.8 ...
@@ -358,28 +214,14 @@ egthomas@grazer:~/g3Depth/func$ R
 > str(res$V7)
  num [1:15299212] 1.3e-25 1.3e-25 1.3e-25 6.0e-20 6.0e-20 ...
 
+#get only pfam annotations with evalue 10^-5
 > res <- res %>% filter(V7 < 10^(-5))
 
 > #for contig reading frame, get the pfam with the highest score
 > best_pfam_dat <- res %>% group_by(V1) %>% slice(which.max(V8))
 
-#gets rid of numbers at end of pfam id
+#make nucleotide id variable
 > best_pfam_dat <- best_pfam_dat %>% mutate(nt_id = str_replace(V1, "_[0-9]{1,}$", ""))
-
-> head(best_pfam_dat)
-# A tibble: 6 × 24
-# Groups:   V1 [6]
-  V1     V2       V3 V4    V5       V6       V7    V8    V9   V10   V11      V12
-  <chr>  <chr> <int> <chr> <chr> <int>    <dbl> <dbl> <dbl> <int> <int>    <dbl>
-1 S4C6_… -       237 Ribo… PF01…    95 2.3 e-22  89.1   1.6     1     1 1.20e-25
-2 S4C6_… -       579 eIF2A PF08…   194 2.8 e-55 198     0       1     1 3.7 e-57
-3 S4C6_… -       100 EF-h… PF00…    29 1.9 e- 8  43.5   4.9     1     1 9.9 e- 6
-4 S4C6_… -       213 Rici… PF14…    89 7.90e-10  49.8   1.6     1     1 5   e- 6
-5 S4C6_… -       386 ATP-… PF00…    60 1.6 e-31 119.   36.1     1     2 9.60e-13
-6 S4C6_… -       125 ATP-… PF00…    60 2.10e-25  99.3  26.1     1     2 2.10e- 7
-# ℹ 12 more variables: V13 <dbl>, V14 <dbl>, V15 <dbl>, V16 <int>, V17 <int>,
-#   V18 <int>, V19 <int>, V20 <int>, V21 <int>, V22 <dbl>, V23 <chr>,
-#   nt_id <chr>
 
 > best_pfam_dat <- best_pfam_dat %>% ungroup()
 
@@ -390,6 +232,7 @@ egthomas@grazer:~/g3Depth/func$ R
 > best_pfam_dat %>% distinct(nt_id) %>% nrow()
 [1] 7585157
 
+#get only one pfam annotation per nucleotide id
 > best_pfam_dat <- best_pfam_dat %>% ungroup() %>% group_by(nt_id) %>% slice(1)
 
 > best_pfam_dat %>% ungroup() %>% nrow()
@@ -399,77 +242,26 @@ egthomas@grazer:~/g3Depth/func$ R
 > best_pfam_dat %>% write_csv("G3_depth_pfamAnnotations_bestPfam.tab")
 
 
-
-###sacha mapped unstranded because assembly was created unstranded
+#nucleotide cluster sequences were indexed and used for 
+##unstranded kallisto mapping by Sacha Coesel
+##Sacha mapped unstranded because assembly was created unstranded
 egthomas@guppy:/scratch/elaina$ cp /mnt/nfs/projects/armbrust-metat/gradients3/g3_depth_pa_metat/kallisto/unstranded/G3PA_depth.raw.est_counts_unstranded.csv.gz .
 egthomas@guppy:/scratch/elaina$ gunzip *
 egthomas@guppy:/scratch/elaina$ mv G3PA_depth.raw.est_counts_unstranded.csv ~/g3Depth/mappedShortReads/
 
-
-egthomas@grazer:~/g3Depth/mappedShortReads$ R
+R
 
 #read in the concatenated g3 depth polyA metaT mapping abundance file
 > dat <- read_csv("G3PA_depth.raw.est_counts_unstranded.csv")
 
-
-head(dat)
-Rows: 32307804 Columns: 26
-── Column specification ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-Delimiter: ","
-chr  (1): target_id
-dbl (25): ...1, length, G3PA.depth.S8C2.DCM.B, G3PA.depth.S5C6.15m.B, G3PA.d...
-
-ℹ Use `spec()` to retrieve the full column specification for this data.
-ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-> head(dat)
-# A tibble: 6 × 26
-   ...1 target_id             length G3PA.depth.S8C2.DCM.B G3PA.depth.S5C6.15m.B
-  <dbl> <chr>                  <dbl>                 <dbl>                 <dbl>
-1     1 S4C6_B_15m_TRINITY_D…    534                  1.68                     0
-2     2 S4C6_B_15m_TRINITY_D…    870                  0                        0
-3     3 S4C6_B_15m_TRINITY_D…    328                  0                        0
-4     4 S4C6_B_15m_TRINITY_D…    395                  0                        0
-5     5 S4C6_B_15m_TRINITY_D…    402                  1                        0
-6     6 S4C6_B_15m_TRINITY_D…    486                  0                        0
-# ℹ 21 more variables: G3PA.depth.S6C7.75m.B <dbl>,
-#   G3PA.depth.S6C7.15m.A <dbl>, G3PA.depth.S5C6.125m.A <dbl>,
-#   G3PA.depth.S6C7.DCM.B <dbl>, G3PA.depth.S6C7.15m.B <dbl>,
-#   G3PA.depth.S4C6.75m.B <dbl>, G3PA.depth.S4C6.75m.A <dbl>,
-#   G3PA.depth.S4C6.15m.B <dbl>, G3PA.depth.S6C7.75m.A <dbl>,
-#   G3PA.depth.S4C6.DCM.B <dbl>, G3PA.depth.S5C6.125m.B <dbl>,
-#   G3PA.depth.S8C2.75m.A <dbl>, G3PA.depth.S8C2.DCM.A <dbl>, …
-
-> colnames(dat)
- [1] "...1"                   "target_id"              "length"                
- [4] "G3PA.depth.S8C2.DCM.B"  "G3PA.depth.S5C6.15m.B"  "G3PA.depth.S6C7.75m.B" 
- [7] "G3PA.depth.S6C7.15m.A"  "G3PA.depth.S5C6.125m.A" "G3PA.depth.S6C7.DCM.B" 
-[10] "G3PA.depth.S6C7.15m.B"  "G3PA.depth.S4C6.75m.B"  "G3PA.depth.S4C6.75m.A" 
-[13] "G3PA.depth.S4C6.15m.B"  "G3PA.depth.S6C7.75m.A"  "G3PA.depth.S4C6.DCM.B" 
-[16] "G3PA.depth.S5C6.125m.B" "G3PA.depth.S8C2.75m.A"  "G3PA.depth.S8C2.DCM.A" 
-[19] "G3PA.depth.S8C2.15m.A"  "G3PA.depth.S4C6.15m.A"  "G3PA.depth.S8C2.15m.B" 
-[22] "G3PA.depth.S4C6.DCM.A"  "G3PA.depth.S5C6.15m.A"  "G3PA.depth.S5C6.DCM.B" 
-[25] "G3PA.depth.S5C6.DCM.A"  "G3PA.depth.S8C2.75m.B"
-
+#gather counts data
 > dat <- dat %>% gather(G3PA.depth.S8C2.DCM.B:G3PA.depth.S8C2.75m.B, key = "sample", value = "est_counts")
 
-> head(dat)
-# A tibble: 6 × 5
-   ...1 target_id                             length sample           est_counts
-  <dbl> <chr>                                  <dbl> <chr>                 <dbl>
-1     1 S4C6_B_15m_TRINITY_DN3635042_c0_g1_i1    534 G3PA.depth.S8C2…       1.68
-2     2 S4C6_B_15m_TRINITY_DN3635058_c0_g1_i1    870 G3PA.depth.S8C2…       0   
-3     3 S4C6_B_15m_TRINITY_DN3635120_c0_g1_i1    328 G3PA.depth.S8C2…       0   
-4     4 S4C6_B_15m_TRINITY_DN3635116_c0_g1_i1    395 G3PA.depth.S8C2…       0   
-5     5 S4C6_B_15m_TRINITY_DN3635074_c0_g1_i1    402 G3PA.depth.S8C2…       1   
-6     6 S4C6_B_15m_TRINITY_DN3635127_c0_g1_i1    486 G3PA.depth.S8C2…       0 
-
-#gets rid of rows with 0 counts, just to make file smaller
+#gets rid of contigs with 0 mapped reads
 > dat <- dat %>% filter(est_counts != 0)
 
-
-
 #load taxa annotation file that was produced with database including 
-#updated marferret (with added ncbi ids) and marmicrodb (prokaryotes)
+#updated marferret and marmicrodb
 > tax <- read.table("~/g3Depth/tax/G3_depth_assembledReads.id99.vs_MarFERReT.v1.1.MMDB.combined_noOutliers.lca.tab_fall2023")
 
 > str(tax)
@@ -483,22 +275,18 @@ dbl (25): ...1, length, G3PA.depth.S8C2.DCM.B, G3PA.depth.S5C6.15m.B, G3PA.d...
 > tax <- tax %>% filter(!is.na(V2))
 > tax <- tax %>% filter(V2 != 0)
 
+#make nucleotide id variable
 > tax <- tax %>% mutate(nt_id = str_replace(V1, "_[0-9]{1,}$", ""))
 
+#get best taxa annotation per nucleotide contig id
 > tax_best <- tax %>% group_by(nt_id) %>% arrange(V3) %>% slice(1)
 
-> tax %>% distinct(nt_id) %>% nrow()
-[1] 18978802
 > tax_best %>% nrow()
 [1] 18978802
 > tax_best %>% distinct(nt_id) %>% nrow()
 [1] 18978802
 
-#are these the contigs that didn't get taxa annotations?
-> dat %>% anti_join(tax_best, by = c("target_id" = "nt_id")) %>% distinct(target_id) %>% nrow()
-[1] 7059007
-> dat %>% semi_join(tax_best, by = c("target_id" = "nt_id")) %>% distinct(target_id) %>% nrow()
-[1] 10192678
+> tax_best %>% write_csv("~/g3Depth/tax/G3_depth_assembledReads.id99.vs_MarFERReT.v1.1.MMDB.combined_noOutliers.lca.tab_fall2023_best.csv")
 
 #add taxa annotations of contigs to the number of reads mapped to contig per sample
 > nrow(dat_tax)
@@ -507,10 +295,12 @@ dbl (25): ...1, length, G3PA.depth.S8C2.DCM.B, G3PA.depth.S5C6.15m.B, G3PA.d...
 > nrow(dat_tax)
 [1] 159214039
 
+#get rid of contigs without taxa annotations
 > dat_tax_noNA <- dat_tax %>% filter(!is.na(V2))
 
 > dat_tax_noNA %>% write_csv("~/g3Depth/mappedShortReads/G3_depth_mappedReadAbundance_noZeroes.csv")
 
+#loads best pfam annotation for each nucleotide contig id
 > best_pfam_dat <- read_csv("~/g3Depth/func/G3_depth_pfamAnnotations_bestPfam.tab")
  
 > str(dat_tax_noNA)
@@ -524,18 +314,22 @@ tibble [97,751,527 × 8] (S3: tbl_df/tbl/data.frame)
  $ V2        : int [1:97751527] 2698737 2836 2864 407301 2759 49237 407301 2759 2864 109239 ...
  $ V3        : num [1:97751527] 2.1e-07 7.8e-61 6.2e-19 6.5e-41 9.0e-14 ...
 
-> merged2 <- dat_tax_noNA %>% mutate(length_kb = length/1000)
-> merged2 <- merged2 %>% mutate(est_counts_div_length_kb = est_counts/length_kb)
-
+#load taxa names corresponding to each taxa id in marferret
 > name <- read_csv("/mnt/nfs/projects/marferret/v1/data/MarFERReT.v1.taxa.csv")
 
+#get rid of unnecessary variables
 > name <- name %>% select(1:4)
 
+#add taxa names to counts data
 > nrow(merged2)
 [1] 97751527
 > merged2 <- merged2 %>% left_join(name, by = c("V2" = "tax_id"))
 > nrow(merged2)
 [1] 97751527
+
+##calculate transcripts per million
+> merged2 <- dat_tax_noNA %>% mutate(length_kb = length/1000)
+> merged2 <- merged2 %>% mutate(est_counts_div_length_kb = est_counts/length_kb)
 
 > mCounts <- merged2 %>% group_by(sample, tax_name) %>% summarize(mCount = sum(est_counts_div_length_kb)/1e6)
 `summarise()` has grouped output by 'sample'. You can override using the `.groups` argument.
@@ -546,207 +340,89 @@ tibble [97,751,527 × 8] (S3: tbl_df/tbl/data.frame)
 > nrow(merged2)
 [1] 97751527
 
-> merged2 %>% filter(is.na(mCount))
-# A tibble: 0 × 14
-
-> merged2 %>% filter(is.na(sample)) 
-# A tibble: 0 × 14
-
 > merged2 <- merged2 %>% mutate(tpm = est_counts_div_length_kb/mCount)
 
-> head(best_pfam_dat$V1)
-[1] "S4C6_B_15m_TRINITY_DN0_c1_g1_i1_4"      
-[2] "S4C6_B_15m_TRINITY_DN0_c3_g1_i1_4"      
-[3] "S4C6_B_15m_TRINITY_DN1000010_c0_g1_i1_2"
-[4] "S4C6_B_15m_TRINITY_DN1000037_c0_g1_i1_3"
-[5] "S4C6_B_15m_TRINITY_DN1000056_c0_g1_i1_1"
-[6] "S4C6_B_15m_TRINITY_DN1000056_c2_g1_i1_5"
-
-> head(merged2$V1)
-[1] "S4C6_B_15m_TRINITY_DN3635074_c0_g1_i1_6"
-[2] "S4C6_B_15m_TRINITY_DN3635082_c0_g1_i1_2"
-[3] "S4C6_B_15m_TRINITY_DN3635104_c0_g1_i1_6"
-[4] "S4C6_B_15m_TRINITY_DN3635059_c0_g1_i1_1"
-[5] "S4C6_B_15m_TRINITY_DN3635093_c0_g1_i1_2"
-[6] "S4C6_B_15m_TRINITY_DN3635100_c0_g1_i1_5"
-
+#add best pfam annotation to each nucleotide contig id
 > nrow(merged2)
 [1] 54235686
 > merged2_pfam <- merged2 %>% left_join(best_pfam_dat %>% distinct(V1, V4, V5), by = c("V1"))
 > nrow(merged2_pfam)
 [1] 54235686
 
+#load core transcribed genes (CTGS) identified 
+#from 10.1038/s41597-023-02842-4
 > core <- read_csv("~/MarFERReT.v1.core_genes.csv")
 
+#get just ctgs grouped at level of eukaryotes
 > core <- core %>% filter(lineage == "Eukaryota")
 
-> head(merged2_pfam$V5)
-[1] "PF00536.32" "PF06925.13" NA           NA           NA          
-[6] NA          
-
+#make a dataframe to count the number of ctgs in each species bin by sample
 > pfamSummary <- merged2_pfam %>% semi_join(core, by = c("V5" = "pfam_id"))
 
+#calculate number of ctgs in each species bin by sample
 > pfamSummary <- pfamSummary %>% group_by(sample, V2, tax_name) %>% distinct(V5) %>% summarize(numCorePfams = n())
 `summarise()` has grouped output by 'sample', 'V2'. You can override using the `.groups` argument.
 
+#there are a total of 605 eukaryote ctgs
 > core %>% distinct(pfam_id) %>% summarize(n = n())
 # A tibble: 1 × 1
       n
   <int>
 1   605
 
+#calculate proportion of ctgs in each species bin by sample
 > pfamSummary <- pfamSummary %>% ungroup() %>% mutate(propCorePfams = numCorePfams/605)
 
 > pfamSummary %>% write_csv("~/g3Depth/corePfamSummary.csv")
 
+#get species bins/samples that have at least 70% of ctgs detected
 > pfamSummary <- pfamSummary %>% filter(propCorePfams >= .7)
 
-> pfamSummary %>% ungroup() %>% distinct(tax_name) %>% nrow()
-[1] 40
-
-#gets just the counts for taxa and sample pairs that have at least 800 expressed non-NA distinct pfams
+#gets just the counts for taxa and sample pairs that have at least 70% ctgs detected
 > merged2_pfam <- merged2_pfam %>% semi_join(pfamSummary, by = c("V2", "sample"))
 
-> merged2_pfam %>% ungroup() %>% distinct(V2, tax_name) %>% nrow()
-[1] 26
-
-> str(merged2_pfam)
-'data.frame':   35093285 obs. of  18 variables:
- $ target_id               : chr  "S4C6_B_15m_TRINITY_DN3635082_c0_g1_i1" "S4C6_B_15m_TRINITY_DN3635059_c0_g1_i1" "S4C6_B_15m_TRINITY_DN3635049_c0_g1_i1" "S4C6_B_15m_TRINITY_DN3635131_c0_g1_i1" ...
- $ length                  : num  712 395 367 394 531 784 308 637 526 958 ...
- $ eff_length              : chr  "502.842" "188.142" "161.436" "187.161" ...
- $ est_counts              : num  4 2 1 1 8 ...
- $ tpm|name_file           : chr  "0.145067|442874_S25.abundance.tsv" "0.193857|442874_S25.abundance.tsv" "0.112964|442874_S25.abundance.tsv" "0.0974367|442874_S25.abundance.tsv" ...
- $ sample                  : chr  "442874_S25.abundance.tsv" "442874_S25.abundance.tsv" "442874_S25.abundance.tsv" "442874_S25.abundance.tsv" ...
- $ V1                      : chr  "S4C6_B_15m_TRINITY_DN3635082_c0_g1_i1_2" "S4C6_B_15m_TRINITY_DN3635059_c0_g1_i1_1" "S4C6_B_15m_TRINITY_DN3635049_c0_g1_i1_3" "S4C6_B_15m_TRINITY_DN3635131_c0_g1_i1_2" ...
- $ V2                      : num  2836 407301 407301 2759 2864 ...
- $ V3                      : num  7.8e-61 6.5e-41 1.3e-08 1.7e-09 6.0e-66 ...
- $ length_kb               : num  0.712 0.395 0.367 0.394 0.531 0.784 0.308 0.637 0.526 0.958 ...
- $ est_counts_div_length_kb: num  5.62 5.06 2.72 2.54 15.07 ...
- $ parent_id               : num  2696291 157684 157684 131567 33630 ...
- $ rank                    : chr  "phylum" "species" "species" "superkingdom" ...
- $ tax_name                : chr  "Bacillariophyta" "Karlodinium veneficum" "Karlodinium veneficum" "Eukaryota" ...
- $ mCount                  : num  0.982 1.556 1.556 3.254 4.999 ...
- $ tpm                     : num  5.72 3.25 1.75 0.78 3.01 ...
- $ V4                      : chr  "MGDG_synth" NA NA "PAP2" ...
- $ V5                      : chr  "PF06925.13" NA NA "PF01569.23" ...
-
-#for each taxa, sample, and pfam combination, get the total number of counts
+#for each taxa, sample, and pfam combination, get the total tpm
 > g3Depth_summary <- merged2_pfam %>% ungroup() %>% dplyr::group_by(sample, V2, tax_name, V5) %>% dplyr::summarize(tpm = sum(tpm))
 `summarise()` has grouped output by 'sample', 'V2', 'tax_name'. You can override using the `.groups` argument.
 
 #ungroup counts summary data
 > g3Depth_summary <- g3Depth_summary %>% ungroup()
 
-> g3Depth_summary %>% group_by(sample, tax_name) %>% summarize(tpm = sum(tpm)) %>% distinct(tpm) %>% ungroup() %>% distinct(tpm)
-`summarise()` has grouped output by 'sample'. You can override using the `.groups` argument.
-# A tibble: 9 × 1
-      tpm
-    <dbl>
-1 1000000
-2 1000000
-3 1000000
-4 1000000
-5 1000000
-6 1000000
-7 1000000
-8 1000000
-9 1000000
-
+#after calculating tpm, get rid of contigs without pfam annotations
 > g3Depth_summary <- g3Depth_summary %>% filter(!is.na(V5))
 
-> colnames(g3Depth_summary)[4]
-[1] "V5"
+#name pfam variable
 > colnames(g3Depth_summary)[4] <- "pfam"
   
+#make pfam variable without digits after decimal
 > g3Depth_summary <- g3Depth_summary %>% mutate(shortPfam = str_replace(pfam, "\\..{1,}$", ""))
 
-> g3Depth_summary %>% filter(is.na(shortPfam))
-# A tibble: 0 × 6
-
+#get rid of unnecessary variables
 > merg <- g3Depth_summary %>% select(sample, tax_name, shortPfam, tpm)
 
+#load feature pfams
 > pfam <- read_csv("~/Extracted_Pfams_noOutliers_newContaminationMetric_xg.csv")
 
-> head(pfam)
-# A tibble: 6 × 1
-  pfam   
-  <chr>  
-1 PF09286
-2 PF02514
-3 PF13925
-4 PF04133
-5 PF03645
-6 PF16158
-
-> colnames(merg)[3]
-[1] "shortPfam"
+#rename pfam variable
 > colnames(merg)[3] <- "pfam"
 
+#get feature pfams missing from counts data
 > miss <- pfam %>% anti_join(merg, by = c("pfam"))
 
-> head(miss)
-# A tibble: 1 × 1
-  pfam   
-  <chr>  
-1 PF14259
-
-> merg %>% filter(str_detect(tax_name, " ")) %>% head()
-# A tibble: 6 × 4
-  sample                tax_name     pfam      tpm
-  <chr>                 <chr>        <chr>   <dbl>
-1 G3PA.depth.S4C6.15m.A Tripos fusus PF00004  47.9
-2 G3PA.depth.S4C6.15m.A Tripos fusus PF00005 860. 
-3 G3PA.depth.S4C6.15m.A Tripos fusus PF00008  18.3
-4 G3PA.depth.S4C6.15m.A Tripos fusus PF00009  94.3
-5 G3PA.depth.S4C6.15m.A Tripos fusus PF00012 382. 
-6 G3PA.depth.S4C6.15m.A Tripos fusus PF00013 298. 
- 
+#add missing feature pfams to counts data with tpm 0 
 > miss <- miss %>% mutate(sample = "G3PA.depth.S4C6.15m.A", tax_name = "Tripos fusus")
 
 > merg <- merg %>% bind_rows(miss)
 
-> head(merg)
-# A tibble: 6 × 4
-  sample                tax_name  pfam        tpm
-  <chr>                 <chr>     <chr>     <dbl>
-1 G3PA.depth.S4C6.15m.A Eukaryota PF00001    3.25
-2 G3PA.depth.S4C6.15m.A Eukaryota PF00003    1.22
-3 G3PA.depth.S4C6.15m.A Eukaryota PF00004 3252.  
-4 G3PA.depth.S4C6.15m.A Eukaryota PF00005 2569.  
-5 G3PA.depth.S4C6.15m.A Eukaryota PF00006 2163.  
-6 G3PA.depth.S4C6.15m.A Eukaryota PF00008  172.  
-
+#spread data, filling in missing pfams with tpm 0
 > merg <- merg %>% spread(key = pfam, value = tpm, fill = 0)
-
-> merg %>% select(1:5) %>% head()
-# A tibble: 6 × 5
-  sample                tax_name             PF00001 PF00002 PF00003
-  <chr>                 <chr>                  <dbl>   <dbl>   <dbl>
-1 G3PA.depth.S4C6.15m.A Alveolata               0        0       0  
-2 G3PA.depth.S4C6.15m.A Bacillariophyta         2.96     0     443. 
-3 G3PA.depth.S4C6.15m.A Bathycoccus             0        0       0  
-4 G3PA.depth.S4C6.15m.A Bathycoccus prasinos  129.       0       0  
-5 G3PA.depth.S4C6.15m.A Calanidae             659.      44.3    50.6
-6 G3PA.depth.S4C6.15m.A Calanoida             168.     107.    218. 
 
 > merg %>% select(sample:tax_name) %>% write_csv("~/g3Depth/g3Depth_tpm_updatedMarferret_marmicroDb2023_sampleTaxa_noOutliers_fixedTPM_fall2023.csv")
 > merg %>% select(-c(sample:tax_name)) %>% write_csv("~/g3Depth/g3Depth_tpm_updatedMarferret_marmicroDb2023_noOutliers_fixedTPM_fall2023.csv")
-
-(base) elainathomas@Elainas-MacBook-Pro-2 g3Depth % scp -P 3004 -i ~/.ssh/id_ed25519 egthomas@frustule.ocean.washington.edu:~/g3Depth/g3Depth_tpm_updatedMarferret_marmicroDb2023_sampleTaxa_noOutliers_fixedTPM_fall2023.csv .
-Enter passphrase for key '/Users/elainathomas/.ssh/id_ed25519': 
-g3Depth_tpm_updatedMarferret_marmicroDb2023_sampleTaxa_noOutliers_fixedTPM_fall2023.csv                                                                                   100%   18KB 295.3KB/s   00:00    
-
-(base) elainathomas@Elainas-MacBook-Pro-2 g3Depth % scp -P 3004 -i ~/.ssh/id_ed25519 egthomas@frustule.ocean.washington.edu:~/g3Depth/g3Depth_tpm_updatedMarferret_marmicroDb2023_noOutliers_fixedTPM_fall2023.csv .
-Enter passphrase for key '/Users/elainathomas/.ssh/id_ed25519': 
-g3Depth_tpm_updatedMarferret_marmicroDb2023_noOutliers_fixedTPM_fall2023.csv                                                                                              100%   23MB  13.0MB/s   00:01    
-
 
 #move files into permanent shared folder on grazer
 egthomas@grazer:~/g3Depth/6tr$ mv *6tr.fasta /mnt/nfs/projects/gradients-metat/G3/g3_lightdarkdepth_pa_metat/depth/PE/6tr/
 egthomas@grazer:~/g3Depth/6tr$ mv *bf100.fasta /mnt/nfs/projects/gradients-metat/G3/g3_lightdarkdepth_pa_metat/depth/PE/6tr/bf/
 egthomas@grazer:~/g3Depth$ mv *fasta.gz /mnt/nfs/projects/gradients-metat/G3/g3_lightdarkdepth_pa_metat/depth/assemblies/
 egthomas@grazer:~/g3Depth/trimmedReads/qc_data$ mv * /mnt/nfs/projects/gradients-metat/G3/g3_lightdarkdepth_pa_metat/depth/PE/
-
-
 
