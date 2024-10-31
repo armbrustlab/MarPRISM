@@ -1,55 +1,54 @@
-#open R on grazer
-egthomas@grazer:~/g3Depth$ R
+###g3 depth 
 
+R
+
+#load estimated counts for taxa across g3 diel samples
+#from prepareFilesForModel_g3Depth.txt
 > g3Depth_gather_merged <- read_csv("~/g3Depth/mappedShortReads/G3_depth_mappedReadAbundance_noZeroes.csv")
 
+#fix sample name in counts data
 > g3Depth_gather_merged <- g3Depth_gather_merged %>% mutate(sample = str_replace(sample, ".abundance.tsv", ""))
 
+#load names of 28 species bins that received trophic mode predictions 
+#across G1-G3 surface transects, G3 depth profiles, G2 incubations, 
+#aloha diel, and g3 diel
+#from plotAllTrophicModePredictions.R
 > species <- read_csv("~/28SpeciesWithTrophicPredictions.csv")
 
+#load taxa names corresponding to taxa ids in marferret
 > name <- read_csv("/mnt/nfs/projects/marferret/v1/data/MarFERReT.v1.taxa.csv")
 
+#get rid of unnecessary variables
 > name <- name %>% select(1:4)
 
-> head(g3Depth_gather_merged)
-# A tibble: 6 × 8
-   ...1 target_id                 length sample est_counts V1        V2       V3
-  <dbl> <chr>                      <dbl> <chr>       <dbl> <chr>  <dbl>    <dbl>
-1     5 S4C6_B_15m_TRINITY_DN363…    402 G3PA.…       1    S4C6… 2.70e6 2.10e- 7
-2     9 S4C6_B_15m_TRINITY_DN363…    712 G3PA.…       4    S4C6… 2.84e3 7.80e-61
-3    39 S4C6_B_15m_TRINITY_DN363…    354 G3PA.…       1    S4C6… 2.86e3 6.20e-19
-4    57 S4C6_B_15m_TRINITY_DN363…    395 G3PA.…       2    S4C6… 4.07e5 6.50e-41
-5    60 S4C6_B_15m_TRINITY_DN363…    527 G3PA.…       1    S4C6… 2.76e3 9   e-14
-6    63 S4C6_B_15m_TRINITY_DN363…    553 G3PA.…       1.98 S4C6… 4.92e4 2.90e-63
-
+#add taxa names to counts data
 > nrow(g3Depth_gather_merged)
 [1] 97751527
 > g3Depth_gather_merged_name <- g3Depth_gather_merged %>% left_join(name, by = c("V2" = "tax_id"))
 > nrow(g3Depth_gather_merged_name)
 [1] 97751527
 
+#get counts for the taxa without trophic predictions
 > notOfInt <- g3Depth_gather_merged_name %>% anti_join(species, by = c("tax_name" = "taxa"))
 
+#get total estimated counts by sample and taxa for the taxa without 
+#trophic predictions
 > notOfInt_summary <- notOfInt %>% group_by(tax_name, sample) %>% summarize(est_counts = sum(est_counts))
 `summarise()` has grouped output by 'tax_name'. You can override using the `.groups` argument.
 
 > notOfInt_summary %>% write_csv("~/g3Depth/g3Depth_otherThanSpeciesWithTrophicPredictions_fall2023_28.csv")
 
+#gets rid of counts without taxa annotations
 > g3Depth_gather_merged_name_noMissingTaxa <- g3Depth_gather_merged_name %>% filter(!is.na(tax_name))
 
+#get counts for the taxa without trophic predictions
 > ofInt <- g3Depth_gather_merged_name_noMissingTaxa %>% semi_join(species, by = c("tax_name" = "taxa"))
 
+
+#get total estimated counts by sample and taxa for the 28 species with 
+#trophic predictions
 > ofInt_summary <- ofInt %>% group_by(tax_name, sample) %>% summarize(est_counts = sum(est_counts))
 `summarise()` has grouped output by 'tax_name'. You can override using the `.groups` argument.
 
-#writes the total number of reads for the haptophytes to csv file
 > ofInt_summary %>% write_csv("~/g3Depth/g3Depth_speciesWithTrophicPredictions_fall2023_28.csv")
 
-
-(base) elainathomas@Elainas-MacBook-Pro-2 g3Depth % scp -P 3004 -i ~/.ssh/id_ed25519 egthomas@frustule.ocean.washington.edu:~/g3Depth/g3Depth_otherThanSpeciesWithTrophicPredictions_fall2023_28.csv .
-Enter passphrase for key '/Users/elainathomas/.ssh/id_ed25519': 
-g3Depth_otherThanSpeciesWithTrophicPredictions_fall2023_28.csv                                                                                                            100%  843KB  14.5MB/s   00:00    
-
-(base) elainathomas@Elainas-MacBook-Pro-2 g3Depth % scp -P 3004 -i ~/.ssh/id_ed25519 egthomas@frustule.ocean.washington.edu:~/g3Depth/g3Depth_speciesWithTrophicPredictions_fall2023_28.csv .
-Enter passphrase for key '/Users/elainathomas/.ssh/id_ed25519': 
-g3Depth_speciesWithTrophicPredictions_fall2023_28.csv                                                                                                                     100%   39KB   1.7MB/s   00:00    

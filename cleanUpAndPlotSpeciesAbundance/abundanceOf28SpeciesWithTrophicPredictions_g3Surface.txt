@@ -1,70 +1,49 @@
 ###G3 surface
-
-egthomas@guppy:~$ stat ~/g3/G3_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_fall2023.csv
-  File: /mnt/nfs/home/egthomas/g3/G3_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_fall2023.csv
-  Size: 16630697860     Blocks: 12254630   IO Block: 131072 regular file
-Device: 37h/55d Inode: 2536257     Links: 1
-Access: (0664/-rw-rw-r--)  Uid: ( 1086/egthomas)   Gid: ( 1086/egthomas)
-Access: 2024-09-13 11:54:24.467969725 -0700
-Modify: 2024-09-13 11:55:10.621531354 -0700
-Change: 2024-09-13 11:55:10.621531354 -0700
- Birth: -
  
-#open R on grazer
-egthomas@grazer:~/g3$ R
+R
 
+#load estimated counts for taxa across g3 surface samples
+#from prepareFilesForModel_g3Surface.txt
 > g3_gather_merged <- read_csv("~/g3/G3_allSamples_processed_updatedMarferret_marmicroDb2023_noOutliers_fall2023.csv")
 
-#load name of each eukaryote in the updated marferret db with its assigned 
-#taxa id
-#ryan sent MarFERReT.v1.taxa.csv over slack in the metat channel on 10/11/22
+#load names of 28 species bins that received trophic mode predictions 
+#across G1-G3 surface transects, G3 depth profiles, G2 incubations, 
+#aloha diel, and g3 diel
+#from plotAllTrophicModePredictions.R
+> species <- read_csv("~/28SpeciesWithTrophicPredictions.csv")
+
+#load taxa names corresponding to taxa ids in marferret
 > name <- read_csv("/mnt/nfs/projects/marferret/v1/data/MarFERReT.v1.taxa.csv")
 
 #get rid of unnecessary variables
 > name <- name %>% select(1:4)
 
+#add taxa names to counts data
 > nrow(g3_gather_merged)
 [1] 125540927
 > g3_gather_merged_name <- g3_gather_merged %>% left_join(name, by = c("V2" = "tax_id"))
 > nrow(g3_gather_merged_name)
 [1] 125540927
 
-> species <- read_csv("~/28SpeciesWithTrophicPredictions.csv")
-
-> head(g3_gather_merged)
-# A tibble: 6 × 10
-   ...1 target_id     length sample est_counts V1        V2       V3 V4    V5   
-  <dbl> <chr>          <dbl> <chr>       <dbl> <chr>  <dbl>    <dbl> <chr> <chr>
-1     1 G3PA.UW10_TR…    378 G3PA.…       1    G3PA… 4.07e5 2.6 e- 7 VWA   PF00…
-2     4 G3PA.UW10_TR…    388 G3PA.…       1    G3PA… 2.95e3 4.22e-18 NA    NA   
-3    14 G3PA.UW10_TR…    350 G3PA.…       2    G3PA… 2.86e3 9.96e-50 Asp   PF00…
-4    29 G3PA.UW10_TR…    363 G3PA.…       2    G3PA… 2.86e3 1.86e-41 NA    NA   
-5    37 G3PA.UW10_TR…    952 G3PA.…       4    G3PA… 4.07e5 9.58e-38 NA    NA   
-6    38 G3PA.UW10_TR…    435 G3PA.…       1.94 G3PA… 1.20e6 3.36e- 8 NA    NA   
-
+#get counts for the taxa without trophic predictions
 > notOfInt <- g3_gather_merged_name %>% anti_join(species, by = c("tax_name" = "taxa"))
 
+#get total estimated counts by sample and taxa for the taxa without 
+#trophic predictions
 > notOfInt_summary <- notOfInt %>% group_by(tax_name, sample) %>% summarize(est_counts = sum(est_counts))
 `summarise()` has grouped output by 'tax_name'. You can override using the `.groups` argument.
 
 > notOfInt_summary %>% write_csv("~/g3/G3PA.contig_dat_all_otherThanSpeciesWithTrophicPredictions_summary_updatedMarferret_marmicroDb2023_noOutliers_fall2023_28.csv")
 
+#gets rid of counts without taxa annotations
 > g3_gather_merged_name_noMissingTaxa <- g3_gather_merged_name %>% filter(!is.na(tax_name))
 
+#get counts for the 28 species with trophic predictions
 > ofInt <- g3_gather_merged_name_noMissingTaxa %>% semi_join(species, by = c("tax_name" = "taxa"))
 
+#get total estimated counts by sample and taxa for the 28 species with 
+#trophic predictions
 > ofInt_summary <- ofInt %>% group_by(tax_name, sample) %>% summarize(est_counts = sum(est_counts))
 `summarise()` has grouped output by 'tax_name'. You can override using the `.groups` argument.
 
-#writes the total number of reads for the haptophytes to csv file
 > ofInt_summary %>% write_csv("~/g3/G3PA.contig_dat_all_speciesWithTrophicPredictions_summary_updatedMarferret_marmicroDb2023_noOutliers_fall2023_28.csv")
-
-
-(base) elainathomas@Elainas-MacBook-Pro-2 g3 % scp -P 3004 -i ~/.ssh/id_ed25519  egthomas@frustule.ocean.washington.edu:~/g3/G3PA.contig_dat_all_otherThanSpeciesWithTrophicPredictions_summary_updatedMarferret_marmicroDb2023_noOutliers_fall2023_28.csv .
-Enter passphrase for key '/Users/elainathomas/.ssh/id_ed25519': 
-G3PA.contig_dat_all_otherThanSpeciesWithTrophicPredictions_summary_updatedMarferret_marmicroDb2023_noOutliers_fall2023_28.csv                                             100% 1691KB   6.2MB/s   00:00    
-
-
-(base) elainathomas@Elainas-MacBook-Pro-2 g3 % scp -P 3004 -i ~/.ssh/id_ed25519  egthomas@frustule.ocean.washington.edu:~/g3/G3PA.contig_dat_all_speciesWithTrophicPredictions_summary_updatedMarferret_marmicroDb2023_noOutliers_fall2023_28.csv .
-Enter passphrase for key '/Users/elainathomas/.ssh/id_ed25519': 
-G3PA.contig_dat_all_speciesWithTrophicPredictions_summary_updatedMarferret_marmicroDb2023_noOutliers_fall2023_28.csv                                                      100%   82KB   1.1MB/s   00:00    
