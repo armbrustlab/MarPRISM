@@ -219,10 +219,18 @@ g <- bind_rows(g, g2Inc)
 
 g <- g %>% arrange(Cruise)
 
+g %>% distinct(Species)
+
+dinos <- c("Azadinium spinosum", "Brandtodinium nutricula", "Dinophysis acuminata", "Gymnodinium catenatum GC744", 
+           "Karenia brevis", "Karlodinium veneficum", "Pelagodinium beii", "Prorocentrum minimum", "Scrippsiella trochoidea", 
+           "Tripos fusus")
+
+g <- g %>% mutate(`Transcripts per L with dinoflagellate correction` = ifelse(Species %in% dinos, `Transcripts per L`/6.4, `Transcripts per L`))
+
 g %>% 
   mutate(Cruise = str_replace(Cruise, "Aloha", "ALOHA")) %>% 
   mutate(Cruise = str_replace(Cruise, "G", "Gradients")) %>% 
-  select(Cruise, Species, Latitude, `Depth (m)`, Time, Treatment, `Timepoint (hr)`, 6, Replicate, 8) %>%
+  select(Cruise, Species, Latitude, `Depth (m)`, Time, Treatment, `Timepoint (hr)`, 6, Replicate, 8, `Transcripts per L with dinoflagellate correction`) %>%
   write_csv("~/Dropbox/grad/research/speciesWithTrophicModePredictionsAbundance_supplementaryTable.csv")
 
 
@@ -359,13 +367,13 @@ modis <- modis %>% mutate(time = time + hm("7:00"))
 latDay <- read_csv("~/Dropbox/grad/research/trophicModePredictionsSupplementaryTable.csv")
 latDay <- latDay %>% select(Cruise, Date, Time, Latitude, `Depth (m)`)
 
-latDay <- latDay %>% filter(Cruise %in% c("G1", "G2", "G3", "G3 depth"))
+latDay <- latDay %>% filter(Cruise %in% c("Gradients1", "Gradients2", "Gradients3", "Gradients3 depth"))
 
-latDay <- latDay %>% filter(!(Cruise == "G3 depth" & `Depth (m)` != 15))
+latDay <- latDay %>% filter(!(Cruise == "Gradients3 depth" & `Depth (m)` != 15))
 
-latDay <- latDay %>% mutate(Cruise = ifelse(Cruise == "G1", "Gradients1: 2016", Cruise))
-latDay <- latDay %>% mutate(Cruise = ifelse(Cruise == "G2", "Gradients2: 2017", Cruise))
-latDay <- latDay %>% mutate(Cruise = ifelse(Cruise == "G3" | Cruise == "G3 depth", "Gradients3: 2019", Cruise))
+latDay <- latDay %>% mutate(Cruise = ifelse(Cruise == "Gradients1", "Gradients1: 2016", Cruise))
+latDay <- latDay %>% mutate(Cruise = ifelse(Cruise == "Gradients2", "Gradients2: 2017", Cruise))
+latDay <- latDay %>% mutate(Cruise = ifelse(Cruise == "Gradients3" | Cruise == "Gradients3 depth", "Gradients3: 2019", Cruise))
 
 modis <- modis %>% mutate(Date = format(time, "%m-%d-%Y"))
 
@@ -392,28 +400,24 @@ merged %>% group_by(cruise) %>% distinct(tax_name) %>% summarize(n = n())
 merged %>% distinct(cruise)
 merged %>% distinct(type)
 
+merged <- merged %>% mutate(absoluteCounts_dinoCorr = ifelse(tax_name %in% dinos, absoluteCounts/6.4, absoluteCounts))
+
 toPlot <- merged %>% 
   group_by(cruise, Latitude, type, tax_name, cruise2) %>% 
-  summarize(absoluteCounts = mean(absoluteCounts), n = n()) %>% 
-  mutate(tax_name = ifelse(!(tax_name %in% c("Karlodinium veneficum", "Oxytricha trifallax", "Pelagomonas calceolata", "Pelagodinium beii", "Triparma pacifica", "Karenia brevis")), "Other species with trophic predictions", tax_name)) %>%
-  mutate(tax_name = factor(tax_name, levels = c("Karenia brevis", "Karlodinium veneficum", "Oxytricha trifallax", "Pelagodinium beii", "Pelagomonas calceolata", "Triparma pacifica", "Other species with trophic predictions"))) %>%
+  summarize(absoluteCounts_dinoCorr = mean(absoluteCounts_dinoCorr), n = n()) %>% 
+  mutate(tax_name = ifelse(!(tax_name %in% c("Pelagomonas calceolata", "Oxytricha trifallax", "Triparma pacifica", "Pelagodinium beii", "Karlodinium veneficum", "Chloroparvula japonica")), "Other species with trophic predictions", tax_name)) %>%
+  mutate(tax_name = factor(tax_name, levels = c("Oxytricha trifallax", "Karlodinium veneficum", "Pelagodinium beii", "Chloroparvula japonica", "Pelagomonas calceolata", "Triparma pacifica", "Other species with trophic predictions"))) %>%
   mutate(type = ifelse(type == "Heterotrophic", "Species with only\nheterotrophy predictions", type)) %>%
   mutate(type = ifelse(type == "Mixed predictions", "Species with mixed\ntrophic predictions", type)) %>%
   mutate(type = ifelse(type == "Phototrophic", "Species with only\nphototrophy predictions", type)) %>%
   mutate(type = factor(type, levels = c("Species with only\nheterotrophy predictions", "Species with mixed\ntrophic predictions", "Species with only\nphototrophy predictions")))
 
 toPlot %>%
-  ggplot(aes(x = Latitude, y = absoluteCounts/1E9, color = type)) +
-  geom_jitter(data = merged %>% 
-                group_by(cruise, Latitude, type, tax_name, cruise2) %>% 
-                summarize(absoluteCounts = mean(absoluteCounts), n = n()) %>% 
-                mutate(tax_name = ifelse(!(tax_name %in% c("Karlodinium veneficum", "Oxytricha trifallax", "Pelagomonas calceolata", "Pelagodinium beii", "Triparma pacifica", "Karenia brevis")), "Other species", tax_name)) %>%
-                filter(tax_name == "Other species"), width = .5, alpha = .2, size = 2) +
-  geom_jitter(data = merged %>% 
-                group_by(cruise, Latitude, type, tax_name, cruise2) %>% 
-                summarize(absoluteCounts = mean(absoluteCounts), n = n()) %>%
-                mutate(tax_name = ifelse(!(tax_name %in% c("Karlodinium veneficum", "Oxytricha trifallax", "Pelagomonas calceolata", "Pelagodinium beii", "Triparma pacifica", "Karenia brevis")), "Other species", tax_name)) %>%
-                filter(tax_name != "Other species"), aes(shape = tax_name), width = .5, size = 3.5, stroke = 1) +
+  ggplot(aes(x = Latitude, y = absoluteCounts_dinoCorr/1E9, color = type)) +
+  geom_jitter(data = toPlot %>% 
+                filter(tax_name == "Other species with trophic predictions"), width = .5, alpha = .2, size = 2) +
+  geom_jitter(data = toPlot %>% 
+                filter(tax_name != "Other species with trophic predictions"), aes(shape = tax_name), width = .5, size = 3.5, stroke = 1) +
   theme_classic() +
   theme_bw() +
   theme(strip.background =element_rect(fill="white")) +
@@ -446,19 +450,19 @@ ggsave("abundanceOverG1G2G3surface_byTrophicMode_taxa_avgAcrossReplicates.png", 
 merged %>%
   ungroup() %>%
   group_by(cruise, cruise2, Latitude, type, Replicate) %>%
-  summarize(absoluteCounts = sum(absoluteCounts), n = n()) %>%
+  summarize(absoluteCounts_dinoCorr = sum(absoluteCounts_dinoCorr), n = n()) %>%
   ungroup() %>% 
   group_by(cruise, Latitude, type) %>%
-  summarize(absoluteCounts = mean(absoluteCounts), n = n()) %>%
+  summarize(absoluteCounts_dinoCorr = mean(absoluteCounts_dinoCorr), n = n()) %>%
   ungroup() %>%
   group_by(Latitude, cruise) %>%
-  arrange(desc(absoluteCounts)) %>%
+  arrange(desc(absoluteCounts_dinoCorr)) %>%
   slice(1) %>%
   ggplot(aes(x = Latitude, color = type)) +
   geom_point(y = 1, size = 6) +
   geom_point(y = 1,pch=21, color = "black", size = 6) + 
   facet_wrap(~cruise) +
-  scale_color_manual(values = c("purple", "forestgreen")) +
+  scale_color_manual(values = c("orange", "purple", "forestgreen")) +
   theme_classic() +
   theme(
     strip.background = element_rect(fill = "white"),
@@ -483,12 +487,12 @@ ggsave("dominantTrophicModeByAbundance.png", height = 4, width = 20)
 merged %>%
   ungroup() %>%
   group_by(cruise, cruise2, Latitude, type, Replicate) %>%
-  summarize(absoluteCounts = sum(absoluteCounts)) %>%
+  summarize(absoluteCounts_dinoCorr = sum(absoluteCounts_dinoCorr)) %>%
   group_by(cruise, Latitude, type) %>%
-  summarize(absoluteCounts = mean(absoluteCounts)) %>%
+  summarize(absoluteCounts_dinoCorr = mean(absoluteCounts_dinoCorr)) %>%
   ungroup() %>%
   group_by(Latitude, cruise) %>%
-  arrange(desc(absoluteCounts)) %>%
+  arrange(desc(absoluteCounts_dinoCorr)) %>%
   slice(2) %>%
   ggplot(aes(x = Latitude, color = type)) +
   geom_point(y = 1, size = 6) +
@@ -523,10 +527,10 @@ merged %>%
   mutate(type = factor(type, levels = c("Heterotrophic species bins", "Species bins with\nmixotrophic capabilities", "Phototrophic species bins"))) %>% 
   ungroup() %>% 
   group_by(cruise, cruise2, Latitude, type, Replicate) %>% 
-  summarize(absoluteCounts = sum(absoluteCounts), n = n()) %>%
+  summarize(absoluteCounts_dinoCorr = sum(absoluteCounts_dinoCorr), n = n()) %>%
   group_by(cruise, Latitude, type) %>% 
-  summarize(absoluteCounts = mean(absoluteCounts), n = n()) %>%
-  ggplot(aes(x = Latitude, y = absoluteCounts/1E9, fill = type)) +
+  summarize(absoluteCounts_dinoCorr = mean(absoluteCounts_dinoCorr), n = n()) %>%
+  ggplot(aes(x = Latitude, y = absoluteCounts_dinoCorr/1E9, fill = type)) +
   geom_area() +
   scale_fill_manual(values = c("orange", "purple", "forestgreen")) +
   theme_classic() +
@@ -594,10 +598,10 @@ merged %>%
   mutate(type = factor(type, levels = c("Heterotrophic species bins", "Species bins with\nmixotrophic capabilities", "Phototrophic species bins"))) %>% 
   ungroup() %>% 
   group_by(cruise, cruise2, Latitude, type, Replicate) %>% 
-  summarize(absoluteCounts = sum(absoluteCounts)) %>%
+  summarize(absoluteCounts_dinoCorr = sum(absoluteCounts_dinoCorr)) %>%
   group_by(cruise, Latitude, type) %>% 
-  summarize(absoluteCounts = mean(absoluteCounts)) %>%
-  ggplot(aes(x = Latitude, y = absoluteCounts/1E9, fill = type)) +
+  summarize(absoluteCounts_dinoCorr = mean(absoluteCounts_dinoCorr)) %>%
+  ggplot(aes(x = Latitude, y = absoluteCounts_dinoCorr/1E9, fill = type)) +
   geom_area() +
   scale_fill_manual(values = c("orange", "purple", "forestgreen")) +
   theme_classic() +

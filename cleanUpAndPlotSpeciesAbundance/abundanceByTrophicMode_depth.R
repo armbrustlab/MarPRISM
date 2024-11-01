@@ -49,61 +49,67 @@ dat <- dat %>% mutate(depthNum = ifelse(depth == "DCM" & cruise == "Gradients3: 
 dat <- dat %>% mutate(depthNum = ifelse(depth == "DCM" & cruise == "Gradients3: 2019" & Latitude == 41.67, 50, depthNum))
 dat <- dat %>% mutate(depthNum = ifelse(depth == "DCM" & cruise == "Gradients3: 2019" & Latitude == 42.33, 41, depthNum))
 
+dinos <- c("Azadinium spinosum", "Brandtodinium nutricula", "Dinophysis acuminata", "Gymnodinium catenatum GC744", 
+           "Karenia brevis", "Karlodinium veneficum", "Pelagodinium beii", "Prorocentrum minimum", "Scrippsiella trochoidea", 
+           "Tripos fusus")
+
+dat <- dat %>% mutate(absoluteCounts_dinoCorr = ifelse(tax_name %in% dinos, absoluteCounts/6.4, absoluteCounts))
+
 bySpecies <- dat
 
-top <- bySpecies %>% group_by(Latitude, type, depthNum) %>% arrange(desc(absoluteCounts)) %>% 
+top <- bySpecies %>% group_by(Latitude, type, depthNum) %>% arrange(desc(absoluteCounts_dinoCorr)) %>% 
   slice(1:2) %>% ungroup() %>% distinct(tax_name)
 
-bySpecies <- bySpecies %>% group_by(cruise, Latitude, type, depthNum, sample, tax_name) %>% summarize(absoluteCounts = sum(absoluteCounts))
+bySpecies <- bySpecies %>% group_by(cruise, Latitude, type, depthNum, sample, tax_name) %>% summarize(absoluteCounts_dinoCorr = sum(absoluteCounts_dinoCorr))
 
 bySpecies <- bySpecies %>% ungroup() %>% ungroup() %>% group_by(cruise, Latitude, type, depthNum, tax_name) %>% 
-  summarize(sd = sd(absoluteCounts), absoluteCounts = mean(absoluteCounts), numSamples = n())
+  summarize(sd_dino = sd(absoluteCounts_dinoCorr), absoluteCounts_dinoCorr = mean(absoluteCounts_dinoCorr), numSamples = n())
 
 bySpecies <- bySpecies %>% ungroup()
 
-bySpecies <- bySpecies %>% mutate(se = sd/sqrt(numSamples))
+bySpecies <- bySpecies %>% mutate(se_dino = sd_dino/sqrt(numSamples))
 
 bySpecies <- bySpecies %>% mutate(depth_tax_name = str_c(depthNum, "  ", tax_name))
 
-bySpecies %>% filter(Latitude > 36, Latitude < 38) %>% filter(type == "phot") %>% select(Latitude, depthNum, tax_name, absoluteCounts) %>% 
-  mutate(absoluteCounts = absoluteCounts/1e8) %>%
-  spread(key = depthNum, value = absoluteCounts) %>% filter(`55`<`15`, `125`<`55`)
+bySpecies %>% filter(Latitude > 36, Latitude < 38) %>% filter(type == "phot") %>% select(Latitude, depthNum, tax_name, absoluteCounts_dinoCorr) %>% 
+  mutate(absoluteCounts_dinoCorr = absoluteCounts_dinoCorr/1e8) %>%
+  spread(key = depthNum, value = absoluteCounts_dinoCorr) %>% filter(`55`<`15`, `125`<`55`)
 
-bySpecies %>% filter(Latitude > 40) %>% filter(type == "phot") %>% select(Latitude, depthNum, tax_name, absoluteCounts) %>% 
-  mutate(absoluteCounts = absoluteCounts/1e8) %>%
-  spread(key = depthNum, value = absoluteCounts) %>% filter(`50`<`15`, `75`<`50`)
+bySpecies %>% filter(Latitude > 40) %>% filter(type == "phot") %>% select(Latitude, depthNum, tax_name, absoluteCounts_dinoCorr) %>% 
+  mutate(absoluteCounts_dinoCorr = absoluteCounts_dinoCorr/1e8) %>%
+  spread(key = depthNum, value = absoluteCounts_dinoCorr) %>% filter(`50`<`15`, `75`<`50`)
 
-bySpecies %>% filter(Latitude > 40) %>% filter(type == "phot") %>% select(Latitude, depthNum, tax_name, absoluteCounts) %>% 
-  mutate(absoluteCounts = absoluteCounts/1e8) %>%
-  spread(key = depthNum, value = absoluteCounts) %>% filter(`41`<`15`, `75`<`41`)
+bySpecies %>% filter(Latitude > 40) %>% filter(type == "phot") %>% select(Latitude, depthNum, tax_name, absoluteCounts_dinoCorr) %>% 
+  mutate(absoluteCounts_dinoCorr = absoluteCounts_dinoCorr/1e8) %>%
+  spread(key = depthNum, value = absoluteCounts_dinoCorr) %>% filter(`41`<`15`, `75`<`41`)
 
-bySpecies %>% filter(Latitude > 40) %>% filter(type == "het") %>% select(Latitude, depthNum, tax_name, absoluteCounts) %>% 
-  mutate(absoluteCounts = absoluteCounts/1e8) %>%
-  spread(key = depthNum, value = absoluteCounts) %>% filter(`50`>`15`)
+bySpecies %>% filter(Latitude > 40) %>% filter(type == "het") %>% select(Latitude, depthNum, tax_name, absoluteCounts_dinoCorr) %>% 
+  mutate(absoluteCounts_dinoCorr = absoluteCounts_dinoCorr/1e8) %>%
+  spread(key = depthNum, value = absoluteCounts_dinoCorr) %>% filter(`50`>`15`)
 
-bySpecies %>% filter(Latitude > 40) %>% filter(type == "het") %>% select(Latitude, depthNum, tax_name, absoluteCounts) %>% 
-  mutate(absoluteCounts = absoluteCounts/1e8) %>%
-  spread(key = depthNum, value = absoluteCounts) %>% filter(`41`>`15`)
+bySpecies %>% filter(Latitude > 40) %>% filter(type == "het") %>% select(Latitude, depthNum, tax_name, absoluteCounts_dinoCorr) %>% 
+  mutate(absoluteCounts_dinoCorr = absoluteCounts_dinoCorr/1e8) %>%
+  spread(key = depthNum, value = absoluteCounts_dinoCorr) %>% filter(`41`>`15`)
 
-bySpecies %>% filter(Latitude > 40) %>% filter(type == "mixed") %>% select(Latitude, depthNum, tax_name, absoluteCounts) %>% 
-  mutate(absoluteCounts = absoluteCounts/1e8) %>%
-  spread(key = depthNum, value = absoluteCounts) %>% filter(`50`>`15`)
+bySpecies %>% filter(Latitude > 40) %>% filter(type == "mixed") %>% select(Latitude, depthNum, tax_name, absoluteCounts_dinoCorr) %>% 
+  mutate(absoluteCounts_dinoCorr = absoluteCounts_dinoCorr/1e8) %>%
+  spread(key = depthNum, value = absoluteCounts_dinoCorr) %>% filter(`50`>`15`)
 
-bySpecies %>% filter(Latitude > 40) %>% filter(type == "mixed") %>% select(Latitude, depthNum, tax_name, absoluteCounts) %>% 
-  mutate(absoluteCounts = absoluteCounts/1e8) %>%
-  spread(key = depthNum, value = absoluteCounts) %>% filter(`41`>`15`)
+bySpecies %>% filter(Latitude > 40) %>% filter(type == "mixed") %>% select(Latitude, depthNum, tax_name, absoluteCounts_dinoCorr) %>% 
+  mutate(absoluteCounts_dinoCorr = absoluteCounts_dinoCorr/1e8) %>%
+  spread(key = depthNum, value = absoluteCounts_dinoCorr) %>% filter(`41`>`15`)
 
 order <- bySpecies %>% arrange(desc(depthNum), desc(type), desc(tax_name)) %>% distinct(depth_tax_name)
 
-bySpecies %>% mutate(absoluteCounts = absoluteCounts/1e9, se = se/1e9) %>% arrange(desc(absoluteCounts))
+bySpecies %>% mutate(absoluteCounts_dinoCorr = absoluteCounts_dinoCorr/1e9, se_dino = se_dino/1e9) %>% arrange(desc(absoluteCounts_dinoCorr))
 
 bySpecies %>% filter(cruise == "Gradients3: 2019") %>% 
   mutate(type = factor(type, levels = c("phot", "mixed", "het"))) %>%
   mutate(Latitude = str_c(as.character(Latitude), " °N")) %>%
   mutate(depth_tax_name = factor(depth_tax_name, levels = order$depth_tax_name)) %>%
-  ggplot(aes(x = depth_tax_name, y = absoluteCounts/1e9, fill = type)) + 
+  ggplot(aes(x = depth_tax_name, y = absoluteCounts_dinoCorr/1e9, fill = type)) + 
   geom_bar(stat = 'identity', position = 'dodge') + 
-  geom_errorbar(aes(ymin=absoluteCounts/1e9-se/1e9, ymax=absoluteCounts/1e9+se/1e9), width=.2,
+  geom_errorbar(aes(ymin=absoluteCounts_dinoCorr/1e9-se_dino/1e9, ymax=absoluteCounts_dinoCorr/1e9+se_dino/1e9), width=.2,
                 position=position_dodge(.9)) +
   facet_wrap(~Latitude, nrow = 1, scales = "free_y") + 
   coord_flip() + 
@@ -144,14 +150,14 @@ g3_fluor <- g3_par %>% select(time,lat,lon,depth,Fluor)
 g3_par <- g3_par %>% select(time,lat,lon,depth,PAR)
 g3_nut <- g3_nut %>% select(time, lat,lon,depth,NO2)
 
-dat <- dat %>% group_by(cruise, Latitude, type, depthNum, sample) %>% summarize(absoluteCounts = sum(absoluteCounts))
+dat <- dat %>% group_by(cruise, Latitude, type, depthNum, sample) %>% summarize(absoluteCounts_dinoCorr = sum(absoluteCounts_dinoCorr))
 
 dat <- dat %>% ungroup() %>% ungroup() %>% group_by(cruise, Latitude, type, depthNum) %>% 
-  summarize(sd = sd(absoluteCounts), absoluteCounts = mean(absoluteCounts), numSamples = n())
+  summarize(sd_dino = sd(absoluteCounts_dinoCorr), absoluteCounts_dinoCorr = mean(absoluteCounts_dinoCorr), numSamples = n())
 
 dat <- dat %>% ungroup()
 
-dat <- dat %>% mutate(se = sd/sqrt(numSamples))
+dat <- dat %>% mutate(se_dino = sd_dino/sqrt(numSamples))
 
 g3_nut <- g3_nut %>% filter(lat %in% c(32.93300, 36.99900, 41.68100, 42.33400))
 
@@ -201,151 +207,155 @@ nrow(g3_par)
 g3_par <- g3_par %>% mutate(percPAR = PAR.x/PAR.y)
 g3_par <- g3_par %>% mutate(percPAR = percPAR*100)
 
-dat %>% filter(cruise == "Gradients3: 2019") %>% 
-  mutate(type = factor(type, levels = c("phot", "mixed", "het"))) %>%
-  mutate(Latitude = str_c(as.character(Latitude), " °N")) %>%
-  ggplot(aes(x = depthNum, y = absoluteCounts/1e9, fill = type)) + 
+
+dat %>% 
+  filter(cruise == "Gradients3: 2019") %>% 
+  mutate(type = factor(type, levels = c("phot", "mixed", "het"))) %>% 
+  mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% 
+  ggplot(aes(x = depthNum, y = absoluteCounts_dinoCorr / 1e9, fill = type)) + 
   geom_bar(stat = 'identity', position = 'dodge') + 
-  geom_errorbar(aes(ymin=absoluteCounts/1e9-se/1e9, ymax=absoluteCounts/1e9+se/1e9), width=5,
-                position=position_dodge(22)) +
+  geom_errorbar(aes(ymin = absoluteCounts_dinoCorr / 1e9 - se_dino / 1e9, ymax = absoluteCounts_dinoCorr / 1e9 + se_dino / 1e9), 
+                width = 5, position = position_dodge(22)) + 
   coord_flip() + 
-  theme_classic() +
-  theme_bw() +
-  theme(strip.background =element_rect(fill="white")) +
-  theme(strip.text.x = element_text(size = 26, color = 'black')) + 
-  theme(strip.text.y = element_text(size = 26, color = 'black')) + 
-  theme(axis.text.x = element_text(size = 22, color = 'black'))  + 
-  theme(axis.text.y = element_text(size = 22, color = 'black')) + 
-  theme(axis.title.y = element_text(size = 26, color = 'black')) + 
-  theme(legend.text = element_text(size = 20, color = 'black')) +
-  theme(legend.title = element_text(size = 22, color = 'black')) +
-  theme(axis.title.x = element_text(size = 26, color = 'black')) +  
-  labs(y = "Billion transcripts per liter", x = "Depth (m)") +
+  theme_bw() + 
+  theme(strip.background = element_rect(fill = "white"),
+        strip.text.x = element_text(size = 26, color = 'black'),
+        strip.text.y = element_text(size = 26, color = 'black'),
+        axis.text.x = element_text(size = 18, color = 'black'), 
+        axis.text.y = element_text(size = 22, color = 'black'), 
+        axis.title.y = element_text(size = 26, color = 'black'), 
+        legend.text = element_text(size = 20, color = 'black'), 
+        legend.title = element_text(size = 22, color = 'black'), 
+        axis.title.x = element_text(size = 26, color = 'black')) + 
   scale_fill_manual(values = c("forestgreen", "purple", "orange")) + 
   geom_point(data = g3_nut %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = NO2*30), color = 'blue', se = FALSE, size = .6)+ 
-  geom_point(data = g3_par %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = percPAR/5), color = 'red', se = FALSE, size = .6) +
+  geom_point(data = g3_par %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = percPAR*.12), color = 'red', se = FALSE, size = .6) +
   geom_line(data = g3_nut %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = NO2*30), color = 'blue', se = FALSE)+ 
-  geom_line(data = g3_par %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = percPAR/5), color = 'red', se = FALSE) +
+  geom_line(data = g3_par %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = percPAR*.12), color = 'red', se = FALSE) +
   
-  geom_point(data = g3_fluor %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = Fluor*5), color = 'lightgreen', se = FALSE, size = .6) +
-  geom_line(data = g3_fluor %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = Fluor*5), color = 'lightgreen', se = FALSE) +
-  scale_x_reverse(limits = c(150,0)) +
-  facet_wrap(~Latitude, nrow = 1)
-
-ggsave("g1G2G3/abundanceBySpeciesType_depth.png", dpi = 600, height = 5, width = 14)
-
-dat %>% filter(cruise == "Gradients3: 2019") %>% 
-  mutate(type = factor(type, levels = c("phot", "mixed", "het"))) %>%
-  mutate(Latitude = str_c(as.character(Latitude), " °N")) %>%
-  ggplot(aes(x = depthNum, y = absoluteCounts/1e9, fill = type)) + 
-  geom_bar(stat = 'identity', position = 'dodge') + 
-  geom_errorbar(aes(ymin=absoluteCounts/1e9-se/1e9, ymax=absoluteCounts/1e9+se/1e9), width=5,
-                position=position_dodge(22)) +
-  coord_flip() + 
-  theme_classic() +
-  theme_bw() +
-  theme(strip.background =element_rect(fill="white")) +
-  theme(strip.text.x = element_text(size = 26, color = 'black')) + 
-  theme(strip.text.y = element_text(size = 26, color = 'black')) + 
-  theme(axis.text.x = element_text(size = 14, color = 'black'))  + 
-  theme(axis.text.y = element_text(size = 22, color = 'black')) + 
-  theme(axis.title.y = element_text(size = 26, color = 'black')) + 
-  theme(legend.text = element_text(size = 20, color = 'black')) +
-  theme(legend.title = element_text(size = 22, color = 'black')) +
-  theme(axis.title.x = element_text(size = 26, color = 'black')) +  
-  labs(y = "Billion transcripts per liter", x = "Depth (m)") +
-  scale_fill_manual(values = c("forestgreen", "purple", "orange")) + 
-  geom_point(data = g3_nut %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = NO2*30), color = 'blue', se = FALSE, size = .6)+ 
-  geom_point(data = g3_par %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = percPAR/5), color = 'red', se = FALSE, size = .6) +
-  geom_line(data = g3_nut %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = NO2*30), color = 'blue', se = FALSE)+ 
-  geom_line(data = g3_par %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = percPAR/5), color = 'red', se = FALSE) +
+  geom_point(data = g3_fluor %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = Fluor*3), color = 'lightgreen', se = FALSE, size = .6) +
+  geom_line(data = g3_fluor %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = Fluor*3), color = 'lightgreen', se = FALSE) +
   
-  geom_point(data = g3_fluor %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = Fluor*5), color = 'lightgreen', se = FALSE, size = .6) +
-  geom_line(data = g3_fluor %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = Fluor*5), color = 'lightgreen', se = FALSE) +
-  
-  scale_x_reverse(limits = c(150,0)) +
+  scale_x_reverse(limits = c(150, 0)) + 
   facet_wrap(~Latitude, nrow = 1) + 
-  scale_y_continuous(sec.axis = sec_axis(trans=~./30, name = expression(NO[3] * "_" * NO[2]~(μmol/L))))
+  scale_y_continuous(limits = c(0, 12), breaks = c(0, 3, 6, 9, 12)) + 
+  labs(x = "Depth (m)", y = "Billion transcripts per liter")
 
-ggsave("g1G2G3/abundanceBySpeciesType_depth_nut.svg", dpi = 600, height = 6, width = 14)
+ggsave("g1G2G3/abundanceBySpeciesType_depth.png", dpi = 600, height = 5.5, width = 14)
 
-dat %>% filter(cruise == "Gradients3: 2019") %>% 
-  mutate(type = ifelse(is.na(type), "NA", type)) %>%
-  mutate(type = factor(type, levels = c("phot", "mixed", "het"))) %>%
-  mutate(Latitude = str_c(as.character(Latitude), " °N")) %>%
-  ggplot(aes(x = depthNum, y = absoluteCounts/1e9, fill = type)) + 
+
+dat %>% 
+  filter(cruise == "Gradients3: 2019") %>% 
+  mutate(type = factor(type, levels = c("phot", "mixed", "het"))) %>% 
+  mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% 
+  ggplot(aes(x = depthNum, y = absoluteCounts_dinoCorr / 1e9, fill = type)) + 
   geom_bar(stat = 'identity', position = 'dodge') + 
-  geom_errorbar(aes(ymin=absoluteCounts/1e9-se/1e9, ymax=absoluteCounts/1e9+se/1e9), width=5,
-                position=position_dodge(22)) +
+  geom_errorbar(aes(ymin = absoluteCounts_dinoCorr / 1e9 - se_dino / 1e9, ymax = absoluteCounts_dinoCorr / 1e9 + se_dino / 1e9), 
+                width = 5, position = position_dodge(22)) + 
   coord_flip() + 
-  theme_classic() +
-  theme_bw() +
-  theme(strip.background =element_rect(fill="white")) +
-  theme(strip.text.x = element_text(size = 26, color = 'black')) + 
-  theme(strip.text.y = element_text(size = 26, color = 'black')) + 
-  theme(axis.text.x = element_text(size = 14, color = 'black'))  + 
-  theme(axis.text.y = element_text(size = 22, color = 'black')) + 
-  theme(axis.title.y = element_text(size = 26, color = 'black')) + 
-  theme(legend.text = element_text(size = 20, color = 'black')) +
-  theme(legend.title = element_text(size = 22, color = 'black')) +
-  theme(axis.title.x = element_text(size = 26, color = 'black')) +  
-  labs(y = "Billion transcripts per liter", x = "Depth (m)") +
+  theme_bw() + 
+  theme(strip.background = element_rect(fill = "white"),
+        strip.text.x = element_text(size = 26, color = 'black'),
+        strip.text.y = element_text(size = 26, color = 'black'),
+        axis.text.x = element_text(size = 18, color = 'black'), 
+        axis.text.y = element_text(size = 22, color = 'black'), 
+        axis.title.y = element_text(size = 26, color = 'black'), 
+        legend.text = element_text(size = 20, color = 'black'), 
+        legend.title = element_text(size = 22, color = 'black'), 
+        axis.title.x = element_text(size = 26, color = 'black')) + 
   scale_fill_manual(values = c("forestgreen", "purple", "orange")) + 
   geom_point(data = g3_nut %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = NO2*30), color = 'blue', se = FALSE, size = .6)+ 
-  geom_point(data = g3_par %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = percPAR/5), color = 'red', se = FALSE, size = .6) +
+  geom_point(data = g3_par %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = percPAR*.12), color = 'red', se = FALSE, size = .6) +
   geom_line(data = g3_nut %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = NO2*30), color = 'blue', se = FALSE)+ 
-  geom_line(data = g3_par %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = percPAR/5), color = 'red', se = FALSE) +
+  geom_line(data = g3_par %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = percPAR*.12), color = 'red', se = FALSE) +
   
-  geom_point(data = g3_fluor %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = Fluor*5), color = 'lightgreen', se = FALSE, size = .6) +
-  geom_line(data = g3_fluor %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = Fluor*5), color = 'lightgreen', se = FALSE) +
+  geom_point(data = g3_fluor %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = Fluor*3), color = 'lightgreen', se = FALSE, size = .6) +
+  geom_line(data = g3_fluor %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = Fluor*3), color = 'lightgreen', se = FALSE) +
   
-  scale_x_reverse(limits = c(150,0)) +
+  scale_x_reverse(limits = c(150, 0)) + 
   facet_wrap(~Latitude, nrow = 1) + 
-  scale_y_continuous(sec.axis = sec_axis(trans=~./5, name = expression("Fluorescence (mg/m"^3*")")))
+  labs(x = "Depth (m)", y = "Billion transcripts per liter") + 
+  scale_y_continuous(limits = c(0, 12), breaks = c(0, 3, 6, 9, 12), sec.axis = sec_axis(trans=~./30, name = expression(NO[3] * "_" * NO[2]~(μmol/L))))
 
-ggsave("g1G2G3/abundanceBySpeciesType_depth_fluor.svg", dpi = 600, height = 5, width = 14)
+ggsave("g1G2G3/abundanceBySpeciesType_depth_nut.svg", dpi = 600, height = 5.5, width = 14)
 
-dat %>% filter(cruise == "Gradients3: 2019") %>% 
-  mutate(type = factor(type, levels = c("phot", "mixed", "het"))) %>%
-  mutate(Latitude = str_c(as.character(Latitude), " °N")) %>%
-  ggplot(aes(x = depthNum, y = absoluteCounts/1e9, fill = type)) + 
+
+dat %>% 
+  filter(cruise == "Gradients3: 2019") %>% 
+  mutate(type = factor(type, levels = c("phot", "mixed", "het"))) %>% 
+  mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% 
+  ggplot(aes(x = depthNum, y = absoluteCounts_dinoCorr / 1e9, fill = type)) + 
   geom_bar(stat = 'identity', position = 'dodge') + 
-  geom_errorbar(aes(ymin=absoluteCounts/1e9-se/1e9, ymax=absoluteCounts/1e9+se/1e9), width=5,
-                position=position_dodge(22)) +
+  geom_errorbar(aes(ymin = absoluteCounts_dinoCorr / 1e9 - se_dino / 1e9, ymax = absoluteCounts_dinoCorr / 1e9 + se_dino / 1e9), 
+                width = 5, position = position_dodge(22)) + 
   coord_flip() + 
-  theme_classic() +
-  theme_bw() +
-  theme(strip.background =element_rect(fill="white")) +
-  theme(strip.text.x = element_text(size = 26, color = 'black')) + 
-  theme(strip.text.y = element_text(size = 26, color = 'black')) + 
-  theme(axis.text.x = element_text(size = 12, color = 'black'))  + 
-  theme(axis.text.y = element_text(size = 22, color = 'black')) + 
-  theme(axis.title.y = element_text(size = 26, color = 'black')) + 
-  theme(legend.text = element_text(size = 20, color = 'black')) +
-  theme(legend.title = element_text(size = 22, color = 'black')) +
-  theme(axis.title.x = element_text(size = 26, color = 'black')) +  
-  labs(y = "Billion transcripts per liter", x = "Depth (m)") +
+  theme_bw() + 
+  theme(strip.background = element_rect(fill = "white"),
+        strip.text.x = element_text(size = 26, color = 'black'),
+        strip.text.y = element_text(size = 26, color = 'black'),
+        axis.text.x = element_text(size = 18, color = 'black'), 
+        axis.text.y = element_text(size = 22, color = 'black'), 
+        axis.title.y = element_text(size = 26, color = 'black'), 
+        legend.text = element_text(size = 20, color = 'black'), 
+        legend.title = element_text(size = 22, color = 'black'), 
+        axis.title.x = element_text(size = 26, color = 'black')) + 
   scale_fill_manual(values = c("forestgreen", "purple", "orange")) + 
   geom_point(data = g3_nut %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = NO2*30), color = 'blue', se = FALSE, size = .6)+ 
-  geom_point(data = g3_par %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = percPAR/5), color = 'red', se = FALSE, size = .6) +
+  geom_point(data = g3_par %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = percPAR*.12), color = 'red', se = FALSE, size = .6) +
   geom_line(data = g3_nut %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = NO2*30), color = 'blue', se = FALSE)+ 
-  geom_line(data = g3_par %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = percPAR/5), color = 'red', se = FALSE) +
+  geom_line(data = g3_par %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = percPAR*.12), color = 'red', se = FALSE) +
   
-  geom_point(data = g3_fluor %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = Fluor*5), color = 'lightgreen', se = FALSE, size = .6) +
-  geom_line(data = g3_fluor %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = Fluor*5), color = 'lightgreen', se = FALSE) +
+  geom_point(data = g3_fluor %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = Fluor*3), color = 'lightgreen', se = FALSE, size = .6) +
+  geom_line(data = g3_fluor %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = Fluor*3), color = 'lightgreen', se = FALSE) +
   
-  scale_x_reverse(limits = c(150,0)) +
+  scale_x_reverse(limits = c(150, 0)) + 
   facet_wrap(~Latitude, nrow = 1) + 
-  scale_y_continuous(sec.axis = sec_axis(trans=~.*5, name="% surface PAR"))
-                     
-ggsave("g1G2G3/abundanceBySpeciesType_depth_par.svg", dpi = 600, height = 5, width = 14)
+  labs(x = "Depth (m)", y = "Billion transcripts per liter") + 
+  scale_y_continuous(limits = c(0, 12), breaks = c(0, 3, 6, 9, 12), sec.axis = sec_axis(trans=~./3, name = expression("Fluorescence (mg/m"^3*")")))
 
+ggsave("g1G2G3/abundanceBySpeciesType_depth_fluor.svg", dpi = 600, height = 5.5, width = 14)
+
+
+dat %>% 
+  filter(cruise == "Gradients3: 2019") %>% 
+  mutate(type = factor(type, levels = c("phot", "mixed", "het"))) %>% 
+  mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% 
+  ggplot(aes(x = depthNum, y = absoluteCounts_dinoCorr / 1e9, fill = type)) + 
+  geom_bar(stat = 'identity', position = 'dodge') + 
+  geom_errorbar(aes(ymin = absoluteCounts_dinoCorr / 1e9 - se_dino / 1e9, ymax = absoluteCounts_dinoCorr / 1e9 + se_dino / 1e9), 
+                width = 5, position = position_dodge(22)) + 
+  coord_flip() + 
+  theme_bw() + 
+  theme(strip.background = element_rect(fill = "white"),
+        strip.text.x = element_text(size = 26, color = 'black'),
+        strip.text.y = element_text(size = 26, color = 'black'),
+        axis.text.x = element_text(size = 18, color = 'black'), 
+        axis.text.y = element_text(size = 22, color = 'black'), 
+        axis.title.y = element_text(size = 26, color = 'black'), 
+        legend.text = element_text(size = 20, color = 'black'), 
+        legend.title = element_text(size = 22, color = 'black'), 
+        axis.title.x = element_text(size = 26, color = 'black')) + 
+  scale_fill_manual(values = c("forestgreen", "purple", "orange")) + 
+  geom_point(data = g3_nut %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = NO2*30), color = 'blue', se = FALSE, size = .6)+ 
+  geom_point(data = g3_par %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = percPAR*.12), color = 'red', se = FALSE, size = .6) +
+  geom_line(data = g3_nut %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = NO2*30), color = 'blue', se = FALSE)+ 
+  geom_line(data = g3_par %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = percPAR*.12), color = 'red', se = FALSE) +
+  
+  geom_point(data = g3_fluor %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = Fluor*3), color = 'lightgreen', se = FALSE, size = .6) +
+  geom_line(data = g3_fluor %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = Fluor*3), color = 'lightgreen', se = FALSE) +
+  
+  scale_x_reverse(limits = c(150, 0)) + 
+  facet_wrap(~Latitude, nrow = 1) + 
+  labs(x = "Depth (m)", y = "Billion transcripts per liter")+ 
+  scale_y_continuous(limits = c(0, 12), breaks = c(0, 3, 6, 9, 12), sec.axis = sec_axis(trans=~./.12, name="% surface PAR"))
+
+ggsave("g1G2G3/abundanceBySpeciesType_depth_par.svg", dpi = 600, height = 5.5, width = 14)
 
 
 dat %>% filter(cruise == "Gradients3: 2019") %>% 
   mutate(type = factor(type, levels = c("phot", "mixed", "het"))) %>%
   mutate(Latitude = str_c(as.character(Latitude), " °N")) %>%
-  ggplot(aes(x = depthNum, y = absoluteCounts/1e9, fill = type)) + 
+  ggplot(aes(x = depthNum, y = absoluteCounts_dinoCorr / 1e9, fill = type)) + 
   coord_flip() + 
   theme_classic() +
   theme_bw() +
@@ -361,17 +371,19 @@ dat %>% filter(cruise == "Gradients3: 2019") %>%
   labs(y = "", x = "Depth (m)") +
   scale_fill_manual(values = c("forestgreen", "purple", "orange")) + 
   geom_point(data = g3_nut %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = NO2*30), color = 'blue', se = FALSE, size = .6)+ 
-  geom_point(data = g3_par %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = percPAR/5), color = 'red', se = FALSE, size = .6) +
+  geom_point(data = g3_par %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = percPAR*.12), color = 'red', se = FALSE, size = .6) +
   geom_line(data = g3_nut %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = NO2*30), color = 'blue', se = FALSE)+ 
-  geom_line(data = g3_par %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = percPAR/5), color = 'red', se = FALSE) +
+  geom_line(data = g3_par %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = percPAR*.12), color = 'red', se = FALSE) +
   
-  geom_point(data = g3_fluor %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = Fluor*5), color = 'lightgreen', se = FALSE, size = .6) +
-  geom_line(data = g3_fluor %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = Fluor*5), color = 'lightgreen', se = FALSE) +
+  geom_point(data = g3_fluor %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = Fluor*3), color = 'lightgreen', se = FALSE, size = .6) +
+  geom_line(data = g3_fluor %>% mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% mutate(type = "phot"), aes(x = depth, y = Fluor*3), color = 'lightgreen', se = FALSE) +
   
   scale_x_reverse(limits = c(130,0), breaks = c(130,125,75,55,50,41,15,0)) +
   facet_wrap(~Latitude, nrow = 1) + 
-  theme(legend.position = "NA")
+  theme(legend.position = "NA") +
+  scale_y_continuous(limits = c(0,12), breaks = c(0,3,6,9,12))
 
 ggsave("g1G2G3/abundanceBySpeciesType_depth_parNutFluor.png", dpi = 600, height = 9, width = 5)
 ggsave("g1G2G3/abundanceBySpeciesType_depth_parNutFluor.svg", dpi = 600, height = 9, width = 5)
+
 
