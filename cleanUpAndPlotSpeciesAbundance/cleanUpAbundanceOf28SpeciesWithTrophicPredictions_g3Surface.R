@@ -110,14 +110,26 @@ exclude <- c("Apostichopus", "Caulerpa", "Acartia", "Adineta", "Amphimedon", "An
 
 both <- both %>% filter(!(genus %in% exclude))
 
-withTrophMode <- both %>% group_by(taxaGroup) %>% summarize(absoluteCounts = sum(absoluteCounts)) %>% 
-  filter(taxaGroup == "speciesWithTrophicMode") %>% select(absoluteCounts)
+dinos <- read_csv("../dinoflagellateSpecies.csv")
 
-rest <- both %>% group_by(taxaGroup) %>% summarize(absoluteCounts = sum(absoluteCounts)) %>% 
-  filter(taxaGroup == "Rest") %>% select(absoluteCounts)
+both %>% anti_join(dinos, by = c("tax_name"))
 
-#73.29 28 species
-round(100*withTrophMode$absoluteCounts/(withTrophMode$absoluteCounts+rest$absoluteCounts),2)
+nrow(both)
+both <- both %>% left_join(dinos, by = c("tax_name"))
+nrow(both)
+
+both <- both %>% mutate(absoluteCounts_dinoCorr = ifelse(group == "Dinoflagellate", absoluteCounts/6.4, absoluteCounts))
+
+withTrophMode <- both %>% group_by(taxaGroup) %>% summarize(absoluteCounts_dinoCorr = sum(absoluteCounts_dinoCorr)) %>% 
+  filter(taxaGroup == "speciesWithTrophicMode") %>% select(absoluteCounts_dinoCorr)
+
+rest <- both %>% group_by(taxaGroup) %>% summarize(absoluteCounts_dinoCorr = sum(absoluteCounts_dinoCorr)) %>% 
+  filter(taxaGroup == "Rest") %>% select(absoluteCounts_dinoCorr)
+
+
+#71.42 28 species
+round(100*withTrophMode$absoluteCounts_dinoCorr/(withTrophMode$absoluteCounts_dinoCorr+rest$absoluteCounts_dinoCorr),2)
+
 
 
 

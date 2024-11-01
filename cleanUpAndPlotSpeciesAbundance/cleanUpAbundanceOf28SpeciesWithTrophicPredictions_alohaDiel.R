@@ -55,14 +55,69 @@ exclude <- c("Apostichopus", "Caulerpa", "Acartia", "Adineta", "Amphimedon", "An
 
 both <- both %>% filter(!(genus %in% exclude))
 
-withTrophMode <- both %>% group_by(taxaGroup) %>% summarize(absoluteCounts = sum(absoluteCounts)) %>% 
-  filter(taxaGroup == "speciesWithTrophicMode") %>% select(absoluteCounts)
+type1 <- read_excel("~/Dropbox/grad/research/g1Surface/typeOfTaxaInPredictions_noOutliers.xlsx")
+type2 <- read_excel("~/Dropbox/grad/research/g2Surface/typeOfTaxaInPredictions_noOutliers.xlsx")
+type3 <- read_excel("~/Dropbox/grad/research/g3/typeOfTaxaInPredictions_noOutliers.xlsx")
 
-rest <- both %>% group_by(taxaGroup) %>% summarize(absoluteCounts = sum(absoluteCounts)) %>% 
-  filter(taxaGroup == "Rest") %>% select(absoluteCounts)
+type <- bind_rows(type1, type2, type3)
 
-#59.24 28 species
-round(100*withTrophMode$absoluteCounts/(withTrophMode$absoluteCounts+rest$absoluteCounts),2)
+type <- type %>% mutate(genus = str_extract(taxa, "[A-Za-z]{1,}"))
+type <- type %>% distinct(genus, group)
+type <- type %>% filter(!is.na(genus))
+
+nrow(both)
+both <- both %>% left_join(type %>% distinct(genus, group), by = c("genus"))
+nrow(both)
+
+group <- read_csv("~/Dropbox/grad/research/g2Surface/cleanedUpIFCB.csv")
+
+nrow(both)
+both <- both %>% left_join(group %>% distinct(var, group.x), by = c("genus" = "var"))
+nrow(both)
+
+both <- both %>% mutate(group = ifelse(is.na(group), group.x, group))
+both <- both %>% select(-group.x)
+
+taxInfo <- read_csv("../tax_v11.csv")
+
+taxInfo <- taxInfo %>% distinct(genus, class_)
+exclude <- taxInfo %>% group_by(genus) %>% distinct(class_) %>% summarize(n = n()) %>% filter(n > 1) %>% distinct(genus)
+
+taxInfo <- taxInfo %>% filter(!(genus %in% exclude$genus))
+
+nrow(both)
+both <- both %>% left_join(taxInfo %>% distinct(genus, class_), by = c("genus"))
+nrow(both)
+
+both <- both %>% mutate(group = ifelse((is.na(group) & class_ == "Dinophyceae"), "Dinoflagellate", group))
+
+both <- both %>% mutate(class_ = ifelse(is.na(class_), genus, class_))
+
+#"Abedinium", "Apocalathium", "Breviolum", "Fugacium" are the only dinoflagellates in this list
+both %>% filter(is.na(group)) %>% distinct(class_)
+
+dinos <- c("Abedinium", "Apocalathium", "Breviolum", "Fugacium")
+
+both <- both %>% mutate(group = ifelse(class_ %in% dinos, "Dinoflagellate", group))
+
+both <- both %>% mutate(group = ifelse(is.na(group), "Nondinoflagellate", group))
+
+both <- both %>% mutate(group = ifelse(group != "Dinoflagellate", "Nondinoflagellate", group))
+
+both %>% distinct(group)
+
+both <- both %>% mutate(absoluteCounts_dinoCorr = ifelse(group == "Dinoflagellate", absoluteCounts/6.4, absoluteCounts))
+
+both %>% distinct(tax_name, group) %>% write_csv("../dinoflagellateSpecies.csv")
+
+withTrophMode <- both %>% group_by(taxaGroup) %>% summarize(absoluteCounts_dinoCorr = sum(absoluteCounts_dinoCorr)) %>% 
+  filter(taxaGroup == "speciesWithTrophicMode") %>% select(absoluteCounts_dinoCorr)
+
+rest <- both %>% group_by(taxaGroup) %>% summarize(absoluteCounts_dinoCorr = sum(absoluteCounts_dinoCorr)) %>% 
+  filter(taxaGroup == "Rest") %>% select(absoluteCounts_dinoCorr)
+
+#47.43 28 species
+round(100*withTrophMode$absoluteCounts_dinoCorr/(withTrophMode$absoluteCounts_dinoCorr+rest$absoluteCounts_dinoCorr),2)
 
 
 
