@@ -558,18 +558,18 @@ merged %>%
   geom_point(data = nut %>% mutate(type = "Phototrophic species bins") %>% filter(lat > 23.49) %>% filter(lat < 42.335), aes(x = lat, y = value*5), size = .7, color = 'blue') +
   geom_line(data = nut %>% mutate(type = "Phototrophic species bins") %>% filter(lat > 23.49) %>% filter(lat < 42.335), aes(x = lat, y = value*5), color = 'blue') +
   
-  geom_point(data = modis %>% mutate(type = "Phototrophic species bins") %>% group_by(cruise, type, lat) %>% summarize(PAR = mean(PAR)) %>% filter(lat < 42.335), aes(x = lat, y = PAR), size = .7, color = 'red') +
-  geom_line(data = modis %>% mutate(type = "Phototrophic species bins") %>% group_by(cruise, type, lat) %>% summarize(PAR = mean(PAR)) %>% filter(lat < 42.335), aes(x = lat, y = PAR), color = 'red') +
+  geom_point(data = modis %>% mutate(type = "Phototrophic species bins") %>% group_by(cruise, type, lat) %>% summarize(PAR = mean(PAR)) %>% filter(lat < 42.335), aes(x = lat, y = PAR/2), size = .7, color = 'red') +
+  geom_line(data = modis %>% mutate(type = "Phototrophic species bins") %>% group_by(cruise, type, lat) %>% summarize(PAR = mean(PAR)) %>% filter(lat < 42.335), aes(x = lat, y = PAR/2), color = 'red') +
   
-  scale_y_continuous(limits = c(0, 100), name = "Billion transcripts per liter",
+  scale_y_continuous(limits = c(0, 40), name = "Billion transcripts per liter",
                      sec.axis = sec_axis(trans=~./5, name = expression(NO[3] * "_" * NO[2]~(μmol/L)))) + theme(axis.text.y.right = element_text(colour = "blue"), axis.title.y.right = element_text(colour = "blue"))
 
 ggsave("abundanceOverG1G2G3surface_byTrophicMode_sum_area.png", height = 7, width = 20)
 
 
 ggplot() + 
-  geom_point(data = modis %>% mutate(type = "Phototrophic species bins") %>% group_by(cruise, type, lat) %>% summarize(PAR = mean(PAR)), aes(x = lat, y = PAR), size = .7, color = 'red') +
-  geom_line(data = modis %>% mutate(type = "Phototrophic species bins") %>% group_by(cruise, type, lat) %>% summarize(PAR = mean(PAR)), aes(x = lat, y = PAR), color = 'red') +
+  geom_point(data = modis %>% mutate(type = "Phototrophic species bins") %>% group_by(cruise, type, lat) %>% summarize(PAR = mean(PAR)), aes(x = lat, y = PAR/2), size = .7, color = 'red') +
+  geom_line(data = modis %>% mutate(type = "Phototrophic species bins") %>% group_by(cruise, type, lat) %>% summarize(PAR = mean(PAR)), aes(x = lat, y = PAR/2), color = 'red') +
   geom_point(data = nut %>% mutate(type = "Phototrophic species bins"), aes(x = lat, y = value*5), size = .7, color = 'blue') +
   geom_line(data = nut %>% mutate(type = "Phototrophic species bins"), aes(x = lat, y = value*5), color = 'blue') + 
   facet_wrap(~cruise) + labs(color = "") +
@@ -584,12 +584,10 @@ ggplot() +
   theme(legend.text = element_text(size = 20, color = 'black')) +
   theme(legend.title = element_text(size = 22, color = 'black')) +
   theme(axis.title.x = element_text(size = 26, color = 'black')) +  
-  labs(y = "NO3_NO2 (μmol/L)", x = "", shape = "", fill = "") + 
-  scale_y_continuous(limits = c(0, 70), sec.axis = sec_axis(trans=~./1, name=expression("PAR (" * "mol quanta " * m^-2 * " " *day^-1 * ")"))) + theme(axis.text.y.right = element_text(colour = "red"), axis.title.y.right = element_text(size = 20, colour = "red"))
+  labs(y = expression(NO[3] * "_" * NO[2]~(μmol/L)), x = "", shape = "", fill = "") + 
+  scale_y_continuous(limits = c(0, 40), sec.axis = sec_axis(trans=~.*2, name=expression("PAR (" * "mol quanta " * m^-2 * " " *day^-1 * ")"))) + theme(axis.text.y.right = element_text(colour = "red"), axis.title.y.right = element_text(size = 20, colour = "red"))
 
-ggsave("nitPARagainstLat.png", height = 3.5, width = 20)
-
-
+ggsave("nitPARagainstLat.png", height = 3.7, width = 20)
 
 merged %>% 
   mutate(type = ifelse(type == "Heterotrophic", "Heterotrophic species bins", type)) %>% 
@@ -629,12 +627,12 @@ merged %>%
   geom_point(data = nut %>% mutate(type = "Phototrophic species bins"), aes(x = lat, y = value*5), size = .7, color = 'blue') +
   geom_line(data = nut %>% mutate(type = "Phototrophic species bins"), aes(x = lat, y = value*5), color = 'blue') +
   
-  geom_point(data = modis %>% mutate(type = "Phototrophic species bins") %>% group_by(cruise, type, lat) %>% summarize(PAR = mean(PAR)), aes(x = lat, y = PAR), size = .7, color = 'red') +
-  geom_line(data = modis %>% mutate(type = "Phototrophic species bins") %>% group_by(cruise, type, lat) %>% summarize(PAR = mean(PAR)), aes(x = lat, y = PAR), color = 'red') +
+  geom_point(data = modis %>% mutate(type = "Phototrophic species bins") %>% group_by(cruise, type, lat) %>% summarize(PAR = mean(PAR)), aes(x = lat, y = PAR/2), size = .7, color = 'red') +
+  geom_line(data = modis %>% mutate(type = "Phototrophic species bins") %>% group_by(cruise, type, lat) %>% summarize(PAR = mean(PAR)), aes(x = lat, y = PAR/2), color = 'red') +
   
   
-  scale_y_continuous(limits = c(0, 100), name = "Billion transcripts per liter",
-                     sec.axis = sec_axis(trans=~./1, name=expression("PAR (" * "mol quanta " * m^-2 * " " *day^-1 * ")"))) + theme(axis.text.y.right = element_text(colour = "red"), axis.title.y.right = element_text(colour = "red"))
+  scale_y_continuous(limits = c(0, 40), name = "Billion transcripts per liter",
+                     sec.axis = sec_axis(trans=~.*2, name=expression("PAR (" * "mol quanta " * m^-2 * " " *day^-1 * ")"))) + theme(axis.text.y.right = element_text(colour = "red"), axis.title.y.right = element_text(colour = "red"))
 
 ggsave("abundanceOverG1G2G3surface_byTrophicMode_sum_area_par.png", height = 7, width = 20)
 
