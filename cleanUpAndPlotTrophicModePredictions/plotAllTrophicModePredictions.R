@@ -5,18 +5,18 @@ library(ggpmisc)
 
 setwd("~/Dropbox/grad/research/")
 
+###clean up and merge datasets
+
 g1 <- read_csv("g1Surface/G1_surface_trophicPredictions_marFerret2023_cleanedUp_noOutliers.csv")
 g2 <- read_csv("g2Surface/G2_surface_trophicPredictions_cleanedUp_updatedMarferret_marmicroDb2023_noOutliers.csv")
 g3 <- read_csv("g3/G3_trophicPredictions_cleanedUp_updatedMarferret_marmicroDb2023_noOutliers.csv")
 
-colnames(g1)
 colnames(g1) <- c("sample", "taxa", "xg_pred", "probability", "size", "depth", "latitude", "station") 
 
 g2 <- g2 %>% select(-Station, -`Time Start (HST)`)
-colnames(g2)
+
 colnames(g2) <- c("sample", "taxa", "xg_pred", "probability", "size", "station", "cast", "depth", "latitude") 
 
-colnames(g3)
 colnames(g3) <- c("sample", "taxa", "xg_pred", "probability", "Sample.ID", "Cruise", "Cruise.ID", "Type", "station", "cast", "size", "depth", "latitude", "longitude", "exp") 
 
 g3 <- g3 %>% select(sample, station, taxa, xg_pred, probability, size, depth, latitude)
@@ -31,13 +31,11 @@ g <- bind_rows(g1 %>% mutate(cruise = "g1"), g2 %>% mutate(cruise = "g2"), g3 %>
 alohaDiel <- read_csv("alohaDiel/G1_trophicPredictions_cleanedUp_updatedMarferret_marmicroDb2023_diel_noOutliers.csv") %>% 
   select(-time.y)
 
-colnames(alohaDiel)
 colnames(alohaDiel) <- c("sample", "taxa", "xg_pred", "probability", "time", "station", "date")
 
 g3Diel <- read_csv("g3Diel/G3_trophicPredictions_cleanedUp_updatedMarferret_marmicroDb2023_diel_noOutliers.csv") %>% 
   select(-Cruise, -Type, -Station, -Cast, -Longitude, -Exp, -Cruise.ID)
 
-colnames(g3Diel)
 colnames(g3Diel) <- c("taxa", "xg_pred", "probability", "sample", "size", "depth", "date", "time", "latitude", "hourMin", 
                       "hour", "justHour")
 
@@ -56,7 +54,8 @@ alohaDiel %>% distinct(date)
 g3Diel$time <- as.numeric(g3Diel$time)
 g3Diel %>% distinct(time)
 
-g <- bind_rows(g, alohaDiel %>% mutate(cruise = "alohaDiel"), g3Diel %>% mutate(cruise = "g3Diel"))
+g <- bind_rows(g, alohaDiel %>% mutate(cruise = "alohaDiel") %>% mutate(xg_pred = str_replace(xg_pred, "y$", "ic")), 
+               g3Diel %>% mutate(cruise = "g3Diel"))
 
 g %>% distinct(xg_pred)
 
@@ -101,7 +100,6 @@ g2Inc <- g2Inc %>% mutate(station = str_c(Expt, Treatment, Timepoint))
 
 g2Inc <- g2Inc %>% select(taxa, xg_pred, probability, `Sample name`, station)
 
-colnames(g2Inc)[4]
 colnames(g2Inc)[4] <- "sample"
 
 g2Inc$cruise <- "G2 incubations"
@@ -120,7 +118,7 @@ g %>% distinct(taxa) %>% write_csv("g1G2G3/28SpeciesWithTrophicPredictions.csv")
 
 g %>% distinct(sample) %>% nrow()
 
-##plot 
+###plot 
 
 g %>% filter(is.na(group))
 
@@ -206,19 +204,7 @@ mixedPreds %>%
   ungroup() %>%
   distinct(taxa) 
 
-mixedPreds %>% 
-  ungroup() %>%
-  distinct(taxa) %>%
-  semi_join(reps %>% group_by(taxa) %>% distinct(xg_pred) %>% summarize(n = n()) %>% 
-  filter(n > 1), by = c("taxa"))
-
-mixedPreds %>% 
-  ungroup() %>%
-  distinct(taxa) %>%
-  anti_join(reps %>% group_by(taxa) %>% distinct(xg_pred) %>% summarize(n = n()) %>% 
-              filter(n > 1), by = c("taxa"))
-
- mixedPreds <- mixedPreds %>% 
+mixedPreds <- mixedPreds %>% 
   ungroup() %>%
   distinct(taxa) %>%
   semi_join(reps %>% group_by(taxa) %>% distinct(xg_pred) %>% summarize(n = n()) %>% 
@@ -275,8 +261,6 @@ dashed <- dat %>% select(xg_pred, taxa, cruise, numPredictions, latitude) %>% di
   gather(Heterotrophy:Phototrophy, key = xg_pred, value = numPredictions)
 
 dashed <- dashed %>% filter(cruise == "Gradients1: 2016")
-
-dat %>% distinct(taxa)
 
 dat$taxa <- factor(dat$taxa, levels = 
                      c("Karlodinium\nveneficum",
@@ -356,6 +340,8 @@ nrow(g)
 g <- g %>% left_join(g3sample %>% select(-Replicate, -Filter), by = c("sample" = "Sample.ID"))
 nrow(g)
 
+g3_sample <- g %>% filter(cruise == "g3") %>% distinct(sample, newSample)
+
 g <- g %>% mutate(sample = ifelse(cruise == "g3", newSample, sample))
 
 g <- g %>% select(-newSample)
@@ -364,8 +350,6 @@ g %>% filter(cruise == "g3") %>% select(sample) %>% head()
 
 g <- g %>% mutate(station = ifelse(cruise == "g3", as.character(latitude), station))
 g <- g %>% mutate(station = ifelse(cruise == "g3Diel", str_extract(sample, "S[0-9]{1,}C[0-9]{1,}"), station))
-g %>% filter(is.na(station))
-
 g <- g %>% mutate(station = ifelse(cruise == "g3Depth", str_c(station, "_", Depth), station))
 
 ##fix cruise names 
@@ -376,9 +360,44 @@ g <- g %>% mutate(cruise = ifelse(cruise == "alohaDiel", "Aloha diel", cruise)) 
   mutate(cruise = ifelse(cruise == "g3Diel", "G3 diel", cruise)) %>%
   mutate(cruise = ifelse(cruise == "g3Depth", "G3 depth", cruise)) 
 
-total <- g %>% group_by(taxa, station, cruise) %>% summarize(total = n())
+aloha <- read_csv("alohaDiel/pfamSummary.csv")
+g1 <- read_csv("g1Surface/corePfamSummary.csv")
+colnames(g1)[1] <- "sample"
 
-total %>% ungroup() %>% arrange(desc(total))
+g2 <- read_csv("g2Surface/pfamSummary.csv")
+colnames(g2)[1] <- "sample"
+
+g3 <- read_csv("g3/pfamSummary.csv")
+g3_diel <- read_csv("g3Diel/pfamSummary.csv")
+g3_depth <- read_csv("g3Depth/corePfamSummary.csv")
+colnames(g3_depth)[2] <- "tax_id"
+
+g2_inc <- read_csv("g2Incubation/pfamSummary.csv")
+
+corePfam <- bind_rows(aloha %>% mutate(cruise = "Aloha diel"), 
+                      g1 %>% mutate(cruise = "G1"), 
+                      g2 %>% mutate(cruise = "G2"), 
+                      g3 %>% mutate(cruise = "G3"), 
+                      g3_diel %>% mutate(cruise = "G3 diel"), 
+                      g3_depth %>% mutate(cruise = "G3 depth"), 
+                      g2_inc %>% mutate(cruise = "G2 incubations"))
+
+corePfam <- corePfam %>% mutate(sample = ifelse(cruise == "G2 incubations", str_extract(sample, "MS[0-9]{1,}"), sample))
+corePfam <- corePfam %>% mutate(sample = ifelse(cruise == "G3 diel", str_replace(sample, "G3PA.diel.", ""), sample))
+
+nrow(corePfam)
+corePfam <- corePfam %>% left_join(g3_sample, by = c("sample"))
+nrow(corePfam)
+
+corePfam <- corePfam %>% mutate(sample = ifelse(cruise == "G3", newSample, sample)) %>% select(-newSample)
+
+g %>% anti_join(corePfam, by = c("sample", "taxa" = "tax_name", "cruise")) %>% distinct(cruise)
+
+nrow(g)
+g <- g %>% left_join(corePfam %>% select(-tax_id, -numCorePfams), by = c("sample", "taxa" = "tax_name", "cruise"))
+nrow(g)
+
+total <- g %>% group_by(taxa, station, cruise) %>% summarize(total = n())
 
 dat <- g %>% group_by(taxa, station, cruise, xg_pred) %>% summarize(n = n()) %>% 
   left_join(total, by = c("taxa", "station", "cruise")) %>% 
@@ -388,10 +407,37 @@ dat <- g %>% group_by(taxa, station, cruise, xg_pred) %>% summarize(n = n()) %>%
   group_by(taxa, station, cruise) %>% arrange(desc(prop)) %>% 
   slice(1)
 
+dat <- dat %>% ungroup() 
+
+dat %>% group_by(xg_pred) %>% summarize(prop = mean(prop))
+
 dat %>% 
-  ggplot(aes(y = prop, x = cruise)) + 
-  geom_boxplot(fill = NA) +
-  labs(y = "Proportion of predictions in agreement\nwith top trophic mode prediction", x = "") +
+  ggplot(aes(fill = xg_pred, x = prop)) + 
+  geom_bar(position = 'dodge') +
+  labs(x = "Proportion of predictions in agreement\nwith top trophic mode prediction", 
+       fill = "Top trophic\nmode prediction", y = "Count") +
+  theme_classic() +
+  theme_bw() +
+  theme(strip.background =element_rect(fill="white")) +
+  theme(axis.text.x = element_text(size = 22, color = 'black'))  + 
+  theme(axis.text.y = element_text(size = 22, color = 'black')) + 
+  theme(axis.title.y = element_text(size = 23, color = 'black')) + 
+  theme(legend.text = element_text(size = 20, color = 'black')) +
+  theme(legend.title = element_text(size = 22, color = 'black')) +
+  theme(axis.title.x = element_text(size = 23, color = 'black')) +
+  scale_fill_manual(values = c("Phototrophy" = "deepskyblue2", "Heterotrophy" = "red", "Mixotrophy" = "black")) + 
+  xlim(0,1.02)
+
+ggsave("g1G2G3/numberOfTrophicModePredictionsByPropInAgreement.png", dpi = 600, height = 6, width = 10)
+
+dat %>% group_by(taxa) %>% summarize(prop = mean(prop)) %>% arrange(prop)
+
+nrow(dat)
+dat <- dat %>% left_join(g %>% group_by(taxa, station, cruise) %>% summarize(meanPropCore = mean(propCorePfams)), by = c("taxa", "station", "cruise"))
+nrow(dat)
+
+dat %>% ggplot(aes(x = meanPropCore, y = prop)) + geom_jitter()+
+  labs(x = "Mean proportion of CTGs in species bin", y = "Proportion of predictions in agreement\nwith top trophic mode prediction") + 
   theme_classic() +
   theme_bw() +
   theme(strip.background =element_rect(fill="white")) +
@@ -401,73 +447,18 @@ dat %>%
   theme(legend.text = element_text(size = 20, color = 'black')) +
   theme(legend.title = element_text(size = 22, color = 'black')) +
   theme(axis.title.x = element_text(size = 23, color = 'black')) + 
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))+ 
-  stat_compare_means(data = dat,
-                     aes(x = cruise, y = prop),
-                     method = "anova", label.x = .5, label.y = .99) +
-  stat_compare_means(data = dat,
-                     aes(x = cruise, y = prop),
-                     label = "p.signif", method = "t.test",
-                     ref.group = ".all.")   
-
-ggsave("g1G2G3/proportionOfPredictionsInAgreement.svg", height = 8, width = 10, dpi=600)
-
-dat %>% ungroup() %>% 
-  group_by(xg_pred) %>% summarize(mean = mean(prop)) %>% 
-  mutate(mean = round(mean, 2))
-
-dat %>% 
-  ggplot(aes(x = xg_pred, y = prop)) + geom_boxplot(fill = NA) +
-  labs(y = "Proportion of predictions in agreement\nwith top trophic mode prediction", 
-       x = "Trophic mode prediction") +
-  theme_classic() +
-  theme_bw() +
-  theme(strip.background =element_rect(fill="white")) +
-  theme(axis.text.x = element_text(size = 22, color = 'black'))  + 
-  theme(axis.text.y = element_text(size = 22, color = 'black')) + 
-  theme(axis.title.y = element_text(size = 23, color = 'black')) + 
-  theme(legend.text = element_text(size = 20, color = 'black')) +
-  theme(legend.title = element_text(size = 22, color = 'black')) +
-  theme(axis.title.x = element_text(size = 23, color = 'black'))+ 
-  stat_compare_means(data = dat, 
-                     aes(x = xg_pred, y = prop), method = "anova", vjust = -1) +
-  stat_compare_means(data = dat,
-                     aes(x = xg_pred, y = prop), label = "p.signif", method = "t.test",
-                       ref.group = ".all.")
-
-ggsave("g1G2G3/proportionOfPredictionsInAgreement_byTrophicMode.svg", height = 7, width = 9, dpi=600)
-
-g %>% ungroup() %>% 
-  ggplot(aes(y = probability, x = cruise)) + 
-  geom_boxplot(fill = NA) +
-  labs(y = "XGBoost probability", x = "", color = "") +
-  theme_classic() +
-  theme_bw() +
-  theme(strip.background =element_rect(fill="white")) +
-  theme(axis.text.x = element_text(size = 22, color = 'black'))  + 
-  theme(axis.text.y = element_text(size = 22, color = 'black')) + 
-  theme(axis.title.y = element_text(size = 23, color = 'black')) + 
-  theme(legend.text = element_text(size = 20, color = 'black')) +
-  theme(legend.title = element_text(size = 22, color = 'black')) +
-  theme(axis.title.x = element_text(size = 23, color = 'black'))+ 
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
-  
-  stat_compare_means(data = g %>% ungroup(), 
-                     aes(x = cruise, y = probability), method = "anova", vjust = -1) + 
-  stat_compare_means(data = g %>% ungroup(), 
-                     aes(x = cruise, y = probability), label = "p.signif", method = "t.test",
-                     ref.group = ".all.")
+  theme(strip.text.x = element_text(size = 23, color = 'black')) +
+  geom_vline(xintercept = .7, linetype = 'dashed') + 
+  ylim(0,1.02)
 
-ggsave("g1G2G3/xgboostProbability.svg", height = 8, width = 10, dpi=600)
+ggsave("g1G2G3/propInAgreementByPropCorePfams.png", dpi = 600, height = 7, width = 10)
 
-g %>% ungroup() %>% group_by(xg_pred) %>% 
-  summarize(mean = mean(probability)) %>% 
-  mutate(mean = round(mean, 2))
 
-g %>% ungroup() %>% 
-  ggplot(aes(x = xg_pred, y = probability)) + geom_boxplot(fill = NA) +
-  labs(y = "XGBoost probability", 
-       x = "Trophic mode prediction") +
+g %>% 
+  ggplot(aes(x = propCorePfams, fill = xg_pred)) + geom_bar(width = .0016, alpha = .8) +
+  scale_fill_manual(values = c("Phototrophy" = "deepskyblue2", "Heterotrophy" = "red", "Mixotrophy" = "black")) +
+  labs(x = "Proportion of CTGs in species bin", y = "Number of predictions", fill = "Trophic mode\nprediction") + 
   theme_classic() +
   theme_bw() +
   theme(strip.background =element_rect(fill="white")) +
@@ -476,104 +467,26 @@ g %>% ungroup() %>%
   theme(axis.title.y = element_text(size = 23, color = 'black')) + 
   theme(legend.text = element_text(size = 20, color = 'black')) +
   theme(legend.title = element_text(size = 22, color = 'black')) +
-  theme(axis.title.x = element_text(size = 23, color = 'black'))+ 
-  stat_compare_means(data = g %>% ungroup(), 
-                     aes(x = xg_pred, y = probability), method = "anova", vjust = -1) + 
-  stat_compare_means(data = g %>% ungroup(), 
-                     aes(x = xg_pred, y = probability), 
-                     label = "p.signif", method = "t.test",
-                     ref.group = ".all.")
+  theme(axis.title.x = element_text(size = 23, color = 'black')) + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
+  theme(strip.text.x = element_text(size = 23, color = 'black')) +
+  geom_vline(xintercept = .7, linetype = 'dashed') + 
+  ylim(0,25)
 
-ggsave("g1G2G3/xgBoostProbability_byTrophicMode.svg", height = 7, width = 9, dpi=600)
+ggsave("g1G2G3/numberOfTrophicModePredictionsByPropCTGs.png", dpi = 600, height = 6, width = 10)
 
 table <- g %>% ungroup() %>% 
   group_by(cruise, taxa, group) %>% summarize(n = n()) %>% 
   ungroup()
 
-table2 <- table
+colnames(table) <- c("Cruise", "Species", "Taxonomic group", "Number of trophic predictions")
 
-colnames(table2)
-colnames(table2) <- c("Cruise", "Species", "Taxonomic group", "Number of trophic predictions")
+table %>% distinct(Cruise)
 
-table2 %>% distinct(Cruise)
-
-table2 %>% 
+table %>% 
   mutate(Cruise = str_replace(Cruise, "G", "Gradients")) %>% 
   mutate(Cruise = str_replace(Cruise, "Aloha", "ALOHA")) %>%
   arrange(Cruise, desc(`Number of trophic predictions`)) %>%
   write_csv("g1G2G3/speciesInCruiseSupplementaryTable.csv")
 
-table %>% ungroup() %>% 
-  summarize(total = sum(n))
-
-table %>% ungroup() %>% 
-  group_by(group) %>%
-  summarize(total = sum(n)) %>% 
-  arrange(desc(total))
-
-g %>% distinct(depth)
-g %>% filter(is.na(depth)) %>% distinct(cruise)
-
-g$depth <- as.numeric(g$depth)
-
-g %>% filter(is.na(latitude)) %>% distinct(cruise)
-
-g <- g %>% mutate(latitude = ifelse(cruise == "Aloha diel", 22.75, latitude))
-
-g %>% filter(is.na(latitude)) %>% distinct(station)
-
-g <- g %>% mutate(latitude = ifelse(str_detect(station, "REXP1"), 41.42, latitude))
-g <- g %>% mutate(latitude = ifelse(str_detect(station, "REXP2"), 37.00, latitude))
-g <- g %>% mutate(latitude = ifelse(str_detect(station, "REXP3"), 32.93, latitude))
-
-g %>% filter(is.na(latitude))
-
-g <- g %>% select(-Latitude)
-
-g %>% filter(is.na(probability))
-
-g %>% ungroup() %>% 
-  ggplot(aes(y = probability, x = latitude)) + 
-  geom_point() +
-  labs(y = "XGBoost probability", x = "Latitude (°N)", color = "") +
-  theme_classic() +
-  theme_bw() +
-  theme(strip.background =element_rect(fill="white")) +
-  theme(axis.text.x = element_text(size = 22, color = 'black'))  + 
-  theme(axis.text.y = element_text(size = 22, color = 'black')) + 
-  theme(axis.title.y = element_text(size = 23, color = 'black')) + 
-  theme(legend.text = element_text(size = 20, color = 'black')) +
-  theme(legend.title = element_text(size = 22, color = 'black')) +
-  theme(axis.title.x = element_text(size = 23, color = 'black')) +
-  stat_poly_line() +
-  stat_poly_eq(use_label(c("eq", "p"))) 
-
-ggsave("xgBoostProbability_byLatitude.svg", height = 7, width = 14, dpi=600)
-
-total <- g %>% group_by(taxa, station, cruise) %>% summarize(total = n())
-
-g %>% 
-  group_by(taxa, station, cruise, xg_pred, latitude) %>% summarize(n = n()) %>% 
-  left_join(total, by = c("taxa", "station", "cruise")) %>% 
-  filter(total != 1) %>%
-  mutate(prop = n/total) %>% 
-  ungroup() %>% 
-  group_by(taxa, station, cruise) %>% arrange(desc(prop)) %>% 
-  slice(1) %>%
-  ggplot(aes(y = prop, x = latitude)) + 
-  geom_point() +
-  labs(y = "Proportion of predictions in agreement\nwith top trophic mode prediction", x = "Latitude (°N)", color = "") +
-  theme_classic() +
-  theme_bw() +
-  theme(strip.background =element_rect(fill="white")) +
-  theme(axis.text.x = element_text(size = 22, color = 'black'))  + 
-  theme(axis.text.y = element_text(size = 22, color = 'black')) + 
-  theme(axis.title.y = element_text(size = 23, color = 'black')) + 
-  theme(legend.text = element_text(size = 20, color = 'black')) +
-  theme(legend.title = element_text(size = 22, color = 'black')) +
-  theme(axis.title.x = element_text(size = 23, color = 'black')) +
-  stat_poly_line() +
-  stat_poly_eq(use_label(c("eq", "p"))) 
-
-ggsave("propReplicatesInAgreement_byLatitude.svg", height = 7, width = 14, dpi=600)
 
