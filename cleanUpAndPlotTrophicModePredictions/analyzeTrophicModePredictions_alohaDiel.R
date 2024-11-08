@@ -84,7 +84,7 @@ totalSample <- merged %>% group_by(taxa, date) %>% summarize(total = n())
 
 exclude <- merged %>% group_by(taxa, xg_pred, date) %>% summarize(numSamples = n()) %>% 
   left_join(totalSample, by = c("taxa", "date")) %>% mutate(prop = numSamples/total*100) %>% 
-  filter(xg_pred %in% c("Heterotrophic", "Phototrophic")) %>% ungroup() %>% 
+  filter(xg_pred %in% c("Heterotrophy", "Phototrophy")) %>% ungroup() %>% 
   filter(prop > 25) %>%
   group_by(taxa, date) %>% distinct(xg_pred) %>% summarize(n = n()) %>% 
   filter(n > 1) %>% ungroup() %>% distinct(taxa, date)
@@ -154,3 +154,4 @@ merged %>%
   guides(color = "none")
 
 ggsave("aloha_diel_allOrganismsTrophicPredictions_dotPlot_updatedMarferret_marmicroDb2023_notGroupedBySize_noOutliers.png", height = 5, width = 22)
+ggsave("aloha_diel_allOrganismsTrophicPredictions_dotPlot_updatedMarferret_marmicroDb2023_notGroupedBySize_noOutliers.svg", height = 5, width = 22)
