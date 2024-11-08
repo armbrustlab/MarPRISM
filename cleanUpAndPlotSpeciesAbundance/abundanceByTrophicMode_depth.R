@@ -71,6 +71,10 @@ bySpecies <- bySpecies %>% mutate(se_dino = sd_dino/sqrt(numSamples))
 
 bySpecies <- bySpecies %>% mutate(depth_tax_name = str_c(depthNum, "  ", tax_name))
 
+order <- bySpecies %>% arrange(desc(depthNum), desc(type), desc(tax_name)) %>% distinct(depth_tax_name)
+
+bySpecies %>% group_by(type) %>% distinct(tax_name) %>% summarize(n = n())
+
 bySpecies %>% filter(Latitude > 36, Latitude < 38) %>% filter(type == "phot") %>% select(Latitude, depthNum, tax_name, absoluteCounts_dinoCorr) %>% 
   mutate(absoluteCounts_dinoCorr = absoluteCounts_dinoCorr/1e8) %>%
   spread(key = depthNum, value = absoluteCounts_dinoCorr) %>% filter(`55`<`15`, `125`<`55`)
@@ -99,9 +103,6 @@ bySpecies %>% filter(Latitude > 40) %>% filter(type == "mixed") %>% select(Latit
   mutate(absoluteCounts_dinoCorr = absoluteCounts_dinoCorr/1e8) %>%
   spread(key = depthNum, value = absoluteCounts_dinoCorr) %>% filter(`41`>`15`)
 
-order <- bySpecies %>% arrange(desc(depthNum), desc(type), desc(tax_name)) %>% distinct(depth_tax_name)
-
-bySpecies %>% mutate(absoluteCounts_dinoCorr = absoluteCounts_dinoCorr/1e9, se_dino = se_dino/1e9) %>% arrange(desc(absoluteCounts_dinoCorr))
 
 bySpecies %>% filter(cruise == "Gradients3: 2019") %>% 
   mutate(type = factor(type, levels = c("phot", "mixed", "het"))) %>%

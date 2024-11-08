@@ -175,6 +175,8 @@ dat_summary %>% filter(!is.na(diff)) %>%
   distinct(type, tax_name) %>% 
   group_by(type) %>% summarize(n = n())
 
+dat_summary %>% group_by(type) %>% distinct(tax_name) %>% summarize(n = n())
+
 dat_summary %>% filter(!is.na(diff)) %>%
   mutate(latitude = str_c(as.character(latitude), " °N")) %>%
   ggplot(aes(x = treatment, y = diff, color = type)) + 

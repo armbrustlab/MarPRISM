@@ -284,6 +284,8 @@ nrow(g3Depth_surf)
 g3Depth_surf <- g3Depth_surf %>% left_join(types, by = c("tax_name" = "taxa"))
 nrow(g3Depth_surf)
 
+g3Depth_surf %>% filter(type == "Mixed predictions") %>% distinct(tax_name)
+
 g3Depth_surf %>% filter(is.na(type))
 
 g3Depth_surf <- g3Depth_surf %>% mutate(cruise = "Gradients3: 2019", cruise2 = "g3Depth")
@@ -292,6 +294,8 @@ g3Depth_surf$sample <- as.character(g3Depth_surf$sample)
 
 merged <- g %>% 
   bind_rows(g3Depth_surf)
+
+merged %>% group_by(type) %>% distinct(tax_name) %>% summarize(n = n())
 
 merged <- merged %>% mutate(size = ifelse(is.na(size), str_extract(sample, "0.2|3um"), size))
 merged %>% filter(is.na(size)) %>% distinct(cruise, sample)
@@ -327,26 +331,42 @@ merged <- merged %>% mutate(absoluteCounts = `0.2`+`3`)
 
 
 nutr_g1 <- read_csv("~/Dropbox/grad/research/g1Surface/Cruise KOK1606 Gradients 1 Organic and Inorganic Nutrients/Cruise KOK1606 Gradients 1 Organic and Inorganic Nutrients.csv")
-nutr_g1 <- nutr_g1 %>% filter(depth < 24) %>% dplyr::select(lat, lon, SiO4:NH4)
+nutr_g1 <- nutr_g1 %>% filter(depth < 24) %>% dplyr::select(time, lat, lon, SiO4:NH4)
 
 nutr_g1 <- nutr_g1 %>% gather(SiO4:NH4, key = "var", value = "value")
-nutr_g1 <- nutr_g1 %>% distinct()
 
 nutr_g2 <- read_csv("~/Dropbox/grad/research/mixotrophyIFCB/Cruise MGL1704 Gradients 2 Organic and Inorganic Nutrients.csv")
-nutr_g2 <- nutr_g2 %>% filter(depth < 24) %>% dplyr::select(lat, lon, SiO4:TOC)
+nutr_g2 <- nutr_g2 %>% filter(depth < 24) %>% dplyr::select(time, lat, lon, SiO4:TOC)
 nutr_g2 <- nutr_g2 %>% gather(SiO4:TOC, key = "var", value = "value")
-nutr_g2 <- nutr_g2 %>% distinct() 
 
 nutr_g3 <- read_csv("~/Dropbox/grad/research/g3/Gradients 3 KM1906 Organic and Inorganic Nutrients/Gradients 3 KM1906 Organic and Inorganic Nutrients.csv")
-nutr_g3 <- nutr_g3 %>% filter(depth < 24) %>% dplyr::select(lat, lon, SiO4:NO2)
+nutr_g3 <- nutr_g3 %>% filter(depth < 24) %>% dplyr::select(time, lat, lon, SiO4:NO2)
 nutr_g3 <- nutr_g3 %>% gather(SiO4:NO2, key = "var", value = "value")
-nutr_g3 <- nutr_g3 %>% distinct() 
 
 nut <- bind_rows(nutr_g1 %>% mutate(cruise = "Gradients1: 2016"), nutr_g2 %>% mutate(cruise = "Gradients2: 2017"), nutr_g3 %>% mutate(cruise = "Gradients3: 2019"))
 
 nut <- nut %>% filter(var %in% c("NO3_NO2", "NO3_plus_NO2"))
 nut <- nut %>% mutate(var = "NO3_NO2")
 nut <- nut %>% filter(!is.na(value))
+
+#load iron data 
+iron_g1 <- read_csv("../g1Surface/KOK1606 Gradients 1 Depth Profile Dissolved Trace Metals/KOK1606 Gradients 1 Depth Profile Dissolved Trace Metals.csv")
+iron_g1 <- iron_g1 %>% select(time:depth, Fe_dissolved)
+iron_g1 %>% distinct(depth) %>% arrange(depth)
+iron_g1 <- iron_g1 %>% filter(depth == 15)
+
+iron_g2 <- read_csv("../g2Surface/MGL1704 Gradients 2 Depth Profile Dissolved Trace Metals/Gradients_2_Diss_Trace_Metal_Profile.csv")
+iron_g2 <- iron_g2 %>% select(time:depth, Fe_dissolved)
+iron_g2 %>% distinct(depth) %>% arrange(depth)
+iron_g2 <- iron_g2 %>% filter(depth <= 15.509)
+
+iron_g3 <- read_csv("../g3/KM1906 Gradients 3 Depth Profile Dissolved Trace Metals/KM1906 Gradients 3 Depth Profile Dissolved Trace Metals.csv")
+iron_g3 <- iron_g3 %>% select(time:depth, Fe_dissolved)
+iron_g3 %>% distinct(depth) %>% arrange(depth)
+iron_g3 <- iron_g3 %>% filter(depth == 15)
+
+iron <- bind_rows(iron_g1 %>% mutate(cruise = "Gradients1: 2016"), iron_g2 %>% mutate(cruise = "Gradients2: 2017"), iron_g3 %>% mutate(cruise = "Gradients3: 2019"))
+iron <- iron %>% filter(!is.na(Fe_dissolved))
 
 #load modis satellite light data
 g1_modis <- read_excel("../g1_PAR.xlsx")
@@ -356,10 +376,7 @@ g3_modis <- read_excel("../g3_PAR.xlsx")
 #modis days are one behind what they should be because of time format
 #they are behind by 7 hours
 modis <- bind_rows(g1_modis %>% mutate(cruise = "Gradients1: 2016"), g2_modis %>% mutate(cruise = "Gradients2: 2017"), g3_modis %>% mutate(cruise = "Gradients3: 2019"))
-
 modis <- modis %>% filter(!is.na(PAR))
-
-head(modis)
 
 #fixes time by adding 7 hours 
 modis <- modis %>% mutate(time = time + hm("7:00"))
@@ -560,6 +577,9 @@ merged %>%
   
   geom_point(data = modis %>% mutate(type = "Phototrophic species bins") %>% group_by(cruise, type, lat) %>% summarize(PAR = mean(PAR)) %>% filter(lat < 42.335), aes(x = lat, y = PAR/2), size = .7, color = 'red') +
   geom_line(data = modis %>% mutate(type = "Phototrophic species bins") %>% group_by(cruise, type, lat) %>% summarize(PAR = mean(PAR)) %>% filter(lat < 42.335), aes(x = lat, y = PAR/2), color = 'red') +
+  
+  #geom_point(data = iron %>% mutate(type = "Phototrophic species bins") %>% filter(lat < 42.335), aes(x = lat, y = Fe_dissolved*40), size = .7, color = "magenta") +
+  #geom_line(data = iron %>% mutate(type = "Phototrophic species bins") %>% filter(lat < 42.335), aes(x = lat, y = Fe_dissolved*40), color = 'magenta') +
   
   scale_y_continuous(limits = c(0, 40), name = "Billion transcripts per liter",
                      sec.axis = sec_axis(trans=~./5, name = expression(NO[3] * "_" * NO[2]~(μmol/L)))) + theme(axis.text.y.right = element_text(colour = "blue"), axis.title.y.right = element_text(colour = "blue"))
