@@ -1,4 +1,4 @@
-# **MarPRISM: Marine PRotist In-Situ Trophic Mode Predictor**  
+# **MarPRISM: Marine PRotist In-Situ trophic Mode predictor**  
 
 
 ## **Overview**  
@@ -17,9 +17,9 @@ We set out to improve the Lambert model as we expected the inclusion of low-sequ
 These changes did not increase the accuracy of trophic predictions. However:  
 - The set of feature Pfams needed for reliable predictions was reduced from **1046 to 183 feature Pfams**.  
 
-## **Model Performance**  
+## **Model performance**  
 
-### **Cross-Validation**  
+### **Cross-validation**  
 The performance of MarPRISM was estimated using cross-validation:  
 - The model was trained on **83% of the training data** and tested on the remaining data.  
 - Performance was evaluated using **F1 score** (Mean F1 score ± standard error)
@@ -36,7 +36,7 @@ We further quantified MarPRISM's performance by testing its ability to make trop
 - **60/76 (78.95%) transcriptomes** were correctly predicted when replicate transcriptomes were considered individually
 
 
-## **How to Run the Model on Marine Metatranscriptomes**  
+## **How to run the model on marine metatranscriptomes**  
 
 1. **Collect poly(A)-selected metatranscriptomes.**  
 2. **Trim, quality control, and de novo assemble RNA sequences.**  
@@ -49,7 +49,7 @@ We further quantified MarPRISM's performance by testing its ability to make trop
    - Sum the RPK by species and sample, then divide by one million to generate a conversion factor.  
    - Divide the RPK by the conversion factor to calculate TPM per contig.  
    - Sum TPMs by Pfam for each species and sample.  
-8. **Filter species bins:** Retain only species bins with at least 70% of eukaryotic core transcribed genes (CTGs) expressed ([MarFERReT.v1.core_genes.csv](https://zenodo.org/records/10278540), filter for lineage Eukaryota).  
+8. **Filter species bins:** Retain only species bins with at least 70% of eukaryotic core transcribed genes (CTGs) expressed ([MarFERReT.v1.core_genes.csv](https://zenodo.org/records/10278540), filter for lineage Eukaryota). Retain only species bins identified as protists. 
 9. **Create a data frame:**  
    Fill in missing Pfams for a species, sample pair with `0`.  
 
