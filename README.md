@@ -21,7 +21,7 @@ These changes did not increase the accuracy of trophic predictions. However:
 ### **Cross-Validation**  
 The performance of MarPRISM was estimated using cross-validation:  
 - The model was trained on **83% of the training data** and tested on the remaining data.  
-- Performance was evaluated using the **F1 score**:  
+- Performance was evaluated using **F1 score**: (Mean F1 score ± standard error)
   - **Overall Mean**: 0.944 ± 0.0154  
   - **Heterotrophy Mean**: 0.958 ± 0.0271  
   - **Mixotrophy Mean**: 0.888 ± 0.0254  
