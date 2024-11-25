@@ -53,12 +53,10 @@ dinos <- c("Azadinium spinosum", "Brandtodinium nutricula", "Dinophysis acuminat
            "Karenia brevis", "Karlodinium veneficum", "Pelagodinium beii", "Prorocentrum minimum", "Scrippsiella trochoidea", 
            "Tripos fusus")
 
+#calculate biomass-adjusted transcript abundance
 dat <- dat %>% mutate(absoluteCounts_dinoCorr = ifelse(tax_name %in% dinos, absoluteCounts/6.4, absoluteCounts))
 
 bySpecies <- dat
-
-top <- bySpecies %>% group_by(Latitude, type, depthNum) %>% arrange(desc(absoluteCounts_dinoCorr)) %>% 
-  slice(1:2) %>% ungroup() %>% distinct(tax_name)
 
 bySpecies <- bySpecies %>% group_by(cruise, Latitude, type, depthNum, sample, tax_name) %>% summarize(absoluteCounts_dinoCorr = sum(absoluteCounts_dinoCorr))
 
@@ -75,33 +73,62 @@ order <- bySpecies %>% arrange(desc(depthNum), desc(type), desc(tax_name)) %>% d
 
 bySpecies %>% group_by(type) %>% distinct(tax_name) %>% summarize(n = n())
 
+
+#37 
 bySpecies %>% filter(Latitude > 36, Latitude < 38) %>% filter(type == "phot") %>% select(Latitude, depthNum, tax_name, absoluteCounts_dinoCorr) %>% 
   mutate(absoluteCounts_dinoCorr = absoluteCounts_dinoCorr/1e8) %>%
   spread(key = depthNum, value = absoluteCounts_dinoCorr) %>% filter(`55`<`15`, `125`<`55`)
 
-bySpecies %>% filter(Latitude > 40) %>% filter(type == "phot") %>% select(Latitude, depthNum, tax_name, absoluteCounts_dinoCorr) %>% 
+bySpecies %>% filter(Latitude > 36, Latitude < 38) %>% filter(type == "mixed") %>% select(Latitude, depthNum, tax_name, absoluteCounts_dinoCorr) %>% 
+  mutate(absoluteCounts_dinoCorr = absoluteCounts_dinoCorr/1e8) %>%
+  spread(key = depthNum, value = absoluteCounts_dinoCorr) %>% filter(`55`<`15`, `125`<`55`)
+
+bySpecies %>% filter(Latitude > 36, Latitude < 38) %>% filter(type == "het") %>% select(Latitude, depthNum, tax_name, absoluteCounts_dinoCorr) %>% 
+  mutate(absoluteCounts_dinoCorr = absoluteCounts_dinoCorr/1e8) %>%
+  spread(key = depthNum, value = absoluteCounts_dinoCorr) %>% filter(`55`<`15`, `125`<`55`)
+
+#41.67
+bySpecies %>% filter(Latitude > 41, Latitude < 42) %>% filter(type == "phot") %>% select(Latitude, depthNum, tax_name, absoluteCounts_dinoCorr) %>% 
   mutate(absoluteCounts_dinoCorr = absoluteCounts_dinoCorr/1e8) %>%
   spread(key = depthNum, value = absoluteCounts_dinoCorr) %>% filter(`50`<`15`, `75`<`50`)
 
-bySpecies %>% filter(Latitude > 40) %>% filter(type == "phot") %>% select(Latitude, depthNum, tax_name, absoluteCounts_dinoCorr) %>% 
+bySpecies %>% filter(Latitude > 41, Latitude < 42) %>% filter(type == "phot") %>% select(Latitude, depthNum, tax_name, absoluteCounts_dinoCorr) %>% 
+  mutate(absoluteCounts_dinoCorr = absoluteCounts_dinoCorr/1e8) %>%
+  spread(key = depthNum, value = absoluteCounts_dinoCorr) %>% filter(`15`<`50`, `75`<`50`)
+
+bySpecies %>% filter(Latitude > 41, Latitude < 42) %>% filter(type == "mixed") %>% select(Latitude, depthNum, tax_name, absoluteCounts_dinoCorr) %>% 
+  mutate(absoluteCounts_dinoCorr = absoluteCounts_dinoCorr/1e8) %>%
+  spread(key = depthNum, value = absoluteCounts_dinoCorr) %>% filter(`50`<`15`, `75`<`50`)
+
+bySpecies %>% filter(Latitude > 41, Latitude < 42) %>% filter(type == "mixed") %>% select(Latitude, depthNum, tax_name, absoluteCounts_dinoCorr) %>% 
+  mutate(absoluteCounts_dinoCorr = absoluteCounts_dinoCorr/1e8) %>%
+  spread(key = depthNum, value = absoluteCounts_dinoCorr) %>% filter(`15`<`50`, `75`<`50`)
+
+bySpecies %>% filter(Latitude > 41, Latitude < 42) %>% filter(type == "het") %>% select(Latitude, depthNum, tax_name, absoluteCounts_dinoCorr) %>% 
+  mutate(absoluteCounts_dinoCorr = absoluteCounts_dinoCorr/1e8) %>%
+  spread(key = depthNum, value = absoluteCounts_dinoCorr) %>% filter(`15`<`50`, `75`<`50`)
+
+#42.33 
+bySpecies %>% filter(Latitude > 42, Latitude < 43) %>% filter(type == "phot") %>% select(Latitude, depthNum, tax_name, absoluteCounts_dinoCorr) %>% 
   mutate(absoluteCounts_dinoCorr = absoluteCounts_dinoCorr/1e8) %>%
   spread(key = depthNum, value = absoluteCounts_dinoCorr) %>% filter(`41`<`15`, `75`<`41`)
 
-bySpecies %>% filter(Latitude > 40) %>% filter(type == "het") %>% select(Latitude, depthNum, tax_name, absoluteCounts_dinoCorr) %>% 
+bySpecies %>% filter(Latitude > 42, Latitude < 43) %>% filter(type == "phot") %>% select(Latitude, depthNum, tax_name, absoluteCounts_dinoCorr) %>% 
   mutate(absoluteCounts_dinoCorr = absoluteCounts_dinoCorr/1e8) %>%
-  spread(key = depthNum, value = absoluteCounts_dinoCorr) %>% filter(`50`>`15`)
+  spread(key = depthNum, value = absoluteCounts_dinoCorr) %>% filter(`15`<`41`, `75`<`41`)
 
-bySpecies %>% filter(Latitude > 40) %>% filter(type == "het") %>% select(Latitude, depthNum, tax_name, absoluteCounts_dinoCorr) %>% 
+bySpecies %>% filter(Latitude > 42, Latitude < 43) %>% filter(type == "mixed") %>% select(Latitude, depthNum, tax_name, absoluteCounts_dinoCorr) %>% 
   mutate(absoluteCounts_dinoCorr = absoluteCounts_dinoCorr/1e8) %>%
-  spread(key = depthNum, value = absoluteCounts_dinoCorr) %>% filter(`41`>`15`)
+  spread(key = depthNum, value = absoluteCounts_dinoCorr) %>% filter(`41`<`15`, `75`<`41`)
 
-bySpecies %>% filter(Latitude > 40) %>% filter(type == "mixed") %>% select(Latitude, depthNum, tax_name, absoluteCounts_dinoCorr) %>% 
+bySpecies %>% filter(Latitude > 42, Latitude < 43) %>% filter(type == "mixed") %>% select(Latitude, depthNum, tax_name, absoluteCounts_dinoCorr) %>% 
   mutate(absoluteCounts_dinoCorr = absoluteCounts_dinoCorr/1e8) %>%
-  spread(key = depthNum, value = absoluteCounts_dinoCorr) %>% filter(`50`>`15`)
+  spread(key = depthNum, value = absoluteCounts_dinoCorr) %>% filter(`15`<`41`, `75`<`41`)
 
-bySpecies %>% filter(Latitude > 40) %>% filter(type == "mixed") %>% select(Latitude, depthNum, tax_name, absoluteCounts_dinoCorr) %>% 
+bySpecies %>% filter(Latitude > 42, Latitude < 43) %>% filter(type == "het") %>% select(Latitude, depthNum, tax_name, absoluteCounts_dinoCorr) %>% 
   mutate(absoluteCounts_dinoCorr = absoluteCounts_dinoCorr/1e8) %>%
-  spread(key = depthNum, value = absoluteCounts_dinoCorr) %>% filter(`41`>`15`)
+  spread(key = depthNum, value = absoluteCounts_dinoCorr) %>% filter(`15`<`41`, `75`<`41`)
+
 
 
 bySpecies %>% filter(cruise == "Gradients3: 2019") %>% 
@@ -239,7 +266,7 @@ dat %>%
   
   scale_x_reverse(limits = c(150, 0)) + 
   facet_wrap(~Latitude, nrow = 1) + 
-  scale_y_continuous(limits = c(0, 12), breaks = c(0, 3, 6, 9, 12)) + 
+  scale_y_continuous(limits = c(0, 12.15), breaks = c(0, 3, 6, 9, 12)) + 
   labs(x = "Depth (m)", y = "Billion transcripts per liter")
 
 ggsave("g1G2G3/abundanceBySpeciesType_depth.png", dpi = 600, height = 5.5, width = 14)

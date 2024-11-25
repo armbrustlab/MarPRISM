@@ -263,15 +263,6 @@ g <- bind_rows(g1 %>% mutate(cruise = "Gradients1: 2016"), g2 %>% mutate(cruise 
 
 g %>% distinct(Replicate)
 
-g3Depth_surf <- g3Depth %>% filter(`Depth (m)` == 15)
-
-g3Depth_surf <- g3Depth_surf %>% mutate(size = "0.2")
-
-g3Depth_surf <- g3Depth_surf %>% select(Species, Latitude, `Transcripts per L`, sample, Replicate, size)
-
-colnames(g3Depth_surf)
-colnames(g3Depth_surf) <- c("tax_name", "Latitude", "absoluteCounts", "sample", "Replicate", "size")
-
 #from plotAllTrophicModePredictions.R
 mixedPreds <- read_csv("~/Dropbox/grad/research/g1G2G3/mixedSpeciesStrict_dielIncubations.csv")
 photPreds <- read_csv("~/Dropbox/grad/research/g1G2G3/phototrophicSpeciesStrict_dielIncubations.csv")
@@ -280,24 +271,11 @@ hetPreds <- read_csv("~/Dropbox/grad/research/g1G2G3/heterotrophicSpeciesStrict_
 types <- bind_rows(mixedPreds %>% mutate(type = "Mixed predictions"), photPreds %>% mutate(type = "Phototrophic"), 
                    hetPreds %>% mutate(type = "Heterotrophic"))
 
-nrow(g3Depth_surf)
-g3Depth_surf <- g3Depth_surf %>% left_join(types, by = c("tax_name" = "taxa"))
-nrow(g3Depth_surf)
-
-g3Depth_surf %>% filter(type == "Mixed predictions") %>% distinct(tax_name)
-
-g3Depth_surf %>% filter(is.na(type))
-
-g3Depth_surf <- g3Depth_surf %>% mutate(cruise = "Gradients3: 2019", cruise2 = "g3Depth")
-
-g3Depth_surf$sample <- as.character(g3Depth_surf$sample)
-
-merged <- g %>% 
-  bind_rows(g3Depth_surf)
+merged <- g
 
 merged %>% group_by(type) %>% distinct(tax_name) %>% summarize(n = n())
 
-merged <- merged %>% mutate(size = ifelse(is.na(size), str_extract(sample, "0.2|3um"), size))
+merged <- merged %>% mutate(size = str_extract(sample, "0.2|3um"))
 merged %>% filter(is.na(size)) %>% distinct(cruise, sample)
 
 sample <- read_csv("../metaT sample log - metaT.csv")
@@ -322,7 +300,7 @@ merged %>% distinct(size)
 
 merged <- merged %>% select(-sample) 
 
-merged %>% group_by(tax_name, Latitude, type, Replicate, cruise, cruise2) %>% summarize(n = n()) %>% 
+merged %>% group_by(tax_name, Latitude, type, Replicate, cruise) %>% summarize(n = n()) %>% 
   filter(n > 2)
 
 merged <- merged %>% spread(key = size, value = absoluteCounts, fill = 0)
@@ -360,67 +338,36 @@ iron_g2 <- iron_g2 %>% select(time:depth, Fe_dissolved)
 iron_g2 %>% distinct(depth) %>% arrange(depth)
 iron_g2 <- iron_g2 %>% filter(depth <= 15.509)
 
+iron_g2_hyper <- read_csv("../mixotrophyIFCB/MGL 1704 Gradients 2 Towfish Trace Elements.csv")
+iron_g2_hyper <- iron_g2_hyper %>% select(time:depth, Fe)
+colnames(iron_g2_hyper)[5] <- "Fe_dissolved"
+
 iron_g3 <- read_csv("../g3/KM1906 Gradients 3 Depth Profile Dissolved Trace Metals/KM1906 Gradients 3 Depth Profile Dissolved Trace Metals.csv")
 iron_g3 <- iron_g3 %>% select(time:depth, Fe_dissolved)
 iron_g3 %>% distinct(depth) %>% arrange(depth)
 iron_g3 <- iron_g3 %>% filter(depth == 15)
 
-iron <- bind_rows(iron_g1 %>% mutate(cruise = "Gradients1: 2016"), iron_g2 %>% mutate(cruise = "Gradients2: 2017"), iron_g3 %>% mutate(cruise = "Gradients3: 2019"))
+iron <- bind_rows(iron_g1 %>% mutate(cruise = "Gradients1: 2016"), iron_g2 %>% mutate(cruise = "Gradients2: 2017"), 
+                  iron_g2_hyper %>% mutate(cruise = "Gradients2: 2017"), iron_g3 %>% mutate(cruise = "Gradients3: 2019"))
 iron <- iron %>% filter(!is.na(Fe_dissolved))
 
-#load modis satellite light data
-g1_modis <- read_excel("../g1_PAR.xlsx")
-g2_modis <- read_excel("../g2_PAR.xlsx")
-g3_modis <- read_excel("../g3_PAR.xlsx")
 
-#modis days are one behind what they should be because of time format
-#they are behind by 7 hours
-modis <- bind_rows(g1_modis %>% mutate(cruise = "Gradients1: 2016"), g2_modis %>% mutate(cruise = "Gradients2: 2017"), g3_modis %>% mutate(cruise = "Gradients3: 2019"))
-modis <- modis %>% filter(!is.na(PAR))
+ncp_g1 <- read_csv("../KOK1606 Gradients 1 O2_Ar gas saturation and surface net community production (NCP)/KOK1606_Gradients1_Surface_O2Ar_NCP.csv")
+ncp_g2 <- read_csv("../MGL1704 Gradients 2 O2_Ar gas saturation and surface net community production (NCP)/MGL1704_Gradients2_Surface_O2Ar_NCP.csv")
+ncp_g3 <- read_csv("../KM1906 Gradients 3 O2_Ar gas saturation and surface net community production (NCP) from an equilibra/KM1906_Gradients3_Surface_O2Ar_NCP.csv")
 
-#fixes time by adding 7 hours 
-modis <- modis %>% mutate(time = time + hm("7:00"))
-
-latDay <- read_csv("~/Dropbox/grad/research/trophicModePredictionsSupplementaryTable.csv")
-latDay <- latDay %>% select(Cruise, Date, Time, Latitude, `Depth (m)`)
-
-latDay <- latDay %>% filter(Cruise %in% c("Gradients1", "Gradients2", "Gradients3", "Gradients3 depth"))
-
-latDay <- latDay %>% filter(!(Cruise == "Gradients3 depth" & `Depth (m)` != 15))
-
-latDay <- latDay %>% mutate(Cruise = ifelse(Cruise == "Gradients1", "Gradients1: 2016", Cruise))
-latDay <- latDay %>% mutate(Cruise = ifelse(Cruise == "Gradients2", "Gradients2: 2017", Cruise))
-latDay <- latDay %>% mutate(Cruise = ifelse(Cruise == "Gradients3" | Cruise == "Gradients3 depth", "Gradients3: 2019", Cruise))
-
-modis <- modis %>% mutate(Date = format(time, "%m-%d-%Y"))
-
-latDay$Date <- strptime(latDay$Date, format="%m-%d-%y")
-latDay$Date <- strftime(latDay$Date, format="%m-%d-%Y")
-
-colnames(latDay)[1]
-colnames(latDay)[1] <- "cruise"
-
-latDay %>% anti_join(modis, by = c("Date", "cruise")) %>% distinct(Date, cruise)
-
-modis %>% group_by(cruise) %>% summarize(min = min(Date), max = max(Date))
-latDay %>% group_by(cruise) %>% summarize(min = min(Date), max = max(Date))
-
-modis <- modis %>% filter(Date != "04-19-2016")
-modis <- modis %>% filter(Date != "05-28-2017")
-modis <- modis %>% filter(Date != "04-10-2019")
-
-modis %>% group_by(cruise) %>% summarize(min = min(Date), max = max(Date))
-latDay %>% group_by(cruise) %>% summarize(min = min(Date), max = max(Date))
+ncp <- bind_rows(ncp_g1 %>% mutate(cruise = "Gradients1: 2016"), ncp_g2 %>% mutate(cruise = "Gradients2: 2017"), ncp_g3 %>% mutate(cruise = "Gradients3: 2019"))
 
 merged %>% group_by(cruise) %>% distinct(tax_name) %>% summarize(n = n())
 
 merged %>% distinct(cruise)
 merged %>% distinct(type)
 
+#calculate biomass-adjusted transcript abundance
 merged <- merged %>% mutate(absoluteCounts_dinoCorr = ifelse(tax_name %in% dinos, absoluteCounts/6.4, absoluteCounts))
 
 toPlot <- merged %>% 
-  group_by(cruise, Latitude, type, tax_name, cruise2) %>% 
+  group_by(cruise, Latitude, type, tax_name) %>% 
   summarize(absoluteCounts_dinoCorr = mean(absoluteCounts_dinoCorr), n = n()) %>% 
   mutate(tax_name = ifelse(!(tax_name %in% c("Pelagomonas calceolata", "Oxytricha trifallax", "Triparma pacifica", "Pelagodinium beii", "Karlodinium veneficum", "Chloroparvula japonica")), "Other species with trophic predictions", tax_name)) %>%
   mutate(tax_name = factor(tax_name, levels = c("Oxytricha trifallax", "Karlodinium veneficum", "Pelagodinium beii", "Chloroparvula japonica", "Pelagomonas calceolata", "Triparma pacifica", "Other species with trophic predictions"))) %>%
@@ -459,97 +406,32 @@ toPlot %>%
   scale_shape_manual(values=c(4,0,2,3,5,6)) + 
   scale_color_manual(values = c("orange", "purple", "forestgreen")) +
   guides(color = FALSE)  + 
-  scale_x_continuous(breaks = c(25,30,35,40), limits = c(23, 44))
+  scale_x_continuous(breaks = c(25,30,35,40), limits = c(23, 42))
 
 ggsave("abundanceOverG1G2G3surface_byTrophicMode_taxa_avgAcrossReplicates.png", height = 7, width = 20)
 
-
-merged %>%
-  ungroup() %>%
-  group_by(cruise, cruise2, Latitude, type, Replicate) %>%
-  summarize(absoluteCounts_dinoCorr = sum(absoluteCounts_dinoCorr), n = n()) %>%
-  ungroup() %>% 
-  group_by(cruise, Latitude, type) %>%
-  summarize(absoluteCounts_dinoCorr = mean(absoluteCounts_dinoCorr), n = n()) %>%
-  ungroup() %>%
-  group_by(Latitude, cruise) %>%
-  arrange(desc(absoluteCounts_dinoCorr)) %>%
-  slice(1) %>%
-  ggplot(aes(x = Latitude, color = type)) +
-  geom_point(y = 1, size = 6) +
-  geom_point(y = 1,pch=21, color = "black", size = 6) + 
-  facet_wrap(~cruise) +
-  scale_color_manual(values = c("orange", "purple", "forestgreen")) +
-  theme_classic() +
-  theme(
-    strip.background = element_rect(fill = "white"),
-    strip.text.x = element_text(size = 26, color = 'black'),
-    strip.text.y = element_text(size = 26, color = 'black'),
-    axis.title.x = element_blank(),  # Remove x-axis title
-    axis.line.x.bottom = element_blank(),   # Remove bottom x-axis line
-    axis.line.x.top = element_line(size = 0.5, color = "black"),  # Add top border
-    axis.line.y = element_line(size = 0.5, color = "black"),  # Add left border
-    axis.text.y = element_text(size = 22, color = 'black'),
-    axis.title.y = element_text(size = 26, color = 'black'),
-    legend.position = "none",  # Remove legend
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank()
-  ) +
-  labs(y = "", x = "", shape = "", fill = "") + 
-  scale_x_continuous(breaks = c(25,30,35,40), limits = c(23, 44))
-
-ggsave("dominantTrophicModeByAbundance.png", height = 4, width = 20)
-
-
-merged %>%
-  ungroup() %>%
-  group_by(cruise, cruise2, Latitude, type, Replicate) %>%
-  summarize(absoluteCounts_dinoCorr = sum(absoluteCounts_dinoCorr)) %>%
-  group_by(cruise, Latitude, type) %>%
-  summarize(absoluteCounts_dinoCorr = mean(absoluteCounts_dinoCorr)) %>%
-  ungroup() %>%
-  group_by(Latitude, cruise) %>%
-  arrange(desc(absoluteCounts_dinoCorr)) %>%
-  slice(2) %>%
-  ggplot(aes(x = Latitude, color = type)) +
-  geom_point(y = 1, size = 6) +
-  geom_point(y = 1,pch=21, color = "black", size = 6) + 
-  facet_wrap(~cruise) +
-  scale_color_manual(values = c("orange", "purple", "forestgreen")) +
-  theme_classic() +
-  theme(
-    strip.background = element_rect(fill = "white"),
-    strip.text.x = element_text(size = 26, color = 'black'),
-    strip.text.y = element_text(size = 26, color = 'black'),
-    axis.title.x = element_blank(),  # Remove x-axis title
-    axis.line.x.bottom = element_blank(),   # Remove bottom x-axis line
-    axis.line.x.top = element_line(size = 0.5, color = "black"),  # Add top border
-    axis.line.y = element_line(size = 0.5, color = "black"),  # Add left border
-    axis.text.y = element_text(size = 22, color = 'black'),
-    axis.title.y = element_text(size = 26, color = 'black'),
-    legend.position = "none",  # Remove legend
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank()
-  ) +
-  labs(y = "", x = "", shape = "", fill = "") + 
-  scale_x_continuous(breaks = c(25,30,35,40), limits = c(23, 44))
-
-ggsave("secondDominantTrophicModeByAbundance.png", height = 4, width = 20)
-
-
-merged %>% 
+dat <- merged %>% 
   mutate(type = ifelse(type == "Heterotrophic", "Heterotrophic species bins", type)) %>% 
   mutate(type = ifelse(type == "Phototrophic", "Phototrophic species bins", type)) %>% 
   mutate(type = ifelse(type == "Mixed predictions", "Species bins with\nmixotrophic capabilities", type)) %>%
   mutate(type = factor(type, levels = c("Heterotrophic species bins", "Species bins with\nmixotrophic capabilities", "Phototrophic species bins"))) %>% 
   ungroup() %>% 
-  group_by(cruise, cruise2, Latitude, type, Replicate) %>% 
+  group_by(cruise, Latitude, type, Replicate) %>% 
   summarize(absoluteCounts_dinoCorr = sum(absoluteCounts_dinoCorr), n = n()) %>%
   group_by(cruise, Latitude, type) %>% 
-  summarize(absoluteCounts_dinoCorr = mean(absoluteCounts_dinoCorr), n = n()) %>%
-  ggplot(aes(x = Latitude, y = absoluteCounts_dinoCorr/1E9, fill = type)) +
-  geom_area() +
-  scale_fill_manual(values = c("orange", "purple", "forestgreen")) +
+  summarize(sd_dino = sd(absoluteCounts_dinoCorr), absoluteCounts_dinoCorr = mean(absoluteCounts_dinoCorr), numSamples = n()) 
+
+dat <- dat %>% ungroup()
+
+dat <- dat %>% mutate(se_dino = sd_dino/sqrt(numSamples))
+
+dat %>%
+  ggplot(aes(x = Latitude, y = absoluteCounts_dinoCorr/1E9, color = type)) +
+  geom_point() +
+  geom_line() +
+  geom_errorbar(aes(ymin = absoluteCounts_dinoCorr / 1e9 - se_dino / 1e9, ymax = absoluteCounts_dinoCorr / 1e9 + se_dino / 1e9), 
+                width = .5, linewidth = .7, alpha = .5) + 
+  scale_color_manual(values = c("orange", "purple", "forestgreen")) +
   theme_classic() +
   theme_bw() +
   theme(strip.background =element_rect(fill="white")) +
@@ -571,57 +453,15 @@ merged %>%
   geom_vline(data=filter(g %>% mutate(cruise = "Gradients3: 2019"), cruise=="Gradients3: 2019"), aes(xintercept=32.45), colour="red", linetype="dashed") + 
   geom_vline(data=filter(g %>% mutate(cruise = "Gradients3: 2019"), cruise=="Gradients3: 2019"), aes(xintercept=35), colour="black", linetype="dashed") + 
   facet_wrap(~cruise) + labs(color = "") +
-  scale_x_continuous(breaks = c(25,30,35,40), limits = c(23, 44)) + 
-  geom_point(data = nut %>% mutate(type = "Phototrophic species bins") %>% filter(lat > 23.49) %>% filter(lat < 42.335), aes(x = lat, y = value*5), size = .7, color = 'blue') +
-  geom_line(data = nut %>% mutate(type = "Phototrophic species bins") %>% filter(lat > 23.49) %>% filter(lat < 42.335), aes(x = lat, y = value*5), color = 'blue') +
+  scale_x_continuous(breaks = c(25,30,35,40), limits = c(23, 42)) 
+
+ggsave("abundanceOverG1G2G3surface_byTrophicMode_sum.png", height = 7, width = 20)
+
+ncp %>% mutate(type = "Phototrophic species bins") %>% filter(lat <= 41.68) %>% 
+  ggplot(aes(x = lat, y = NCP)) + 
+  geom_point(size = .2, color = "green", alpha = .2) +
+  geom_line(color = 'green', alpha = .2) + 
   
-  geom_point(data = modis %>% mutate(type = "Phototrophic species bins") %>% group_by(cruise, type, lat) %>% summarize(PAR = mean(PAR)) %>% filter(lat < 42.335), aes(x = lat, y = PAR/2), size = .7, color = 'red') +
-  geom_line(data = modis %>% mutate(type = "Phototrophic species bins") %>% group_by(cruise, type, lat) %>% summarize(PAR = mean(PAR)) %>% filter(lat < 42.335), aes(x = lat, y = PAR/2), color = 'red') +
-  
-  #geom_point(data = iron %>% mutate(type = "Phototrophic species bins") %>% filter(lat < 42.335), aes(x = lat, y = Fe_dissolved*40), size = .7, color = "magenta") +
-  #geom_line(data = iron %>% mutate(type = "Phototrophic species bins") %>% filter(lat < 42.335), aes(x = lat, y = Fe_dissolved*40), color = 'magenta') +
-  
-  scale_y_continuous(limits = c(0, 40), name = "Billion transcripts per liter",
-                     sec.axis = sec_axis(trans=~./5, name = expression(NO[3] * "_" * NO[2]~(μmol/L)))) + theme(axis.text.y.right = element_text(colour = "blue"), axis.title.y.right = element_text(colour = "blue"))
-
-ggsave("abundanceOverG1G2G3surface_byTrophicMode_sum_area.png", height = 7, width = 20)
-
-
-ggplot() + 
-  geom_point(data = modis %>% mutate(type = "Phototrophic species bins") %>% group_by(cruise, type, lat) %>% summarize(PAR = mean(PAR)), aes(x = lat, y = PAR/2), size = .7, color = 'red') +
-  geom_line(data = modis %>% mutate(type = "Phototrophic species bins") %>% group_by(cruise, type, lat) %>% summarize(PAR = mean(PAR)), aes(x = lat, y = PAR/2), color = 'red') +
-  geom_point(data = nut %>% mutate(type = "Phototrophic species bins"), aes(x = lat, y = value*5), size = .7, color = 'blue') +
-  geom_line(data = nut %>% mutate(type = "Phototrophic species bins"), aes(x = lat, y = value*5), color = 'blue') + 
-  facet_wrap(~cruise) + labs(color = "") +
-  scale_x_continuous(breaks = c(25,30,35,40)) + theme_classic() +
-  theme_bw() +
-  theme(strip.background =element_rect(fill="white")) +
-  theme(strip.text.x = element_text(size = 26, color = 'black')) + 
-  theme(strip.text.y = element_text(size = 26, color = 'black')) + 
-  theme(axis.text.x = element_text(size = 22, color = 'black'))  + 
-  theme(axis.text.y = element_text(size = 22, color = 'blue')) + 
-  theme(axis.title.y = element_text(size = 20, color = 'blue')) + 
-  theme(legend.text = element_text(size = 20, color = 'black')) +
-  theme(legend.title = element_text(size = 22, color = 'black')) +
-  theme(axis.title.x = element_text(size = 26, color = 'black')) +  
-  labs(y = expression(NO[3] * "_" * NO[2]~(μmol/L)), x = "", shape = "", fill = "") + 
-  scale_y_continuous(limits = c(0, 40), sec.axis = sec_axis(trans=~.*2, name=expression("PAR (" * "mol quanta " * m^-2 * " " *day^-1 * ")"))) + theme(axis.text.y.right = element_text(colour = "red"), axis.title.y.right = element_text(size = 20, colour = "red"))
-
-ggsave("nitPARagainstLat.png", height = 3.7, width = 20)
-
-merged %>% 
-  mutate(type = ifelse(type == "Heterotrophic", "Heterotrophic species bins", type)) %>% 
-  mutate(type = ifelse(type == "Phototrophic", "Phototrophic species bins", type)) %>% 
-  mutate(type = ifelse(type == "Mixed predictions", "Species bins with\nmixotrophic capabilities", type)) %>%
-  mutate(type = factor(type, levels = c("Heterotrophic species bins", "Species bins with\nmixotrophic capabilities", "Phototrophic species bins"))) %>% 
-  ungroup() %>% 
-  group_by(cruise, cruise2, Latitude, type, Replicate) %>% 
-  summarize(absoluteCounts_dinoCorr = sum(absoluteCounts_dinoCorr)) %>%
-  group_by(cruise, Latitude, type) %>% 
-  summarize(absoluteCounts_dinoCorr = mean(absoluteCounts_dinoCorr)) %>%
-  ggplot(aes(x = Latitude, y = absoluteCounts_dinoCorr/1E9, fill = type)) +
-  geom_area() +
-  scale_fill_manual(values = c("orange", "purple", "forestgreen")) +
   theme_classic() +
   theme_bw() +
   theme(strip.background =element_rect(fill="white")) +
@@ -634,6 +474,7 @@ merged %>%
   theme(legend.title = element_text(size = 22, color = 'black')) +
   theme(axis.title.x = element_text(size = 26, color = 'black')) +  
   labs(y = "Billion transcripts per liter", x = "Latitude (°N)", shape = "", fill = "") + 
+
   geom_vline(data=filter(g, cruise=="Gradients1: 2016"), aes(xintercept=32.15), colour="red", linetype="dashed") + 
   geom_vline(data=filter(g, cruise=="Gradients1: 2016"), aes(xintercept=33), colour="black", linetype="dashed") + 
   
@@ -643,18 +484,63 @@ merged %>%
   geom_vline(data=filter(g %>% mutate(cruise = "Gradients3: 2019"), cruise=="Gradients3: 2019"), aes(xintercept=32.45), colour="red", linetype="dashed") + 
   geom_vline(data=filter(g %>% mutate(cruise = "Gradients3: 2019"), cruise=="Gradients3: 2019"), aes(xintercept=35), colour="black", linetype="dashed") + 
   facet_wrap(~cruise) + labs(color = "") +
-  scale_x_continuous(breaks = c(25,30,35,40)) + 
-  geom_point(data = nut %>% mutate(type = "Phototrophic species bins"), aes(x = lat, y = value*5), size = .7, color = 'blue') +
-  geom_line(data = nut %>% mutate(type = "Phototrophic species bins"), aes(x = lat, y = value*5), color = 'blue') +
+    
+  scale_x_continuous(breaks = c(25,30,35,40), limits = c(23, 42)) + 
   
-  geom_point(data = modis %>% mutate(type = "Phototrophic species bins") %>% group_by(cruise, type, lat) %>% summarize(PAR = mean(PAR)), aes(x = lat, y = PAR/2), size = .7, color = 'red') +
-  geom_line(data = modis %>% mutate(type = "Phototrophic species bins") %>% group_by(cruise, type, lat) %>% summarize(PAR = mean(PAR)), aes(x = lat, y = PAR/2), color = 'red') +
+
+  geom_point(data = iron %>% mutate(type = "Phototrophic species bins") %>% filter(lat <= 41.68), aes(x = lat, y = Fe_dissolved*25), size = .7, color = "magenta") +
+  geom_line(data = iron %>% mutate(type = "Phototrophic species bins") %>% filter(lat <= 41.68), aes(x = lat, y = Fe_dissolved*25), color = 'magenta') +
+  
+  geom_point(data = nut %>% mutate(type = "Phototrophic species bins") %>% filter(lat > 23.49) %>% filter(lat <= 41.68), aes(x = lat, y = value*5), size = .7, color = 'blue') +
+  geom_line(data = nut %>% mutate(type = "Phototrophic species bins") %>% filter(lat > 23.49) %>% filter(lat <= 41.68), aes(x = lat, y = value*5), color = 'blue') +
+  
+  scale_y_continuous(limits = c(0, 50), breaks = c(0,25,50,75,100), name = expression(atop(Net ~ community ~ production, (mmol ~ O[2] ~ m^-2 ~ day^-1))),
+                     sec.axis = sec_axis(trans=~./5, name = expression(NO[3] * "_" * NO[2]~(μmol/L)))) + theme(axis.text.y.right = element_text(colour = "blue"), axis.title.y.right = element_text(colour = "blue")) + 
+  theme(axis.text.y.left = element_text(colour = "green"), axis.title.y.left = element_text(colour = "green"))
+
+ggsave("nitIronNCPAgainstLat.png", height = 4.4, width = 20)
+
+
+
+ncp %>% mutate(type = "Phototrophic species bins") %>% filter(lat <= 41.68) %>% 
+  ggplot(aes(x = lat, y = NCP)) + 
+  geom_point(size = .2, color = "green", alpha = .2) +
+  geom_line(color = 'green', alpha = .2) + 
+  
+  theme_classic() +
+  theme_bw() +
+  theme(strip.background =element_rect(fill="white")) +
+  theme(strip.text.x = element_text(size = 26, color = 'black')) + 
+  theme(strip.text.y = element_text(size = 26, color = 'black')) + 
+  theme(axis.text.x = element_text(size = 22, color = 'black'))  + 
+  theme(axis.text.y = element_text(size = 22, color = 'black')) + 
+  theme(axis.title.y = element_text(size = 26, color = 'black')) + 
+  theme(legend.text = element_text(size = 20, color = 'black')) +
+  theme(legend.title = element_text(size = 22, color = 'black')) +
+  theme(axis.title.x = element_text(size = 26, color = 'black')) +  
+  labs(y = "Billion transcripts per liter", x = "Latitude (°N)", shape = "", fill = "") + 
+  
+  geom_vline(data=filter(g, cruise=="Gradients1: 2016"), aes(xintercept=32.15), colour="red", linetype="dashed") + 
+  geom_vline(data=filter(g, cruise=="Gradients1: 2016"), aes(xintercept=33), colour="black", linetype="dashed") + 
+  
+  geom_vline(data=filter(g %>% mutate(cruise = "Gradients2: 2017"), cruise=="Gradients2: 2017"), aes(xintercept=32.5), colour="red", linetype="dashed") + 
+  geom_vline(data=filter(g %>% mutate(cruise = "Gradients2: 2017"), cruise=="Gradients2: 2017"), aes(xintercept=36.2), colour="black", linetype="dashed") + 
+  
+  geom_vline(data=filter(g %>% mutate(cruise = "Gradients3: 2019"), cruise=="Gradients3: 2019"), aes(xintercept=32.45), colour="red", linetype="dashed") + 
+  geom_vline(data=filter(g %>% mutate(cruise = "Gradients3: 2019"), cruise=="Gradients3: 2019"), aes(xintercept=35), colour="black", linetype="dashed") + 
+  facet_wrap(~cruise) + labs(color = "") +
+  
+  scale_x_continuous(breaks = c(25,30,35,40), limits = c(23, 42)) + 
   
   
-  scale_y_continuous(limits = c(0, 40), name = "Billion transcripts per liter",
-                     sec.axis = sec_axis(trans=~.*2, name=expression("PAR (" * "mol quanta " * m^-2 * " " *day^-1 * ")"))) + theme(axis.text.y.right = element_text(colour = "red"), axis.title.y.right = element_text(colour = "red"))
+  geom_point(data = iron %>% mutate(type = "Phototrophic species bins") %>% filter(lat <= 41.68), aes(x = lat, y = Fe_dissolved*25), size = .7, color = "magenta") +
+  geom_line(data = iron %>% mutate(type = "Phototrophic species bins") %>% filter(lat <= 41.68), aes(x = lat, y = Fe_dissolved*25), color = 'magenta') +
+  
+  geom_point(data = nut %>% mutate(type = "Phototrophic species bins") %>% filter(lat > 23.49) %>% filter(lat <= 41.68), aes(x = lat, y = value*5), size = .7, color = 'blue') +
+  geom_line(data = nut %>% mutate(type = "Phototrophic species bins") %>% filter(lat > 23.49) %>% filter(lat <= 41.68), aes(x = lat, y = value*5), color = 'blue') +
+  
+  scale_y_continuous(limits = c(0, 50), breaks = c(0,25,50,75,100), name = expression(atop(Net ~ community ~ production, (mmol ~ O[2] ~ m^-2 ~ day^-1))),
+                     sec.axis = sec_axis(trans=~./25, name=expression("Fe (nmol/L)"))) + theme(axis.text.y.right = element_text(colour = "magenta"), axis.title.y.right = element_text(colour = "magenta")) + 
+  theme(axis.text.y.left = element_text(colour = "green"), axis.title.y.left = element_text(colour = "green"))
 
-ggsave("abundanceOverG1G2G3surface_byTrophicMode_sum_area_par.png", height = 7, width = 20)
-
-
-
+ggsave("nitIronNCPAgainstLat_iron.png", height = 4.4, width = 20)
