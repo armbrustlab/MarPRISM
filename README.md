@@ -34,30 +34,39 @@ We further quantified MarPRISM's performance by testing its ability to make trop
 - **21/27 (77.78%) protist cultures** were correctly predicted across all replicate transcriptomes.  
 - **60/76 (78.95%) transcriptomes** were correctly predicted when replicate transcriptomes were considered individually
 
-How to run model on marine metatranscriptomes
-Collect poly(A)-selected metatranscriptomes
-Trim, quality control and de novo assemble RNA sequences
-Map transcripts to de novo assemblies with kallisto
-Functionally annotate transcripts with [Pfam database](https://www.ebi.ac.uk/interpro/download/pfam/) with hmmsearch (E-value < 1e-05) 
-Taxonomically annotate assemblies with Diamond last common ancestor (Buchfink et al., 2015), using the [Marine Functional EukaRyotic Reference Taxa (MarFERReT) reference sequence library](https://www.nature.com/articles/s41597-023-02842-4) (E-value < 1e-05)
-Sum the estimated number of reads mapped to each contig (outputted by kallisto) by taxonomic annotation and sample (metatranscriptome) 
-To normalize sequence reads to TPM, the estimated number of reads mapped to each contig (outputted by kallisto) was divided by the contig nucleotide length (kilobases) of the contig to generate reads per kilobase (RPK). The RPK for each contig was summed by species and sample (metatranscriptome) and divided by one million to generate a conversion factor; RPK divided by the conversion factor is the TPM per contig. TPMs were summed by Pfam for each species and each sample (metatranscriptome). 
-For each sample (metatranscriptome), get only the species bins that have at least 70% of eukaryotic core transcribed genes (CTGs) expressed ([MarFERReT.v1.core_genes.csv](https://zenodo.org/records/10278540), filter for lineage Eukaryota) 
-Make a dataframe (filling in missing Pfams in a species/sample with 0
-	Pfam1	Pfam2	Pfam3	etc.
-Species1_sample1	TPM	TPM	TPM	TPM
-Species2_sample1	TPM	TPM	TPM	TPM
-Species1_sample2	TPM	TPM	TPM	TPM
-etc.	TPM	TPM	TPM	TPM![image](https://github.com/user-attachments/assets/9127def6-d338-4e20-887c-d70ac23a42e4)
 
+## **How to Run the Model on Marine Metatranscriptomes**  
 
-Create conda environment for MarPRISM
-conda env create -f MarPRISM_environment.mlk.yml                               
+1. **Collect poly(A)-selected metatranscriptomes.**  
+2. **Trim, quality control, and de novo assemble RNA sequences.**  
+3. **Map transcripts to de novo assemblies with `kallisto`.**  
+4. **Functionally annotate transcripts** using the [Pfam database](https://www.ebi.ac.uk/interpro/download/pfam/) with `hmmsearch` (E-value < 1e-05).  
+5. **Taxonomically annotate assemblies** with Diamond last common ancestor ([Buchfink et al., 2015](https://academic.oup.com/bioinformatics/article/31/6/926/213099)), using the [Marine Functional EukaRyotic Reference Taxa (MarFERReT) reference sequence library](https://www.nature.com/articles/s41597-023-02842-4) (E-value < 1e-05).  
+6. **Sum the estimated number of reads mapped to each contig** (outputted by `kallisto`) by taxonomic annotation and sample (metatranscriptome).  
+7. **Normalize sequence reads to TPM:**  
+   - Divide the estimated number of reads mapped to each contig by its nucleotide length (in kilobases) to generate reads per kilobase (RPK).  
+   - Sum the RPK by species and sample, then divide by one million to generate a conversion factor.  
+   - Divide the RPK by the conversion factor to calculate TPM per contig.  
+   - Sum TPMs by Pfam for each species and sample.  
+8. **Filter species bins:** Retain only species bins with at least 70% of eukaryotic core transcribed genes (CTGs) expressed ([MarFERReT.v1.core_genes.csv](https://zenodo.org/records/10278540), filter for lineage Eukaryota).  
+9. **Create a DataFrame:**  
+   Fill in missing Pfams for a species/sample with `0`.  
 
-Activate conda environment for MarPRISM
-conda activate MarPRISM
+   |                  | Pfam1 | Pfam2 | Pfam3 | ...  |
+   |------------------|-------|-------|-------|------|
+   | Species1_sample1 | TPM   | TPM   | TPM   | TPM  |
+   | Species2_sample1 | TPM   | TPM   | TPM   | TPM  |
+   | Species1_sample2 | TPM   | TPM   | TPM   | TPM  |
 
-Run your datafile with TPM by Pfam by species bins that pass 70% CTGs detected
+10. **Create the Conda environment for MarPRISM**  
+    ```bash
+    conda env create -f MarPRISM_environment.mlk.yml
+    ```
+
+11. **Activate the Conda environment for MarPRISM**  
+    ```bash
+    conda activate MarPRISM
+    ```
 
 
 
