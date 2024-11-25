@@ -1,5 +1,6 @@
 # **MarPRISM: Marine PRotist In-Situ Trophic Mode Predictor**  
 
+
 ## **Overview**  
 To examine the **in situ** activity of protists, [Lambert et al., 2022](https://www.pnas.org/doi/abs/10.1073/pnas.2100916119) developed a machine learning model to predict the trophic mode of marine protist species based on gene expression from metatranscriptomes.  
 - The Lambert model code can be found [here](https://github.com/armbrustlab/trophic-mode-ml).  
@@ -49,8 +50,8 @@ We further quantified MarPRISM's performance by testing its ability to make trop
    - Divide the RPK by the conversion factor to calculate TPM per contig.  
    - Sum TPMs by Pfam for each species and sample.  
 8. **Filter species bins:** Retain only species bins with at least 70% of eukaryotic core transcribed genes (CTGs) expressed ([MarFERReT.v1.core_genes.csv](https://zenodo.org/records/10278540), filter for lineage Eukaryota).  
-9. **Create a DataFrame:**  
-   Fill in missing Pfams for a species/sample with `0`.  
+9. **Create a data frame:**  
+   Fill in missing Pfams for a species, sample pair with `0`.  
 
    |                  | Pfam1 | Pfam2 | Pfam3 | ...  |
    |------------------|-------|-------|-------|------|
@@ -67,6 +68,10 @@ We further quantified MarPRISM's performance by testing its ability to make trop
     ```bash
     conda activate MarPRISM
     ```
+    
+12. **Run your DataFrame through Jupyter Notebook `MarPRISM.ipynb`:**  
+    Open the Jupyter Notebook and follow the instructions within `MarPRISM.ipynb` to process the DataFrame and make predictions.
+
 
 
 
