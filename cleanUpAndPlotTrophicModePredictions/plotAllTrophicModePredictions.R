@@ -171,7 +171,7 @@ mixed_strict <- mixed_strict %>% mutate(prop = n/total)
 
 mixedPreds <- mixed_strict %>% 
   ungroup() %>%
-  group_by(taxa) %>% arrange(desc(prop)) %>% slice(1) %>% filter(prop < .90)
+  group_by(taxa) %>% arrange(desc(prop)) %>% slice(1) %>% filter(prop < .77)
 
 mixedPreds %>% 
   ungroup() %>%
@@ -245,7 +245,7 @@ g %>% distinct(taxa) %>% nrow()
 g <- g %>% mutate(xg_pred = str_replace(xg_pred, "ic", "y"))
 
 dat <- g %>% 
-  filter(cruise %in% c("g1", "g2", "g3", "g3Depth")) %>%
+  filter(cruise %in% c("g1", "g2", "g3")) %>%
   semi_join(mixedPreds, by = c("taxa")) %>%
   mutate(cruise = ifelse(cruise == "g3Depth", "g3", cruise)) %>%
   group_by(xg_pred, taxa, cruise, latitude) %>% summarize(numPredictions = n()) %>% 
@@ -264,22 +264,22 @@ dashed <- dashed %>% filter(cruise == "Gradients1: 2016")
 
 dat$taxa <- factor(dat$taxa, levels = 
                      c("Karlodinium\nveneficum",
-                       "Prorocentrum\nminimum", 
                        "Bolidomonas\nsp. 1657", 
                        "Chrysochromulina\nsp. KB-HA01", 
                        "Pelagodinium\nbeii",   
                      "Azadinium\nspinosum",
+                     "Prorocentrum\nminimum",
                      "Scrippsiella\ntrochoidea", 
                      "Tripos\nfusus", 
                      "Prymnesium\npolylepis"))
 
 dashed$taxa <- factor(dashed$taxa, levels = 
-                        c("Karlodinium\nveneficum",
-                          "Prorocentrum\nminimum", 
+                        c("Karlodinium\nveneficum", 
                           "Bolidomonas\nsp. 1657", 
                           "Chrysochromulina\nsp. KB-HA01", 
                           "Pelagodinium\nbeii",   
                           "Azadinium\nspinosum",
+                          "Prorocentrum\nminimum",
                           "Scrippsiella\ntrochoidea", 
                           "Tripos\nfusus", 
                           "Prymnesium\npolylepis"))
@@ -315,16 +315,9 @@ dat %>%
   scale_size_continuous(breaks = c(2,4,6,8), limits = c(1,8)) + 
   scale_color_manual(values = c("Phototrophy" = "deepskyblue2", "Heterotrophy" = "red", "Mixotrophy" = "black")) + 
   guides(color="none") +
-  scale_x_continuous(breaks = c(25,30,35,40))
+  scale_x_continuous(breaks = c(25,30,35,40), limits = c(23, 42))
 
-ggsave("g1G2G3/trophicModePredictionsBySpeciesTypeOverG1AndG2AndG3_mixedPredictions_noOutliers_withG3Depth.png", dpi = 600, width = 15, height = 14)
-
-#write g2 preditions to a csv file for plotting with g2 incubations
-insitu <- g %>%
-  filter(cruise == "g2") %>% 
-  filter(latitude %in% c(32.93, 37.0, 41.42))
-
-insitu %>% write_csv("g2Incubation/g2SurfaceInsituPredictions.csv")
+ggsave("g1G2G3/trophicModePredictionsBySpeciesTypeOverG1AndG2AndG3_mixedPredictions_noOutliers.png", dpi = 600, width = 15, height = 14)
 
 ##fix g3 sample names 
 
