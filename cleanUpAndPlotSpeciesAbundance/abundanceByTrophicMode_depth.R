@@ -20,8 +20,6 @@ dat <- dat %>% mutate(depth = ifelse(str_detect(`Add'l ID`, "DCM"), "DCM", depth
 dat <- dat %>% select(tax_name, absoluteCounts, Latitude, depth, sample)
 dat$sample <- as.character(dat$sample)
 
-dat <- dat %>% mutate(cruise = "Gradients3: 2019")
-
 mixed <- read_csv("g1G2G3/mixedSpeciesStrict_dielIncubations.csv") %>% mutate(type = "mixed")
 phot <- read_csv("g1G2G3/phototrophicSpeciesStrict_dielIncubations.csv") %>% mutate(type = "phot")
 het <- read_csv("g1G2G3/heterotrophicSpeciesStrict_dielIncubations.csv") %>% mutate(type = "het")
@@ -41,13 +39,13 @@ dat <- dat %>% mutate(depthNum = ifelse(depth == "Surface", 15, NA))
 dat <- dat %>% mutate(depthNum = ifelse(depth == "75", 75, depthNum))
 dat <- dat %>% mutate(depthNum = ifelse(depth == "125", 125, depthNum))
 
-dat %>% distinct(depth, Latitude, cruise) %>% filter(depth == "DCM") %>% filter(cruise == "Gradients3: 2019")
+dat %>% distinct(depth, Latitude) %>% filter(depth == "DCM")
 
 #DCM was at 130m at 32.9 °N, 55m at 37 °N, 50m at 41.7 °N, and 41m at 42.3 °N
-dat <- dat %>% mutate(depthNum = ifelse(depth == "DCM" & cruise == "Gradients3: 2019" & Latitude == 32.92, 130, depthNum))
-dat <- dat %>% mutate(depthNum = ifelse(depth == "DCM" & cruise == "Gradients3: 2019" & Latitude == 37, 55, depthNum))
-dat <- dat %>% mutate(depthNum = ifelse(depth == "DCM" & cruise == "Gradients3: 2019" & Latitude == 41.67, 50, depthNum))
-dat <- dat %>% mutate(depthNum = ifelse(depth == "DCM" & cruise == "Gradients3: 2019" & Latitude == 42.33, 41, depthNum))
+dat <- dat %>% mutate(depthNum = ifelse(depth == "DCM" & Latitude == 32.92, 130, depthNum))
+dat <- dat %>% mutate(depthNum = ifelse(depth == "DCM" & Latitude == 37, 55, depthNum))
+dat <- dat %>% mutate(depthNum = ifelse(depth == "DCM" & Latitude == 41.67, 50, depthNum))
+dat <- dat %>% mutate(depthNum = ifelse(depth == "DCM" & Latitude == 42.33, 41, depthNum))
 
 dinos <- c("Azadinium spinosum", "Brandtodinium nutricula", "Dinophysis acuminata", "Gymnodinium catenatum GC744", 
            "Karenia brevis", "Karlodinium veneficum", "Pelagodinium beii", "Prorocentrum minimum", "Scrippsiella trochoidea", 
@@ -58,9 +56,9 @@ dat <- dat %>% mutate(absoluteCounts_dinoCorr = ifelse(tax_name %in% dinos, abso
 
 bySpecies <- dat
 
-bySpecies <- bySpecies %>% group_by(cruise, Latitude, type, depthNum, sample, tax_name) %>% summarize(absoluteCounts_dinoCorr = sum(absoluteCounts_dinoCorr))
+bySpecies <- bySpecies %>% group_by(Latitude, type, depthNum, sample, tax_name) %>% summarize(absoluteCounts_dinoCorr = sum(absoluteCounts_dinoCorr))
 
-bySpecies <- bySpecies %>% ungroup() %>% ungroup() %>% group_by(cruise, Latitude, type, depthNum, tax_name) %>% 
+bySpecies <- bySpecies %>% ungroup() %>% ungroup() %>% group_by(Latitude, type, depthNum, tax_name) %>% 
   summarize(sd_dino = sd(absoluteCounts_dinoCorr), absoluteCounts_dinoCorr = mean(absoluteCounts_dinoCorr), numSamples = n())
 
 bySpecies <- bySpecies %>% ungroup()
@@ -68,8 +66,6 @@ bySpecies <- bySpecies %>% ungroup()
 bySpecies <- bySpecies %>% mutate(se_dino = sd_dino/sqrt(numSamples))
 
 bySpecies <- bySpecies %>% mutate(depth_tax_name = str_c(depthNum, "  ", tax_name))
-
-order <- bySpecies %>% arrange(desc(depthNum), desc(type), desc(tax_name)) %>% distinct(depth_tax_name)
 
 bySpecies %>% group_by(type) %>% distinct(tax_name) %>% summarize(n = n())
 
@@ -129,33 +125,62 @@ bySpecies %>% filter(Latitude > 42, Latitude < 43) %>% filter(type == "het") %>%
   mutate(absoluteCounts_dinoCorr = absoluteCounts_dinoCorr/1e8) %>%
   spread(key = depthNum, value = absoluteCounts_dinoCorr) %>% filter(`15`<`41`, `75`<`41`)
 
+topTaxa <- bySpecies %>% 
+  arrange(desc(absoluteCounts_dinoCorr)) %>% 
+  ungroup() %>% 
+  group_by(Latitude, depthNum) %>% slice(1:3) %>% 
+  ungroup() %>% 
+  distinct(type, tax_name)
 
+total <- bySpecies %>% ungroup() %>% ungroup() %>% group_by(Latitude, depthNum) %>% 
+  mutate(tax_name = ifelse(!(tax_name %in% topTaxa$tax_name), "Other species bins with trophic predictions", tax_name)) %>%
+  summarize(total = sum(absoluteCounts_dinoCorr))
 
-bySpecies %>% filter(cruise == "Gradients3: 2019") %>% 
-  mutate(type = factor(type, levels = c("phot", "mixed", "het"))) %>%
-  mutate(Latitude = str_c(as.character(Latitude), " °N")) %>%
-  mutate(depth_tax_name = factor(depth_tax_name, levels = order$depth_tax_name)) %>%
-  ggplot(aes(x = depth_tax_name, y = absoluteCounts_dinoCorr/1e9, fill = type)) + 
-  geom_bar(stat = 'identity', position = 'dodge') + 
-  geom_errorbar(aes(ymin=absoluteCounts_dinoCorr/1e9-se_dino/1e9, ymax=absoluteCounts_dinoCorr/1e9+se_dino/1e9), width=.2,
-                position=position_dodge(.9)) +
-  facet_wrap(~Latitude, nrow = 1, scales = "free_y") + 
-  coord_flip() + 
+bySpecies %>% left_join(total, by = c("Latitude", "depthNum")) %>% 
+  mutate(prop = absoluteCounts_dinoCorr/total) %>% 
+  ungroup() %>% 
+  group_by(Latitude, depthNum) %>% 
+  summarize(prop = sum(prop)) %>% ungroup() %>% distinct(prop)
+
+order <- topTaxa %>% arrange(desc(type), tax_name)
+
+bySpecies %>% left_join(total, by = c("Latitude", "depthNum")) %>% 
+  mutate(tax_name = ifelse(!(tax_name %in% topTaxa$tax_name), "Other species bins with trophic predictions", tax_name)) %>%
+  mutate(tax_name = factor(tax_name, levels = c(order$tax_name, "Other species bins with trophic predictions"))) %>%
+  ungroup() %>% 
+  group_by(Latitude, tax_name, depthNum) %>% 
+  summarize(absoluteCounts_dinoCorr = sum(absoluteCounts_dinoCorr)) %>%
+  left_join(total, by = c("Latitude", "depthNum")) %>%
+  mutate(prop = absoluteCounts_dinoCorr/total) %>% 
+  mutate(Latitude = str_c(Latitude, " °N")) %>%
+  ggplot(aes(x = depthNum, y = prop, fill = tax_name)) + geom_bar(stat = 'identity', width = 8, color = 'black') + 
+  facet_wrap(~Latitude, nrow = 1) + 
+  coord_flip() + xlim(150, 0) +
   theme_classic() +
   theme_bw() +
-  theme(strip.background =element_rect(fill="white")) +
-  theme(strip.text.x = element_text(size = 26, color = 'black')) + 
-  theme(strip.text.y = element_text(size = 26, color = 'black')) + 
-  theme(axis.text.x = element_text(size = 22, color = 'black'))  + 
-  theme(axis.text.y = element_text(size = 12, color = 'black')) + 
-  theme(axis.title.y = element_text(size = 26, color = 'black')) + 
-  theme(legend.text = element_text(size = 20, color = 'black')) +
-  theme(legend.title = element_text(size = 22, color = 'black')) +
-  theme(axis.title.x = element_text(size = 26, color = 'black')) +  
-  labs(y = "Billion transcripts per liter", x = "Depth (m)") + 
-  scale_fill_manual(values = c("forestgreen", "purple", "orange"))
+  labs(y = "Proportion of biomass-adjusted transcripts", x = "Depth (m)", fill = "Species bin") +
+  theme(strip.background = element_rect(fill = "white"),
+        strip.text.x = element_text(size = 26, color = 'black'),
+        strip.text.y = element_text(size = 26, color = 'black'),
+        axis.text.x = element_text(size = 18, color = 'black'), 
+        axis.text.y = element_text(size = 22, color = 'black'), 
+        axis.title.y = element_text(size = 26, color = 'black'), 
+        legend.text = element_text(size = 20, color = 'black'), 
+        legend.title = element_text(size = 22, color = 'black'), 
+        axis.title.x = element_text(size = 26, color = 'black')) + 
+  scale_fill_manual(values = 
+                      c("Bathycoccus prasinos" = "#E41A1C", 
+                        "Pelagomonas calceolata" = "#377EB8", 
+                        "Phaeocystis antarctica" = "black",
+                        "Triparma pacifica" = "magenta",
+                        "Karlodinium veneficum" = "turquoise2", 
+                        "Karenia brevis" = "white",
+                        "Oxytricha trifallax" = "tan", 
+                        "Stramenopiles sp. TOSAG23-2" = "coral4",
+                        "Other species bins with trophic predictions" = "#999999"))
 
-ggsave("g1G2G3/abundanceByDepthTrophicMode_species.png", dpi = 300, height = 14, width = 30)
+ggsave("g1G2G3/abundanceByDepthTrophicMode_species_propBarPlot.png", dpi = 300, height = 7, width = 26)
+
 
 g3_par <- read_csv("2019 SCOPE Gradients Downcast CTD Data/KM1906_Gradients3_CTD.csv")
 
@@ -178,9 +203,9 @@ g3_fluor <- g3_par %>% select(time,lat,lon,depth,Fluor)
 g3_par <- g3_par %>% select(time,lat,lon,depth,PAR)
 g3_nut <- g3_nut %>% select(time, lat,lon,depth,NO2)
 
-dat <- dat %>% group_by(cruise, Latitude, type, depthNum, sample) %>% summarize(absoluteCounts_dinoCorr = sum(absoluteCounts_dinoCorr))
+dat <- dat %>% group_by(Latitude, type, depthNum, sample) %>% summarize(absoluteCounts_dinoCorr = sum(absoluteCounts_dinoCorr))
 
-dat <- dat %>% ungroup() %>% ungroup() %>% group_by(cruise, Latitude, type, depthNum) %>% 
+dat <- dat %>% ungroup() %>% ungroup() %>% group_by(Latitude, type, depthNum) %>% 
   summarize(sd_dino = sd(absoluteCounts_dinoCorr), absoluteCounts_dinoCorr = mean(absoluteCounts_dinoCorr), numSamples = n())
 
 dat <- dat %>% ungroup()
@@ -235,9 +260,7 @@ nrow(g3_par)
 g3_par <- g3_par %>% mutate(percPAR = PAR.x/PAR.y)
 g3_par <- g3_par %>% mutate(percPAR = percPAR*100)
 
-
 dat %>% 
-  filter(cruise == "Gradients3: 2019") %>% 
   mutate(type = factor(type, levels = c("phot", "mixed", "het"))) %>% 
   mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% 
   ggplot(aes(x = depthNum, y = absoluteCounts_dinoCorr / 1e9, fill = type)) + 
@@ -271,9 +294,7 @@ dat %>%
 
 ggsave("g1G2G3/abundanceBySpeciesType_depth.png", dpi = 600, height = 5.5, width = 14)
 
-
 dat %>% 
-  filter(cruise == "Gradients3: 2019") %>% 
   mutate(type = factor(type, levels = c("phot", "mixed", "het"))) %>% 
   mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% 
   ggplot(aes(x = depthNum, y = absoluteCounts_dinoCorr*6 / 1e9, fill = type)) + 
@@ -310,7 +331,6 @@ ggsave("g1G2G3/abundanceBySpeciesType_depth_gyreDiffScale.svg", dpi = 600, heigh
 
 
 dat %>% 
-  filter(cruise == "Gradients3: 2019") %>% 
   mutate(type = factor(type, levels = c("phot", "mixed", "het"))) %>% 
   mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% 
   ggplot(aes(x = depthNum, y = absoluteCounts_dinoCorr / 1e9, fill = type)) + 
@@ -346,7 +366,6 @@ ggsave("g1G2G3/abundanceBySpeciesType_depth_nut.svg", dpi = 600, height = 5.5, w
 
 
 dat %>% 
-  filter(cruise == "Gradients3: 2019") %>% 
   mutate(type = factor(type, levels = c("phot", "mixed", "het"))) %>% 
   mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% 
   ggplot(aes(x = depthNum, y = absoluteCounts_dinoCorr / 1e9, fill = type)) + 
@@ -382,7 +401,6 @@ ggsave("g1G2G3/abundanceBySpeciesType_depth_fluor.svg", dpi = 600, height = 5.5,
 
 
 dat %>% 
-  filter(cruise == "Gradients3: 2019") %>% 
   mutate(type = factor(type, levels = c("phot", "mixed", "het"))) %>% 
   mutate(Latitude = str_c(as.character(Latitude), " °N")) %>% 
   ggplot(aes(x = depthNum, y = absoluteCounts_dinoCorr / 1e9, fill = type)) + 
@@ -417,7 +435,7 @@ dat %>%
 ggsave("g1G2G3/abundanceBySpeciesType_depth_par.svg", dpi = 600, height = 5.5, width = 14)
 
 
-dat %>% filter(cruise == "Gradients3: 2019") %>% 
+dat %>% 
   mutate(type = factor(type, levels = c("phot", "mixed", "het"))) %>%
   mutate(Latitude = str_c(as.character(Latitude), " °N")) %>%
   ggplot(aes(x = depthNum, y = absoluteCounts_dinoCorr / 1e9, fill = type)) + 

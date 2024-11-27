@@ -379,7 +379,7 @@ order <- topTaxa %>% arrange(desc(type), tax_name)
 total <- merged %>% 
   group_by(cruise, Latitude, tax_name) %>% 
   summarize(absoluteCounts_dinoCorr = mean(absoluteCounts_dinoCorr), n = n()) %>% 
-  mutate(tax_name = ifelse(!(tax_name %in% topTaxa$tax_name), "Other species with trophic predictions", tax_name)) %>%
+  mutate(tax_name = ifelse(!(tax_name %in% topTaxa$tax_name), "Other species bins with trophic predictions", tax_name)) %>%
   ungroup() %>% 
   group_by(cruise, Latitude) %>% 
   summarize(total = sum(absoluteCounts_dinoCorr))
@@ -387,15 +387,15 @@ total <- merged %>%
 merged %>% 
   group_by(cruise, Latitude, tax_name) %>% 
   summarize(absoluteCounts_dinoCorr = mean(absoluteCounts_dinoCorr), n = n()) %>% 
-  mutate(tax_name = ifelse(!(tax_name %in% topTaxa$tax_name), "Other species with trophic predictions", tax_name)) %>%
-  mutate(tax_name = factor(tax_name, levels = c(order$tax_name, "Other species with trophic predictions"))) %>%
+  mutate(tax_name = ifelse(!(tax_name %in% topTaxa$tax_name), "Other species bins with trophic predictions", tax_name)) %>%
+  mutate(tax_name = factor(tax_name, levels = c(order$tax_name, "Other species bins with trophic predictions"))) %>%
   ungroup() %>% 
   group_by(cruise, Latitude, tax_name) %>% 
   summarize(absoluteCounts_dinoCorr = sum(absoluteCounts_dinoCorr)) %>%
   left_join(total, by = c("cruise", "Latitude")) %>% 
   mutate(prop = absoluteCounts_dinoCorr/total) %>%
   ggplot(aes(x = Latitude, y = prop, fill = tax_name)) +
-  geom_bar(stat = 'identity', width = .5, color = 'black') +
+  geom_bar(stat = 'identity', width = .3, color = 'black') +
   theme_classic() +
   theme_bw() +
   theme(strip.background =element_rect(fill="white")) +
@@ -407,7 +407,7 @@ merged %>%
   theme(legend.text = element_text(size = 20, color = 'black')) +
   theme(legend.title = element_text(size = 22, color = 'black')) +
   theme(axis.title.x = element_text(size = 26, color = 'black')) +  
-  labs(y = "Billion transcripts per liter", x = "Latitude (°N)", shape = "") + 
+  labs(y = "Proportion of biomass-adjusted transcripts", x = "Latitude (°N)", fill = "Species bin") + 
   geom_vline(data=filter(g, cruise=="Gradients1: 2016"), aes(xintercept=32.15), colour="red", linetype="dashed") + 
   geom_vline(data=filter(g, cruise=="Gradients1: 2016"), aes(xintercept=33), colour="black", linetype="dashed") + 
   
@@ -420,52 +420,9 @@ merged %>%
   guides(color = FALSE)  + 
   scale_x_continuous(breaks = c(25,30,35,40), limits = c(23, 42)) +
   scale_fill_manual(values = 
-                      c("#E41A1C", "#377EB8", "yellow", "turquoise2", "lightpink", "darkgreen", "#999999"))
+                      c("#E41A1C", "#377EB8", "yellow", "turquoise2", "lightpink", "tan", "#999999"))
 
-
-toPlot <- merged %>% 
-  group_by(cruise, Latitude, type, tax_name) %>% 
-  summarize(absoluteCounts_dinoCorr = mean(absoluteCounts_dinoCorr), n = n()) %>% 
-  mutate(tax_name = ifelse(!(tax_name %in% c("Pelagomonas calceolata", "Oxytricha trifallax", "Triparma pacifica", "Pelagodinium beii", "Karlodinium veneficum", "Chloroparvula japonica")), "Other species with trophic predictions", tax_name)) %>%
-  mutate(tax_name = factor(tax_name, levels = c("Oxytricha trifallax", "Karlodinium veneficum", "Pelagodinium beii", "Chloroparvula japonica", "Pelagomonas calceolata", "Triparma pacifica", "Other species with trophic predictions"))) %>%
-  mutate(type = ifelse(type == "Heterotrophic", "Species with only\nheterotrophy predictions", type)) %>%
-  mutate(type = ifelse(type == "Mixed predictions", "Species with mixed\ntrophic predictions", type)) %>%
-  mutate(type = ifelse(type == "Phototrophic", "Species with only\nphototrophy predictions", type)) %>%
-  mutate(type = factor(type, levels = c("Species with only\nheterotrophy predictions", "Species with mixed\ntrophic predictions", "Species with only\nphototrophy predictions")))
-
-toPlot %>%
-  ggplot(aes(x = Latitude, y = absoluteCounts_dinoCorr/1E9, color = type)) +
-  geom_jitter(data = toPlot %>% 
-                filter(tax_name == "Other species with trophic predictions"), width = .5, alpha = .2, size = 2) +
-  geom_jitter(data = toPlot %>% 
-                filter(tax_name != "Other species with trophic predictions"), aes(shape = tax_name), width = .5, size = 3.5, stroke = 1) +
-  theme_classic() +
-  theme_bw() +
-  theme(strip.background =element_rect(fill="white")) +
-  theme(strip.text.x = element_text(size = 26, color = 'black')) + 
-  theme(strip.text.y = element_text(size = 26, color = 'black')) + 
-  theme(axis.text.x = element_text(size = 22, color = 'black'))  + 
-  theme(axis.text.y = element_text(size = 22, color = 'black')) + 
-  theme(axis.title.y = element_text(size = 26, color = 'black')) + 
-  theme(legend.text = element_text(size = 20, color = 'black')) +
-  theme(legend.title = element_text(size = 22, color = 'black')) +
-  theme(axis.title.x = element_text(size = 26, color = 'black')) +  
-  labs(y = "Billion transcripts per liter", x = "Latitude (°N)", shape = "") + 
-  geom_vline(data=filter(g, cruise=="Gradients1: 2016"), aes(xintercept=32.15), colour="red", linetype="dashed") + 
-  geom_vline(data=filter(g, cruise=="Gradients1: 2016"), aes(xintercept=33), colour="black", linetype="dashed") + 
-  
-  geom_vline(data=filter(g %>% mutate(cruise = "Gradients2: 2017"), cruise=="Gradients2: 2017"), aes(xintercept=32.5), colour="red", linetype="dashed") + 
-  geom_vline(data=filter(g %>% mutate(cruise = "Gradients2: 2017"), cruise=="Gradients2: 2017"), aes(xintercept=36.2), colour="black", linetype="dashed") + 
-  
-  geom_vline(data=filter(g %>% mutate(cruise = "Gradients3: 2019"), cruise=="Gradients3: 2019"), aes(xintercept=32.45), colour="red", linetype="dashed") + 
-  geom_vline(data=filter(g %>% mutate(cruise = "Gradients3: 2019"), cruise=="Gradients3: 2019"), aes(xintercept=35), colour="black", linetype="dashed") + 
-  facet_wrap(~cruise) + labs(color = "") + 
-  scale_shape_manual(values=c(4,0,2,3,5,6)) + 
-  scale_color_manual(values = c("orange", "purple", "forestgreen")) +
-  guides(color = FALSE)  + 
-  scale_x_continuous(breaks = c(25,30,35,40), limits = c(23, 42))
-
-ggsave("abundanceOverG1G2G3surface_byTrophicMode_taxa_avgAcrossReplicates.png", height = 7, width = 20)
+ggsave("abundanceOverG1G2G3surface_byTrophicMode_taxa_propBarPlot.png", height = 7, width = 20)
 
 dat <- merged %>% 
   mutate(type = ifelse(type == "Heterotrophic", "Heterotrophic species bins", type)) %>% 
@@ -514,7 +471,6 @@ dat %>%
 
 ggsave("abundanceOverG1G2G3surface_byTrophicMode_sum.png", height = 7, width = 20)
 
-head(dat)
 total <- dat %>% group_by(cruise, Latitude) %>% summarize(total = sum(absoluteCounts_dinoCorr))
 
 dat %>%
@@ -552,8 +508,6 @@ dat %>%
   )
 
 ggsave("abundanceOverG1G2G3surface_byTrophicMode_prop.png", height = 5, width = 20)
-
-
 
 
 ncp %>% filter(lat <= 41.68, lat >= 23) %>% 
@@ -602,8 +556,6 @@ ncp %>% filter(lat <= 41.68, lat >= 23) %>%
   theme(axis.text.y.left = element_text(colour = "green"), axis.title.y.left = element_text(colour = "green"))
 
 ggsave("nitIronNCPAgainstLat.png", height = 4.4, width = 20)
-
-
 
 ncp %>% filter(lat <= 41.68, lat >= 23) %>% 
   mutate(lat = round(lat, 2)) %>% 
