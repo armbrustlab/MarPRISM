@@ -55,6 +55,16 @@ order <- c("32.93_Ctrl_0", "32.93_Ctrl_96", "32.93_LoNP_96", "32.93_HiNP_96", "3
 order_noTime <- str_replace(order, "_[0-9]{1,}", "")
 order_noTime <- unique(order_noTime)
 
+#At the northernmost REXP1 station at 41.42°N, in situ dissolved
+#inorganic nitrogen (DIN) was 2 μM and iron (Fe) was 0.3 nM resulting in a molar N:Fe of 6.6 ×
+#103 and log10N:Fe of 3.8. At the transition zone REXP2 station at 37.00°N, in situ nutrient
+#concentrations were 0.06 μM DIN and 0.51 nM Fe resulting in a log10N:Fe of 2.1 At the
+#southernmost REXP3 station at 32.93°N, in situ concentrations were 0.01 μM DIN and 0.22 nM
+#Fe, resulting in a log10N:Fe of 1.7 (Fig 3.4 a, b).
+dat <- dat %>% mutate(latitude = ifelse(Expt == "REXP1", 41.42, NA))
+dat <- dat %>% mutate(latitude = ifelse(Expt == "REXP2", 37.00, latitude))
+dat <- dat %>% mutate(latitude = ifelse(Expt == "REXP3", 32.93, latitude))
+
 dat_summary <- dat %>% ungroup() %>% 
   filter(Timepoint != 0) %>%
   mutate(latTreat = str_c(latitude, "_", Treatment)) %>%
@@ -202,3 +212,95 @@ dat_summary <- dat %>% ungroup() %>%
 
 dat_summary %>% ggplot(aes(x = Treatment, y = absoluteCounts, fill = type)) + geom_bar(stat = 'identity') + 
   facet_wrap(~latitude, scales = 'free')
+
+#chlorophyll data from Nick Hawco 
+chlor <- read_excel("Calculating Chl Trilogy Gradients.xlsx", sheet = "RR experiments")
+
+chlor <- chlor %>% select(Station, Depth, `...17`, `...18`)
+chlor <- chlor %>% filter(!is.na(`...17`))
+chlor <- chlor %>% mutate(se = `...18`/sqrt(3))
+
+#fill in missing station IDs
+chlor <- chlor %>% mutate(Station = ifelse(is.na(Station), lag(Station), Station))
+chlor <- chlor %>% mutate(Station = ifelse(is.na(Station), lag(Station), Station))
+chlor <- chlor %>% mutate(Station = ifelse(is.na(Station), lag(Station), Station))
+chlor <- chlor %>% mutate(Station = ifelse(is.na(Station), lag(Station), Station))
+
+#fix station name
+chlor <- chlor %>% mutate(Station = ifelse(Station == "TZ", "RR tZ", Station))
+
+#make names for variables more clear
+chlor <- chlor %>% select(-`...18`)
+colnames(chlor) <- c("station", "treatment", "mean", "se")
+
+#get rid of time zero hours
+chlor <- chlor %>% filter(!str_detect(treatment, "T0"))
+
+#make dataframe for control treatments and noncontrol treatments
+control <- chlor %>% filter(str_detect(treatment, "control|Control"))
+chlor <- chlor %>% filter(!str_detect(treatment, "control|Control"))
+
+control <- control %>% select(-treatment)
+colnames(control) <- c("station", "control_mean", "control_se")
+
+#add control treatments as more columns
+chlor <- chlor %>% left_join(control, by = c("station"))
+
+#calculate  ratio of treatment:control mean chlorophyll
+chlor <- chlor %>% mutate(diff = mean/control_mean)
+
+#calculate se of ratio of treatment:control mean chlorophyll
+chlor <- chlor %>% mutate(cv = se/mean)
+
+chlor <- chlor %>% mutate(cv_sq = cv^2)
+
+chlor <- chlor %>% mutate(control_cv = control_se/control_mean)
+
+chlor <- chlor %>% mutate(control_cv_sq = control_cv^2)
+
+chlor <- chlor %>% mutate(se_mult = sqrt(cv_sq+control_cv_sq))
+
+chlor <- chlor %>% mutate(diff_se = diff*se_mult)
+
+#fix station names 
+chlor <- chlor %>% mutate(station = ifelse(station == "Gyre T0", "32.93 °N", station))
+chlor <- chlor %>% mutate(station = ifelse(station == "RR tZ", "37 °N", station))
+chlor <- chlor %>% mutate(station = ifelse(station == "HNLC", "41.42 °N", station))
+
+chlor %>% arrange(station, treatment)
+chlor <- chlor %>% mutate(treatment = ifelse(treatment == "FeNP A", "NPFe", treatment))
+chlor <- chlor %>% mutate(treatment = ifelse(treatment == "HNP A", "HiNP", treatment))
+chlor <- chlor %>% mutate(treatment = ifelse(treatment == "LNP A", "LoNP", treatment))
+
+chlor <- chlor %>% mutate(treatment = ifelse(treatment == "Fe high", "HiFe", treatment))
+chlor <- chlor %>% mutate(treatment = ifelse(treatment == "Fe low", "LoFe", treatment))
+
+#put treatments in order
+chlor$treatment <- factor(chlor$treatment, levels = c("LoNP", "HiNP", "Fe", "NP", "LoFe", "HiFe", "NPFe"))
+
+chlor %>% ggplot(aes(x = treatment, y = diff)) + geom_bar(stat = 'identity', fill = 'green') + 
+  geom_errorbar(aes(ymin=diff-diff_se, ymax=diff+diff_se), width = .5) +
+  geom_hline(yintercept = 1, linetype = "dashed") + 
+  theme_classic() +
+  theme_bw() +
+  theme(strip.background =element_rect(fill="white")) +
+  theme(strip.text.x = element_text(size = 26, color = 'black')) + 
+  theme(strip.text.y = element_text(size = 26, color = 'black')) + 
+  theme(axis.text.x = element_text(size = 10, color = 'black'))  + 
+  theme(axis.text.y = element_text(size = 22, color = 'black')) + 
+  theme(axis.title.y = element_text(size = 26, color = 'black')) + 
+  theme(legend.text = element_text(size = 20, color = 'black')) +
+  theme(legend.title = element_text(size = 22, color = 'black')) +
+  theme(axis.title.x = element_text(size = 26, color = 'black')) +  
+  facet_wrap(~station, scales = "free_x") + 
+  labs(x = "", y = "Mean ratio of chlorophyll\nin treatment:control") + 
+  scale_y_continuous(breaks = c(0,1,2,4,6)) 
+
+ggsave("responseInChlorophyll.png", dpi = 300, height = 4.2, width = 14)
+
+
+
+
+
+
+
