@@ -1,4 +1,4 @@
-# **MarPRISM: Marine PRotist In-Situ trophic Mode predictor**  
+# **MarPRISM: Marine PRotist In Situ trophic Mode predictor**  
 
 
 ## **Overview**  
@@ -70,7 +70,17 @@ We further quantified MarPRISM's performance by testing its ability to make trop
     ```
     
 12. **Run your DataFrame through Jupyter Notebook `MarPRISM.ipynb`:**  
-    Open the Jupyter Notebook and follow the instructions within `MarPRISM.ipynb` to process the DataFrame and make predictions.
+    - Open the Jupyter Notebook `MarPRISM.ipynb` and follow the instructions within to process the DataFrame and make predictions.  
+    - **Required Files:**  
+      - Training Data: `trainingDataMarPRISM.csv`  
+      - Example DataFrame: `exampleDataset.csv`  
+
+13. **Filter Predictions Based on Replicate Consistency:**  
+    - Exclude phototrophy and heterotrophy predictions that are evenly split between replicate metatranscriptomes for the same species bin.  
+    - For non-diel samples, we excluded instances where ≥25% of trophic predictions across replicates for one species bin fall into phototrophy and heterotrophy categories.  
+
+14. **Prioritize Replicate-Supported Predictions:**  
+    - Trust trophic predictions more when multiple replicates support the same result.
 
 
 
