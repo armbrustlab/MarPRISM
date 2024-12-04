@@ -40,9 +40,9 @@ We further quantified MarPRISM's performance by testing its ability to make trop
 
 1. **Collect poly(A)-selected metatranscriptomes.**  
 2. **Trim, quality control, and de novo assemble RNA sequences.**  
-3. **Map transcripts to de novo assemblies with `kallisto`.**  
+3. **Map transcripts to de novo assemblies.** We used `kallisto` estimated counts. 
 4. **Functionally annotate transcripts** using the [Pfam database](https://www.ebi.ac.uk/interpro/download/pfam/) with `hmmsearch` (E-value < 1e-05).  
-5. **Taxonomically annotate assemblies** with `Diamond last common ancestor`, using the [Marine Functional EukaRyotic Reference Taxa (MarFERReT) reference sequence library](https://www.nature.com/articles/s41597-023-02842-4) (E-value < 1e-05).  
+5. **Taxonomically annotate assemblies.** We used `Diamond last common ancestor`, using the [Marine Functional EukaRyotic Reference Taxa (MarFERReT) reference sequence library](https://www.nature.com/articles/s41597-023-02842-4) (E-value < 1e-05).  
 6. **Sum the estimated number of reads mapped to each contig** (outputted by `kallisto`) by taxonomic annotation and sample (metatranscriptome).  
 7. **Normalize sequence reads to TPM:**  
    - Divide the estimated number of reads mapped to each contig by its nucleotide length (in kilobases) to generate reads per kilobase (RPK).  
