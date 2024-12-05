@@ -79,11 +79,16 @@ Details of how we process metatranscriptomes can be found [here](https://www.nat
     ```
     - **Required Files:**  
       - Training Data: `trainingDataMarPRISM.csv`  
-      - Example DataFrame: `exampleDataset.csv`  
+      - Example DataFrame: `exampleDataset.csv`
+     
+13. **Deactivate the Conda environment for MarPRISM**  
+    ```bash
+    conda deactivate
+    ```
 
-13. **Filter predictions based on replicate consistency:**  
+14. **Filter predictions based on replicate consistency:**  
     - Exclude phototrophy and heterotrophy predictions that are evenly split between replicate metatranscriptomes for the same species bin.  
     - For non-diel samples, we excluded instances where ≥25% of trophic predictions across replicates for one species bin fall into phototrophy and heterotrophy categories.  
 
-14. **Prioritize replicate-supported predictions:**  
+15. **Prioritize replicate-supported predictions:**  
     - When interpreting results, put more trust in trophic predictions when multiple replicates give you the same trophic mode prediction.
