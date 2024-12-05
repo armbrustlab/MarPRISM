@@ -1,5 +1,6 @@
-# **MarPRISM: Marine PRotist In Situ trophic Mode predictor**  
+# **MarPRISM: Marine PRotist In Situ Trophic Mode Predictor**
 
+<img src="https://github.com/user-attachments/assets/a0a280f1-7bd9-4885-8646-22ac9986fe3f" alt="marPRISMLogo" width="300">
 
 ## **Overview**  
 To examine the **in situ** activity of protists, [Lambert et al., 2022](https://www.pnas.org/doi/abs/10.1073/pnas.2100916119) developed a machine learning model to predict the trophic mode of marine protist species based on gene expression from metatranscriptomes.  
@@ -12,10 +13,11 @@ We set out to improve the Lambert model as we expected the inclusion of low-sequ
 
 ### Key changes  
 - **Updated model software**  
-- **Removed contaminated and low-sequence transcriptomes**  
+- **Removed contaminated and low-sequence transcriptomes.** Info on transcriptomes used in training MarPRISM can be found in `infoOnTrainingData.xlsx`.
 
 These changes did not increase the accuracy of trophic predictions. However:  
-- The set of feature Pfams needed for reliable predictions was reduced from **1046 to 183 feature Pfams**.  
+- The set of feature Pfams needed for reliable predictions was reduced from **1046 to 183 feature Pfams**.
+- More info on 183 feature Pfams can be found in `featurePfams.xlsx`.
 
 ## **Model performance**  
 
@@ -37,13 +39,14 @@ We further quantified MarPRISM's performance by testing its ability to make trop
 
 
 ## **How to run the model on marine metatranscriptomes**  
+Details of how we process metatranscriptomes can be found [here](https://www.nature.com/articles/s41597-024-04005-5).
 
 1. **Collect poly(A)-selected metatranscriptomes.**  
 2. **Trim, quality control, and de novo assemble RNA sequences.**  
 3. **Map transcripts to de novo assemblies.** We used `kallisto` estimated counts (est_counts). 
 4. **Functionally annotate transcripts** using the [Pfam database](https://www.ebi.ac.uk/interpro/download/pfam/) with `hmmsearch` (E-value < 1e-05).  
 5. **Taxonomically annotate assemblies.** We used `Diamond last common ancestor`, using the [Marine Functional EukaRyotic Reference Taxa (MarFERReT) reference sequence library](https://www.nature.com/articles/s41597-023-02842-4) (E-value < 1e-05).  
-6. **Sum the estimated number of reads mapped to each contig** (outputted by `kallisto`) by taxonomic annotation and sample (metatranscriptome).  
+6. **Sum the estimated number of reads mapped to each contig** by taxonomic annotation and sample (metatranscriptome).  
 7. **Normalize sequence reads to TPM:**  
    - Divide the estimated number of reads mapped to each contig by its nucleotide length (in kilobases) to generate reads per kilobase (RPK).  
    - Sum the RPK by species and sample, then divide by one million to generate a conversion factor.  
@@ -69,19 +72,18 @@ We further quantified MarPRISM's performance by testing its ability to make trop
     conda activate MarPRISM
     ```
     
-12. **Run your DataFrame through Jupyter Notebook `MarPRISM.ipynb`:**  
-    - Open the Jupyter Notebook `MarPRISM.ipynb` and follow the instructions within to process the DataFrame and make predictions.  
+12. **Run your dataframe through Jupyter Notebook `MarPRISM.ipynb`:**  
+    - Open the Jupyter Notebook `MarPRISM.ipynb` and follow the instructions within to process the DataFrame and make predictions.
+    ```bash
+    jupyter-notebook MarPRISM.ipynb
+    ```
     - **Required Files:**  
       - Training Data: `trainingDataMarPRISM.csv`  
       - Example DataFrame: `exampleDataset.csv`  
 
-13. **Filter Predictions Based on Replicate Consistency:**  
+13. **Filter predictions based on replicate consistency:**  
     - Exclude phototrophy and heterotrophy predictions that are evenly split between replicate metatranscriptomes for the same species bin.  
     - For non-diel samples, we excluded instances where ≥25% of trophic predictions across replicates for one species bin fall into phototrophy and heterotrophy categories.  
 
-14. **Prioritize Replicate-Supported Predictions:**  
-    - Trust trophic predictions more when multiple replicates support the same result.
-
-
-
-
+14. **Prioritize replicate-supported predictions:**  
+    - When interpreting results, put more trust in trophic predictions when multiple replicates give you the same trophic mode prediction.
