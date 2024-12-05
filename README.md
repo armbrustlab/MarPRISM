@@ -1,6 +1,6 @@
 # **MarPRISM: Marine PRotist In Situ Trophic Mode Predictor**
 
-![marPRISMLogo](https://github.com/user-attachments/assets/dbeac577-6127-4633-8e3e-dfdd6355532e)
+<img src="https://github.com/user-attachments/assets/dbeac577-6127-4633-8e3e-dfdd6355532e" alt="marPRISMLogo" width="300"/>
 
 ## **Overview**  
 To examine the **in situ** activity of protists, [Lambert et al., 2022](https://www.pnas.org/doi/abs/10.1073/pnas.2100916119) developed a machine learning model to predict the trophic mode of marine protist species based on gene expression from metatranscriptomes.  
