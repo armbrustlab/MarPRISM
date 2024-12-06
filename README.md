@@ -23,6 +23,7 @@ These changes did not increase the accuracy of trophic predictions. However:
 
 ### **Cross-validation**  
 The performance of MarPRISM was estimated using cross-validation:  
+- Cross-validation can be run in `modelDevelopmentTesting/marPRISM_crossValidation.ipynb`.
 - The model was trained on **83% of the training data** and tested on the remaining data.  
 - Performance was evaluated using **F1 score** (Mean F1 score ± standard error)
   - **Overall mean**: 0.944 ± 0.0154  
@@ -34,6 +35,7 @@ The performance of MarPRISM was estimated using cross-validation:
 
 ### **Testing on cultured protist transcriptomes**  
 We further quantified MarPRISM's performance by testing its ability to make trophic predictions for cultured protist transcriptomes not present in the training data. 
+- `modelDevelopmentTesting/testTranscriptomes.csv` can be run through `MarPRISM.ipynb` to recreate trophic predictions.
 - **21/27 (77.78%) protist cultures** were correctly predicted across all replicate transcriptomes.  
 - **60/76 (78.95%) transcriptomes** were correctly predicted when replicate transcriptomes were considered individually
 
