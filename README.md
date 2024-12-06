@@ -13,7 +13,7 @@ We set out to improve the Lambert model as we expected the inclusion of low-sequ
 
 ### Key changes  
 - **Updated model software**  
-- **Removed contaminated and low-sequence transcriptomes.** Info on transcriptomes used in training MarPRISM can be found in `furtherInfo/trainingData.xlsx`.
+- **Removed contaminated and low-sequence transcriptomes.**
 
 These changes did not increase the accuracy of trophic predictions. However:  
 - The set of feature Pfams needed for reliable predictions was reduced from **1046 to 183 feature Pfams**.
@@ -33,7 +33,7 @@ The performance of MarPRISM was estimated using cross-validation:
 **Mixotrophy** was the most difficult trophic mode to predict, likely due to overlapping Pfams with both phototrophy and heterotrophy.  
 
 ### **Testing on cultured protist transcriptomes**  
-We further quantified MarPRISM's performance by testing its ability to make trophic predictions for cultured protist transcriptomes not present in the training data. Info on the test transcriptomes can be found in `furtherInfo/testTranscriptomes.xlsx`:  
+We further quantified MarPRISM's performance by testing its ability to make trophic predictions for cultured protist transcriptomes not present in the training data. 
 - **21/27 (77.78%) protist cultures** were correctly predicted across all replicate transcriptomes.  
 - **60/76 (78.95%) transcriptomes** were correctly predicted when replicate transcriptomes were considered individually
 
@@ -80,10 +80,10 @@ Details of how we process metatranscriptomes can be found [here](https://www.nat
     - **Files:**  
       - Training Data: `trainingDataMarPRISM.csv`
       - Features: `MarPRISM_featurePfams.csv`
-      - Example DataFrame: `testTranscriptomes.csv` These are the transcriptomes that we used for testing MarPRISM.
+      - Example DataFrame: `exampleDataset.csv`
      
      - **Output:**
-       - To check that your Jupyter Notebook is working correctly, if testTranscriptomes.csv is used as input, your output `testTranscriptomes_trophicPredictions.csv` should match `testTranscriptomes_trophicPredictions_marPRISM.csv`.
+       - To check that your Jupyter Notebook is working correctly, if testTranscriptomes.csv is used as input, your output `exampleDataset_trophicPredictions.csv` should match `exampleDataset_trophicPredictions_marPRISM.csv`.
      
 13. **Deactivate the Conda environment for MarPRISM**  
     ```bash
