@@ -83,7 +83,7 @@ Details of how we process metatranscriptomes can be found [here](https://www.nat
       - Example DataFrame: `exampleDataset.csv`
      
      - **Output:**
-       - To check that your Jupyter Notebook is working correctly, if testTranscriptomes.csv is used as input, your output `exampleDataset_trophicPredictions.csv` should match `exampleDataset_trophicPredictions_marPRISM.csv`.
+       - To check that your Jupyter Notebook is working correctly, if testTranscriptomes.csv is used as input, your output `exampleDataset_trophicPredictions.csv` should match `exampleDataset_trophicPredictions_toCompare.csv`.
      
 13. **Deactivate the Conda environment for MarPRISM**  
     ```bash
