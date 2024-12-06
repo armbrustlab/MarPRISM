@@ -33,7 +33,7 @@ The performance of MarPRISM was estimated using cross-validation:
 **Mixotrophy** was the most difficult trophic mode to predict, likely due to overlapping Pfams with both phototrophy and heterotrophy.  
 
 ### **Testing on cultured protist transcriptomes**  
-We further quantified MarPRISM's performance by testing its ability to make trophic predictions for cultured protist transcriptomes not present in the training data:  
+We further quantified MarPRISM's performance by testing its ability to make trophic predictions for cultured protist transcriptomes not present in the training data. Info on the test transcriptomes can be found in `infoOnTestTranscriptomes.xlsx`:  
 - **21/27 (77.78%) protist cultures** were correctly predicted across all replicate transcriptomes.  
 - **60/76 (78.95%) transcriptomes** were correctly predicted when replicate transcriptomes were considered individually
 
@@ -84,7 +84,6 @@ Details of how we process metatranscriptomes can be found [here](https://www.nat
      
      - **Output:**
        - To check that your Jupyter Notebook is working correctly, if testTranscriptomes.csv is used as input, your output `testTranscriptomes_trophicPredictions.csv` should match `testTranscriptomes_trophicPredictions_marPRISM.csv`.
-       - Info on the test transcriptomes can be found in infoOnTestTranscriptomes.xlsx
      
 13. **Deactivate the Conda environment for MarPRISM**  
     ```bash
