@@ -17,7 +17,7 @@ We set out to improve the Lambert model as we expected the inclusion of low-sequ
 
 These changes did not increase the accuracy of trophic predictions. However:  
 - The set of feature Pfams needed for reliable predictions was reduced from **1046 to 183 feature Pfams**.
-- More info on 183 feature Pfams can be found in `featurePfams.xlsx`.
+- More info on 183 feature Pfams can be found in `infoOnFeaturePfams.xlsx`.
 
 ## **Model performance**  
 
