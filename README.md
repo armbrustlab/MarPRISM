@@ -19,6 +19,28 @@ These changes did not increase the accuracy of trophic predictions. However:
 - The set of feature Pfams needed for reliable predictions was reduced from **1046 to 183 feature Pfams**.
 - More info on 183 feature Pfams can be found in `furtherInfo/featurePfams.xlsx`.
 
+## **Model development**  
+
+After removing contaminated and low-sequence transcriptomes, we conducted feature selection using mean decrease in accuracy to identify the feature Pfams essential for model performance.  
+
+1. **Balancing training data**  
+   - Training data was imbalanced:  
+     - 44 heterotrophic entries  
+     - 85 mixotrophic entries  
+     - 258 phototrophic entries  
+   - To address this, phototrophic transcriptomes were randomly undersampled to create five balanced training datasets:  
+     - Number of phototrophic transcriptomes = 50, 80, 100, 120, 140  
+     - Mixotrophic and heterotrophic transcriptomes were included in full.  
+
+2. **Feature selection**  
+   - Conducted on the balanced training datasets to identify essential Pfams.  
+   - Script: `modelDevelopmentTesting/mda.py`  
+
+3. **Hyperparameter optimization**  
+   - A grid search was performed to optimize model parameters.  
+   - Used one dataset with 100 phototrophic transcriptomes and all mixotrophic and heterotrophic transcriptomes.  
+   - Script: `modelDevelopmentTesting/parameter_gridsearch.py`  
+
 ## **Model performance**  
 
 ### **Cross-validation**  
