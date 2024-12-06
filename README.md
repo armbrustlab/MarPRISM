@@ -13,11 +13,11 @@ We set out to improve the Lambert model as we expected the inclusion of low-sequ
 
 ### Key changes  
 - **Updated model software**  
-- **Removed contaminated and low-sequence transcriptomes.** Info on transcriptomes used in training MarPRISM can be found in `infoOnTrainingData.xlsx`.
+- **Removed contaminated and low-sequence transcriptomes.** Info on transcriptomes used in training MarPRISM can be found in `furtherInfo/trainingData.xlsx`.
 
 These changes did not increase the accuracy of trophic predictions. However:  
 - The set of feature Pfams needed for reliable predictions was reduced from **1046 to 183 feature Pfams**.
-- More info on 183 feature Pfams can be found in `infoOnFeaturePfams.xlsx`.
+- More info on 183 feature Pfams can be found in `furtherInfo/featurePfams.xlsx`.
 
 ## **Model performance**  
 
@@ -33,7 +33,7 @@ The performance of MarPRISM was estimated using cross-validation:
 **Mixotrophy** was the most difficult trophic mode to predict, likely due to overlapping Pfams with both phototrophy and heterotrophy.  
 
 ### **Testing on cultured protist transcriptomes**  
-We further quantified MarPRISM's performance by testing its ability to make trophic predictions for cultured protist transcriptomes not present in the training data. Info on the test transcriptomes can be found in `infoOnTestTranscriptomes.xlsx`:  
+We further quantified MarPRISM's performance by testing its ability to make trophic predictions for cultured protist transcriptomes not present in the training data. Info on the test transcriptomes can be found in `furtherInfo/testTranscriptomes.xlsx`:  
 - **21/27 (77.78%) protist cultures** were correctly predicted across all replicate transcriptomes.  
 - **60/76 (78.95%) transcriptomes** were correctly predicted when replicate transcriptomes were considered individually
 
