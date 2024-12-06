@@ -77,10 +77,13 @@ Details of how we process metatranscriptomes can be found [here](https://www.nat
     ```bash
     jupyter-notebook MarPRISM.ipynb
     ```
-    - **Required Files:**  
-      - Training Data: `trainingDataMarPRISM.csv`  
-      - Example DataFrame: `testTranscriptomes.csv` These are the transcriptomes not included in training that we used for testing MarPRISM.
-      - To check that your Jupyter Notebook is working correctly, if testTranscriptomes.csv is used as the input, your output should match `testTranscriptomes_trophicPredictions.csv`. Info on the test transcriptomes can be found in infoOnTestTranscriptomes.xlsx
+    - **Files:**  
+      - Training Data: `trainingDataMarPRISM.csv`
+      - Features: `MarPRISM_featurePfams.csv`
+      - Example DataFrame: `testTranscriptomes.csv` These are the transcriptomes that we used for testing MarPRISM.
+     
+     - **Output:**
+      - To check that your Jupyter Notebook is working correctly, if testTranscriptomes.csv is used as input, your output should match `testTranscriptomes_trophicPredictions_.csv`.        Info on the test transcriptomes can be found in infoOnTestTranscriptomes.xlsx
      
 13. **Deactivate the Conda environment for MarPRISM**  
     ```bash
