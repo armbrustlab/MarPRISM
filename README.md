@@ -76,8 +76,10 @@ Details of how we process metatranscriptomes can be found [here](https://www.nat
    - Sum the RPK by species and sample, then divide by one million to generate a conversion factor.  
    - Divide the RPK by the conversion factor to calculate TPM per contig.  
    - Sum TPMs by Pfam for each species and sample.  
-8. **Filter species bins:** Retain only species bins with at least 70% of eukaryotic core transcribed genes (CTGs) expressed ([MarFERReT.v1.core_genes.csv](https://zenodo.org/records/10554340), filter for lineage Eukaryota). Retain only species bins identified as protists. 
-9. **Create a data frame:**  
+8. **Filter species bins:** Retain only species bins with at least 70% of eukaryotic core transcribed genes (CTGs) expressed.
+   - Eukaryota CTGs: `MarFERReT.v1.core_genes_eukaryota.csv` These CTGs were identified in ([MarFERReT.v1.core_genes.csv](https://zenodo.org/records/10554340), filtering for lineage        Eukaryota). 
+   - Retain only species bins identified as protists. 
+10. **Create a data frame:**  
    Fill in missing Pfams for a species, sample pair with `0`.  
 
    |                  | Pfam1 | Pfam2 | Pfam3 | ...  |
@@ -86,17 +88,17 @@ Details of how we process metatranscriptomes can be found [here](https://www.nat
    | Species2_sample1 | TPM   | TPM   | TPM   | TPM  |
    | Species1_sample2 | TPM   | TPM   | TPM   | TPM  |
 
-10. **Create the Conda environment for MarPRISM**  
+11. **Create the Conda environment for MarPRISM**  
     ```bash
     conda env create -f MarPRISM_environment.mlk.yml
     ```
 
-11. **Activate the Conda environment for MarPRISM**  
+12. **Activate the Conda environment for MarPRISM**  
     ```bash
     conda activate MarPRISM
     ```
     
-12. **Run your dataframe through Jupyter Notebook `MarPRISM.ipynb`:**  
+13. **Run your dataframe through Jupyter Notebook `MarPRISM.ipynb`:**  
     - Open the Jupyter Notebook `MarPRISM.ipynb` and follow the instructions within to process the DataFrame and make predictions.
     ```bash
     jupyter-notebook MarPRISM.ipynb
@@ -109,14 +111,14 @@ Details of how we process metatranscriptomes can be found [here](https://www.nat
      - **Output:**
        - To check that your Jupyter Notebook is working correctly, if `exampleDataset.csv` is used as input, your output `exampleDataset_trophicPredictions.csv` should match `exampleDataset_trophicPredictions_toCompare.csv`.
      
-13. **Deactivate the Conda environment for MarPRISM**  
+14. **Deactivate the Conda environment for MarPRISM**  
     ```bash
     conda deactivate
     ```
 
-14. **Filter predictions based on replicate consistency:**  
+15. **Filter predictions based on replicate consistency:**  
     - Exclude phototrophy and heterotrophy predictions that are evenly split between replicate metatranscriptomes for the same species bin.  
     - For non-diel samples, we excluded instances where ≥25% of trophic predictions across replicates for one species bin fall into phototrophy and heterotrophy categories.  
 
-15. **Prioritize replicate-supported predictions:**  
+16. **Prioritize replicate-supported predictions:**  
     - When interpreting results, put more trust in trophic predictions when multiple replicates give you the same trophic mode prediction.
