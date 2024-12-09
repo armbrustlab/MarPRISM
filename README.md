@@ -77,7 +77,7 @@ Details of how we process metatranscriptomes can be found [here](https://www.nat
    - Divide the RPK by the conversion factor to calculate TPM per contig.  
    - Sum TPMs by Pfam for each species and sample.  
 8. **Filter species bins:** Retain only species bins with at least 70% of eukaryotic core transcribed genes (CTGs) expressed.
-   - Eukaryota CTGs: `MarFERReT.v1.core_genes_eukaryota.csv` These CTGs were identified in [MarFERReT.v1.core_genes.csv](https://zenodo.org/records/10554340), filtering for lineage        Eukaryota). 
+   - Eukaryota CTGs: `MarFERReT.v1.core_genes_eukaryota.csv` These CTGs were identified in [MarFERReT.v1.core_genes.csv](https://zenodo.org/records/10554340), filtering for lineage        Eukaryota. 
    - Retain only species bins identified as protists. 
 10. **Create a data frame:**  
    Fill in missing Pfams for a species, sample pair with `0`.  
