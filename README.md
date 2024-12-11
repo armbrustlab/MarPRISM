@@ -101,9 +101,9 @@ Details of how we process metatranscriptomes can be found [here](https://www.nat
     ```bash
     jupyter-notebook MarPRISM.ipynb
     ```
-    - MarPRISM will output a warning and not make predictions for species bin sample pairs with <70% of the eukaryote core transcribed genes (CTGs) expressed.
+    - MarPRISM will output a warning and not make predictions for species bin sample pairs with <70% of eukaryote core transcribed genes (CTGs) expressed.
       - Trophic predictions are not reliable for species bins with low coverage.
-      - The eukaryote CTGs were [MarFERReT.v1.core_genes.csv](https://zenodo.org/records/10554340), filtering for lineage Eukaryota
+      - The eukaryote CTGs `MarFERReT.v1.core_genes_eukaryota.csv` are from [MarFERReT.v1.core_genes.csv](https://zenodo.org/records/10554340), filtering for lineage Eukaryota.
 
     - **Files:**  
       - Training Data: `trainingDataMarPRISM.csv`
