@@ -30,7 +30,7 @@ After removing contaminated and low-sequence transcriptomes, we conducted featur
      - 258 phototrophic entries  
    - To address this, phototrophic transcriptomes were randomly undersampled to create five balanced training datasets:  
      - Number of phototrophic transcriptomes = 50, 80, 100, 120, 140  
-     - Mixotrophic and heterotrophic transcriptomes were included in full.  
+     - Mixotrophic and heterotrophic transcriptomes were included in full.
 
 2. **Feature selection**  
    - Conducted on the balanced training datasets to identify essential Pfams.  
