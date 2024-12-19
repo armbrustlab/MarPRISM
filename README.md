@@ -143,7 +143,7 @@ conda deactivate
 Output: 
    `exampleDataset_trophicPredictions.csv` which contains the trophic predictions for each taxonomic bin and sample pair that have ≥70% eukaryote core transcribed genes expressed. 
 
-Then we excluded trophic predictions for taxonomic bins not identified at the species level, and taxonomic bins that were not identified as protists. 
+Then we retain only trophic predictions for transcript bins identified as protists and at the species level. 
 Then we excluded predictions that are mixed. 
 
 ## **How to run feature selection**  
@@ -165,7 +165,6 @@ conda deactivate
 
 ## **How to run hyperparameter optimization**  
 
-3. **Hyperparameter optimization**  
    - Dataset with 100 phototrophic transcriptomes and all mixotrophic and heterotrophic transcriptomes, located [here](https://zenodo.org/uploads/14518902).
        -    `Field_training_contamLowSeqsRemoved_100phototrophic.csv`
    - Script: `modelDevelopmentTesting/parameter_gridsearch.py`
@@ -190,7 +189,10 @@ cd modelDevelopmentTesting
 jupyter-notebook crossValidation.ipynb
 conda deactivate
 ```
-For each model version, this will output two csv files: one for the mean and standard error of the F1 score for the overall model, and one for the mean and standard error of the F1 score treating each trophic mode separately. For MarpRISM, a csv file will be outputted with the mean and standard error of the F1 score by percentage of training data used. 
+Output: 
+   'model_overall_f1_scores.csv': the overall mean and standard error of the F1 score for each model tested. 
+   'models_byClass_f1_scores.csv': the mean and standard error of the F1 score by trophic mode for each model tested. 
+   'marPRISM_k_train_size_vs_f1_score_by_class.csv': For MarPRISM, the mean and standard error of the F1 score by percentage of training data used. 
 
 - To run cross-validation on the previous version of the model (Lambert et al. 2022):
 ```bash
@@ -200,8 +202,10 @@ conda activate environment
 jupyter-notebook lambertModel_crossValidation.ipynb
 conda deactivate
 ```
-This will output two csv files for the previous version of the model (Lambert et al. 2022): one for the mean and standard error of the F1 score for the overall model, and one for the mean and standard error of the F1 score treating each trophic mode separately. 
-
+Output: 
+   'lambert_model_overall_f1_score.csv': the overall mean and standard error of the F1 score for the previous version of the model (Lambert et al. 2022). 
+   'lambert_model_overall_f1_score_byClass.csv': the mean and standard error of the F1 score by trophic mode for the previous version of the model (Lambert et al. 2022). 
+   
 ### **How to test MarPRISM on test transcriptomes**  
 - `modelDevelopmentTesting/testTranscriptomes.csv` can be run through `MarPRISM.ipynb` to recreate trophic predictions.
 - Transcript per million counts for the test transcriptomes are located [here](https://zenodo.org/uploads/14518902)
@@ -211,7 +215,7 @@ This will output two csv files for the previous version of the model (Lambert et
  conda env create -f MarPRISM_environment.mlk.yml
  conda activate MarPRISM
  jupyter-notebook MarPRISM.ipynb
- substitute exampleDataset.csv for testTranscriptomes.csv (https://zenodo.org/uploads/14518902) 
+ substitute exampleDataset.csv for testTranscriptomes.csv
  conda deactivate
  ```
 The trophic mode predictions for the test transcriptomes can be compared to their metadata: [testTranscriptomes.xlsx](https://zenodo.org/uploads/14518902).
