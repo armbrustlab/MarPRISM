@@ -69,6 +69,8 @@ The performance of MarPRISM was estimated using cross-validation:
 - Cross-validation was conducted using the script located at: `modelDevelopmentTesting/crossValidation.ipynb`.
 - We tested other versions of the model in the same script, including a Random Forest model and different sets of feature Pfams.
 
+**Mixotrophy** was the most difficult trophic mode to predict, likely due to overlapping Pfams with both phototrophy and heterotrophy.  
+
 #### To run cross-validation:
 
 ```bash
@@ -89,8 +91,6 @@ jupyter-notebook lambertModel_crossValidation.ipynb
 conda deactivate
 ```
 This will output two csv files for the previous version of the model (Lambert et al. 2022): one for the mean and standard error of the F1 score for the overall model, and one for the mean and standard error of the F1 score treating each trophic mode separately. 
-
-**Mixotrophy** was the most difficult trophic mode to predict, likely due to overlapping Pfams with both phototrophy and heterotrophy.  
 
 ### **Testing on cultured protist transcriptomes**  
 We further quantified MarPRISM's performance by testing its ability to make trophic predictions for cultured protist transcriptomes not present in the training data. 
