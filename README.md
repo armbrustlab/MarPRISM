@@ -154,7 +154,7 @@ jupyter-notebook MarPRISM.ipynb
 #substitute exampleDataset.csv in MarPRISM.ipynb for one of the above datasets
 conda deactivate
 ```
-#### Datasets:
+#### Output:
    - `exampleDataset_trophicPredictions.csv` which contains the trophic predictions for each taxonomic bin and sample pair that have ≥70% eukaryote core transcribed genes expressed. 
 
 Then we **retained only trophic predictions for transcript bins identified as protists and at the species level**. 
@@ -165,13 +165,15 @@ We **excluded predictions split between phototrophy and heterotrophy**:
 
 ## **How we ran feature selection**  
 
-Datasets with undersampled phototrophic transcriptomes can be found [here](https://zenodo.org/uploads/14518902).
-   - `trainingData_contamLowSeqsRemoved_50phot`
-   - `trainingData_contamLowSeqsRemoved_80phot`
-   - `trainingData_contamLowSeqsRemoved_100phot`
-   - `trainingData_contamLowSeqsRemoved_120phot`
+#### Datasets:
+   - Phototrophic transcriptomes were undersampled to select features
+      - Datasets used for feature selection can be found [here](https://zenodo.org/uploads/14518902).
+      - `trainingData_contamLowSeqsRemoved_50phot`
+      - `trainingData_contamLowSeqsRemoved_80phot`
+      - `trainingData_contamLowSeqsRemoved_100phot`
+      - `trainingData_contamLowSeqsRemoved_120phot`
 
-Script: `modelDevelopmentTesting/mda.py`
+#### To run feature selection for XGBoost model:
 
 ```bash
 conda env create -f MarPRISM_environment.mlk.yml
@@ -184,14 +186,17 @@ python mda.py -model xgboost -data trainingData_contamLowSeqsRemoved_100phot -o 
 python mda.py -model xgboost -data trainingData_contamLowSeqsRemoved_120phot -o features_contamLowSeqsRemoved_120phot_xg
 conda deactivate
 ```
-We then took the union of Pfams in 'features_contamLowSeqsRemoved_50phot_xg', 'features_contamLowSeqsRemoved_80phot_xg', 'features_contamLowSeqsRemoved_100phot_xg', and 'features_contamLowSeqsRemoved_120phot_xg' that had an importance score greater than 0. 
+
+We then took the **union of Pfams** in 'features_contamLowSeqsRemoved_50phot_xg', 'features_contamLowSeqsRemoved_80phot_xg', 'features_contamLowSeqsRemoved_100phot_xg', and 'features_contamLowSeqsRemoved_120phot_xg' that had an **importance score greater than 0**. 
 
 ## **How we ran hyperparameter optimization**  
 
-Dataset with 100 phototrophic transcriptomes and all mixotrophic and heterotrophic transcriptomes, located [here](https://zenodo.org/uploads/14518902).
-   - `trainingData_contamLowSeqsRemoved_100phot`
+#### Datasets:
+   - Phototrophic transcriptomes were undersampled to find best performing hyperparameters
+         - Dataset with 100 phototrophic transcriptomes and all mixotrophic and heterotrophic transcriptomes, located [here](https://zenodo.org/uploads/14518902).
+         - `trainingData_contamLowSeqsRemoved_100phot`
 
-Script: `modelDevelopmentTesting/parameter_gridsearch.py`
+#### To run hyperparameter search for XGBoost model:
 
 ```bash
 conda env create -f MarPRISM_environment.mlk.yml
@@ -202,10 +207,11 @@ python parameter_gridsearch.py -model xgboost -data trainingData_contamLowSeqsRe
 conda deactivate
 ```
 
-#### How to run cross-validation:
+#### How we ran cross-validation:
 
-Cross-validation was conducted using the script located at: `modelDevelopmentTesting/crossValidation.ipynb`.
-   - We tested other versions of the model in the same script, including a Random Forest model and different sets of feature Pfams.
+We used cross-validation to **quantify the performance of MarPRISM** as well as other model versions. 
+
+#### To run cross-validation for MarPRISM and other model versions:
 
 ```bash
 conda env create -f MarPRISM_environment.mlk.yml
@@ -215,12 +221,13 @@ jupyter-notebook crossValidation.ipynb
 conda deactivate
 ```
 
-Output: 
+#### Output:
    - 'model_overall_f1_scores.csv': the overall mean and standard error of the F1 score for each model tested. 
    - 'models_byClass_f1_scores.csv': the mean and standard error of the F1 score by trophic mode for each model tested. 
    - 'marPRISM_k_train_size_vs_f1_score_by_class.csv': For MarPRISM, the mean and standard error of the F1 score by percentage of training data used. 
 
-To run cross-validation on the previous version of the model (Lambert et al. 2022):
+#### To run cross-validation on the previous version of the model (Lambert et al. 2022):
+
 ```bash
 cd modelDevelopmentTesting
 conda env create -f environment.mlk.yml
@@ -228,25 +235,27 @@ conda activate environment
 jupyter-notebook lambertModel_crossValidation.ipynb
 conda deactivate
 ```
-Output: 
+#### Output:
    - 'lambert_model_overall_f1_score.csv': the overall mean and standard error of the F1 score for the previous version of the model (Lambert et al. 2022). 
    - 'lambert_model_overall_f1_score_byClass.csv': the mean and standard error of the F1 score by trophic mode for the previous version of the model (Lambert et al. 2022). 
    
-### **How to test MarPRISM on test transcriptomes**  
+### **How we ran MarPRISM on test transcriptomes**  
 
-`modelDevelopmentTesting/testTranscriptomes.csv` can be run through `MarPRISM.ipynb` to recreate trophic predictions.
+#### Dataset:
+   - `testTranscriptomes.csv.gz` located [here](https://zenodo.org/uploads/14518902)
+   - Has transcript per million counts for the test transcriptomes.
+   - Transcriptomes used for testing are from publicly available sources: accession IDs for transcriptomes used to test MarPRISM are available in 'testTranscriptomes.xlsx' located [here](https://zenodo.org/uploads/14518902).
 
-Transcript per million counts for the test transcriptomes are located [here](https://zenodo.org/uploads/14518902)
-The transcriptomes used for testing are from publicly available sources: accession IDs for transcriptomes used to test MarPRISM are available in [testTranscriptomes.xlsx](https://zenodo.org/uploads/14518902).
+#### To run MarPRISM on test transcriptomes:
 
  ```bash
  conda env create -f MarPRISM_environment.mlk.yml
  conda activate MarPRISM
  jupyter-notebook MarPRISM.ipynb
- substitute exampleDataset.csv for testTranscriptomes.csv
+ #substitute exampleDataset.csv for testTranscriptomes.csv
  conda deactivate
  ```
-Output: 
-   - `exampleDataset_trophicPredictions.csv` will have the trophic mode predictions for the test transcriptomes. 
+#### Output:
+   - `exampleDataset_trophicPredictions.csv` has the trophic mode predictions for the test transcriptomes. 
 
-The trophic mode predictions can then be compared to their metadata: [testTranscriptomes.xlsx](https://zenodo.org/uploads/14518902).
+The trophic mode predictions can then be compared to their expected trophic mode: [testTranscriptomes.xlsx](https://zenodo.org/uploads/14518902).
