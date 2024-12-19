@@ -28,14 +28,15 @@ After removing contaminated and low-sequence transcriptomes, we conducted featur
      - 44 heterotrophic entries  
      - 85 mixotrophic entries  
      - 258 phototrophic entries  
-   - To address this, phototrophic transcriptomes were randomly undersampled to create five balanced training datasets:  
-     - Number of phototrophic transcriptomes = 50, 80, 100, 120, 140  
-     - Mixotrophic and heterotrophic transcriptomes were included in full.
-     - Balanced training datasets are located here: https://zenodo.org/uploads/14518902
 
 2. **Feature selection**  
-   - Conducted on the balanced training datasets to identify essential Pfams.  
-   - Script: `modelDevelopmentTesting/mda.py`  
+   - Conducted on the balanced training datasets to identify essential Pfams.
+   - - To address this, phototrophic transcriptomes were randomly undersampled to create five balanced training datasets:  
+     - Number of phototrophic transcriptomes = 50, 80, 100, 120, 140  
+     - Mixotrophic and heterotrophic transcriptomes were included in full.
+     - Balanced training datasets can be found [here](https://zenodo.org/uploads/14518902).
+   - Script: `modelDevelopmentTesting/mda.py`
+   - Using 
 
 3. **Hyperparameter optimization**  
    - A grid search was performed to optimize model parameters.  
@@ -53,26 +54,29 @@ The performance of MarPRISM was estimated using cross-validation:
   - **Heterotrophy mean**: 0.958 ± 0.0271  
   - **Mixotrophy mean**: 0.888 ± 0.0254  
   - **Phototrophy mean**: 0.961 ± 0.0124
-- Cross-validation was conducted with the following script: modelDevelopmentTesting/crossValidation.ipynb
-- We tested other versions of the model in modelDevelopmentTesting/crossValidation.ipynb as well, including a Random Forest model, and different sets of feature Pfams.
-- To run cross-validation:
-    ```bash
-    conda env create -f MarPRISM_environment.mlk.yml
-        conda activate MarPRISM
-cd modelDevelopTesting
-    jupyter-notebook crossValidation.ipynb
-    conda deactivate
-    ```
-    For each model version, this will output two csv files: one for the mean and standard error of the F1 score for the overall model, and one for the mean and standard error of the F1 score treating each trophic mode separately. 
+- Cross-validation was conducted using the script located at: `modelDevelopmentTesting/crossValidation.ipynb`.
+- We tested other versions of the model in the same script, including a Random Forest model and different sets of feature Pfams.
+
+#### To run cross-validation:
+
+```bash
+conda env create -f MarPRISM_environment.mlk.yml
+conda activate MarPRISM
+cd modelDevelopmentTesting
+jupyter-notebook crossValidation.ipynb
+conda deactivate
+```
+For each model version, this will output two csv files: one for the mean and standard error of the F1 score for the overall model, and one for the mean and standard error of the F1 score treating each trophic mode separately. For MarpRISM, a csv file will be outputted with the mean and standard error of the F1 score by percentage of training data used. 
+
 - To run cross-validation on the previous version of the model (Lambert et al. 2022):
-      ```bash
-  cd modelDevelopTesting
-    conda env create -f environment.mlk.yml
-        conda activate environment
-    jupyter-notebook lambertModel_crossValidation.ipynb
-  conda deactivate
-    ```
-<img width="468" alt="image" src="https://github.com/user-attachments/assets/b981fb20-da25-4b0b-b6f5-19f89d9edffe" />
+```bash
+cd modelDevelopmentTesting
+conda env create -f environment.mlk.yml
+conda activate environment
+jupyter-notebook lambertModel_crossValidation.ipynb
+conda deactivate
+```
+This will output two csv files for the previous version of the model (Lambert et al. 2022): one for the mean and standard error of the F1 score for the overall model, and one for the mean and standard error of the F1 score treating each trophic mode separately. 
 
 **Mixotrophy** was the most difficult trophic mode to predict, likely due to overlapping Pfams with both phototrophy and heterotrophy.  
 
@@ -81,16 +85,17 @@ We further quantified MarPRISM's performance by testing its ability to make trop
 - `modelDevelopmentTesting/testTranscriptomes.csv` can be run through `MarPRISM.ipynb` to recreate trophic predictions.
 - **21/27 (77.78%) protist cultures** were correctly predicted across all replicate transcriptomes.  
 - **60/76 (78.95%) transcriptomes** were correctly predicted when replicate transcriptomes were considered individually
-- Test transcriptomes are located here: https://zenodo.org/uploads/14518902, accession IDs for transcriptomes used to test MarPRISM are available in testTranscriptomes.xlsx 
+- Transcript per million counts for the test transcriptomes are located [here](https://zenodo.org/uploads/14518902)
+- The transcriptomes used for testing are from publicly available sources: accession IDs for transcriptomes used to test MarPRISM are available in [testTranscriptomes.xlsx](https://zenodo.org/uploads/14518902) 
 - To run the test transcriptomes through MarPRISM:
-      ```bash
-    conda env create -f MarPRISM_environment.mlk.yml
-    conda activate MarPRISM
-    jupyter-notebook MarPRISM.ipynb
-  substitute exampleDataset.csv for testTranscritomes.csv (https://zenodo.org/uploads/14518902) 
-  conda deactivate
-    ```
-    Then you can look at metadata for testTranscriptomes:  testTranscriptomes.xlsx (https://zenodo.org/uploads/14518902) 
+ ```bash
+ conda env create -f MarPRISM_environment.mlk.yml
+ conda activate MarPRISM
+ jupyter-notebook MarPRISM.ipynb
+ substitute exampleDataset.csv for testTranscritomes.csv (https://zenodo.org/uploads/14518902) 
+ conda deactivate
+ ```
+The trophic mode predictions for the test transcriptomes can be compared to their metadata: [testTranscriptomes.xlsx](https://zenodo.org/uploads/14518902) 
 
 ## **How to run the model on marine metatranscriptomes**  
 Details of how we process metatranscriptomes can be found [here](https://www.nature.com/articles/s41597-024-04005-5).
