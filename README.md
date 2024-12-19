@@ -25,10 +25,11 @@ After removing contaminated and low-sequence transcriptomes, we conducted featur
 
 1. **Feature selection**  
    - Training dataset is unbalanced, more phototrophic transcriptomes than heterotrophic and mixotrophic transcriptomes.
-   - To address this, phototrophic transcriptomes were randomly undersampled to create five balanced training datasets:  
-     - Number of phototrophic transcriptomes = 50, 80, 100, 120, 140  
+   - To address this, phototrophic transcriptomes were randomly undersampled to create four more balanced datasets:  
+     - Number of phototrophic transcriptomes = 60, 80, 100, 120
      - Mixotrophic and heterotrophic transcriptomes were included in full.
-     - Balanced training datasets can be found [here](https://zenodo.org/uploads/14518902).
+     - Datasets with undersampled phototrophic transcriptomes can be found [here](https://zenodo.org/uploads/14518902).
+        -    
    - Script: `modelDevelopmentTesting/mda.py`
    - Using 
 
