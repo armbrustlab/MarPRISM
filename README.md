@@ -239,7 +239,7 @@ conda deactivate
    - 'lambert_model_overall_f1_score.csv': the overall mean and standard error of the F1 score for the previous version of the model (Lambert et al. 2022). 
    - 'lambert_model_overall_f1_score_byClass.csv': the mean and standard error of the F1 score by trophic mode for the previous version of the model (Lambert et al. 2022). 
    
-### **How we ran MarPRISM on test transcriptomes**  
+## **How we ran MarPRISM on test transcriptomes**  
 
 #### Dataset:
    - `testTranscriptomes.csv.gz` located [here](https://zenodo.org/uploads/14518902)
