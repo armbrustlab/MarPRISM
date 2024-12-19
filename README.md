@@ -137,13 +137,15 @@ Estimated counts outputted by `kallisto` were converted to transcripts per milli
    - Transcripts per million for each set of samples can be found [here](https://zenodo.org/uploads/14519070).
 
 #### Datasets:
-- **G1PA.tpm_counts.csv** (G1 surface transect)
-- **G2PA.tpm_counts.csv** (G2 surface transect)
-- **G3PA.tpm_counts.csv** (G3 surface transect)
-- **G3PA_depth.tpm_counts.csv** (G3 depth profiles)
-- **D1PA.tpm_counts.csv** (ALOHA diel study)
-- **G3PA_diel.tpm_counts.csv** (G3 diel study)
-- **G2PA_incubations.tpm_counts.csv** (G2 onboard nutrient amendment incubations)
+- G1PA.tpm_counts.csv (G1 surface transect)
+- G2PA.tpm_counts.csv (G2 surface transect)
+- G3PA.tpm_counts.csv (G3 surface transect)
+- G3PA_depth.tpm_counts.csv (G3 depth profiles)
+- D1PA.tpm_counts.csv (ALOHA diel study)
+- G3PA_diel.tpm_counts.csv (G3 diel study)
+- G2PA_incubations.tpm_counts.csv (G2 onboard nutrient amendment incubations)
+
+#### To run MarPRISM on these transcriptomes:
 
 ```bash
 conda env create -f MarPRISM_environment.mlk.yml
@@ -152,14 +154,14 @@ jupyter-notebook MarPRISM.ipynb
 #substitute exampleDataset.csv in MarPRISM.ipynb for one of the above datasets
 conda deactivate
 ```
-*Output:**
+#### Datasets:
    - `exampleDataset_trophicPredictions.csv` which contains the trophic predictions for each taxonomic bin and sample pair that have ≥70% eukaryote core transcribed genes expressed. 
 
-Then we retained only trophic predictions for transcript bins identified as protists and at the species level. 
+Then we **retained only trophic predictions for transcript bins identified as protists and at the species level**. 
 
-Exclude predictions split between phototrophy and heterotrophy:
-   - For non-diel samples, we excluded instances where >25% of trophic predictions across replicates for one species bin fell into phototrophy and heterotrophy categories.  
-   - For diel samples, we excluded instances where >25% of trophic predictions across samples and timepoints in a day for one species bin fell into phototrophy and heterotrophy             categories.  
+We **excluded predictions split between phototrophy and heterotrophy**:
+   - For non-diel samples, exclude instances where >25% of trophic predictions across replicates for one species bin were in both phototrophy and heterotrophy.  
+   - For diel samples, exclude instances where >25% of trophic predictions across samples and timepoints in a day for one species bin were in both phototrophy and heterotrophy.  
 
 ## **How we ran feature selection**  
 
@@ -168,6 +170,7 @@ Datasets with undersampled phototrophic transcriptomes can be found [here](https
    - `trainingData_contamLowSeqsRemoved_80phot`
    - `trainingData_contamLowSeqsRemoved_100phot`
    - `trainingData_contamLowSeqsRemoved_120phot`
+
 Script: `modelDevelopmentTesting/mda.py`
 
 ```bash
@@ -187,6 +190,7 @@ We then took the union of Pfams in 'features_contamLowSeqsRemoved_50phot_xg', 'f
 
 Dataset with 100 phototrophic transcriptomes and all mixotrophic and heterotrophic transcriptomes, located [here](https://zenodo.org/uploads/14518902).
    - `trainingData_contamLowSeqsRemoved_100phot`
+
 Script: `modelDevelopmentTesting/parameter_gridsearch.py`
 
 ```bash
@@ -201,7 +205,7 @@ conda deactivate
 #### How to run cross-validation:
 
 Cross-validation was conducted using the script located at: `modelDevelopmentTesting/crossValidation.ipynb`.
-We tested other versions of the model in the same script, including a Random Forest model and different sets of feature Pfams.
+   - We tested other versions of the model in the same script, including a Random Forest model and different sets of feature Pfams.
 
 ```bash
 conda env create -f MarPRISM_environment.mlk.yml
