@@ -26,17 +26,32 @@ After removing contaminated and low-sequence transcriptomes, we conducted featur
 1. **Feature selection**  
    - Training dataset is unbalanced, more phototrophic transcriptomes than heterotrophic and mixotrophic transcriptomes.
    - To address this, phototrophic transcriptomes were randomly undersampled to create four more balanced datasets:  
-     - Number of phototrophic transcriptomes = 60, 80, 100, 120
+     - Number of phototrophic transcriptomes = 50, 80, 100, 120
      - Mixotrophic and heterotrophic transcriptomes were included in full.
      - Datasets with undersampled phototrophic transcriptomes can be found [here](https://zenodo.org/uploads/14518902).
-        -    
+        -    Field_training_contamLowSeqsRemoved_50phototrophic.csv
+        -    Field_training_contamLowSeqsRemoved_80phototrophic.csv
+        -    Field_training_contamLowSeqsRemoved_100phototrophic.csv
+        -    Field_training_contamLowSeqsRemoved_120phototrophic.csv
    - Script: `modelDevelopmentTesting/mda.py`
-   - Using 
+- ```bash
+conda env create -f MarPRISM_environment.mlk.yml
+conda activate MarPRISM
+cd modelDevelopmentTesting
+conda deactivate
+```
 
 3. **Hyperparameter optimization**  
    - A grid search was performed to optimize model parameters.  
-   - Used one dataset with 100 phototrophic transcriptomes and all mixotrophic and heterotrophic transcriptomes.  
-   - Script: `modelDevelopmentTesting/parameter_gridsearch.py`  
+   - Used one dataset with 100 phototrophic transcriptomes and all mixotrophic and heterotrophic transcriptomes.
+       -    Field_training_contamLowSeqsRemoved_100phototrophic.csv
+   - Script: `modelDevelopmentTesting/parameter_gridsearch.py`
+   - ```bash
+conda env create -f MarPRISM_environment.mlk.yml
+conda activate MarPRISM
+cd modelDevelopmentTesting
+conda deactivate
+```
 
 ## **Model performance**  
 
