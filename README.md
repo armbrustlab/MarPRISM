@@ -29,6 +29,140 @@ After removing contaminated and low-sequence transcriptomes, we conducted featur
      - Number of phototrophic transcriptomes = 50, 80, 100, 120
      - Mixotrophic and heterotrophic transcriptomes were included in full.
      - Datasets with undersampled phototrophic transcriptomes can be found [here](https://zenodo.org/uploads/14518902).
+     - Script: `modelDevelopmentTesting/mda.py`.
+
+3. **Hyperparameter optimization**  
+   - A grid search was performed to optimize model parameters.  
+   - Used one dataset with 100 phototrophic transcriptomes and all mixotrophic and heterotrophic transcriptomes, located [here](https://zenodo.org/uploads/14518902).
+   - Script: `modelDevelopmentTesting/parameter_gridsearch.py`.
+
+## **Model performance**  
+
+### **Cross-validation**  
+The performance of MarPRISM was estimated using cross-validation:  
+- Cross-validation can be run in `modelDevelopmentTesting/marPRISM_crossValidation.ipynb`.
+- The model was trained on **83% of the training data** and tested on the remaining data.  
+- Performance was evaluated using **F1 score** (Mean F1 score ± standard error)
+  - **Overall mean**: 0.944 ± 0.0154  
+  - **Heterotrophy mean**: 0.958 ± 0.0271  
+  - **Mixotrophy mean**: 0.888 ± 0.0254  
+  - **Phototrophy mean**: 0.961 ± 0.0124
+
+**Mixotrophy** was the most difficult trophic mode to predict, likely due to overlapping Pfams with both phototrophy and heterotrophy.  
+
+## **How to run the model on marine metatranscriptomes**  
+Details of how we process metatranscriptomes can be found [here](https://www.nature.com/articles/s41597-024-04005-5).
+
+1. **Collect poly(A)-selected metatranscriptomes.**  
+2. **Trim, quality control, and de novo assemble RNA sequences.**  
+3. **Map transcripts to de novo assemblies.** We used `kallisto` estimated counts (est_counts). 
+4. **Functionally annotate transcripts** using the [Pfam database](https://www.ebi.ac.uk/interpro/download/pfam/) with `hmmsearch` (E-value < 1e-05).  
+5. **Taxonomically annotate assemblies.** We used `Diamond last common ancestor`, using the [Marine Functional EukaRyotic Reference Taxa (MarFERReT) reference sequence library](https://www.nature.com/articles/s41597-023-02842-4) (E-value < 1e-05).  
+6. **Sum the estimated number of reads mapped to each contig** by taxonomic annotation and sample (metatranscriptome).  
+7. **Normalize sequence reads to transcripts per million (TPM):**  
+   - Divide the estimated number of reads mapped to each contig by its nucleotide length (in kilobases) to generate reads per kilobase (RPK).  
+   - Sum the RPK by species and sample, then divide by one million to generate a conversion factor.  
+   - Divide the RPK by the conversion factor to calculate transcripts per million per contig.  
+   - Sum transcripts per million by Pfam for each species and sample.  
+8. **Filter species bins:** Retain only transcript bins identified as protists and at the species level. 
+10. **Create a data frame:**  
+   Fill in missing Pfams for a species, sample pair with `0`.  
+
+   |                  | Pfam1 | Pfam2 | Pfam3 | ...  |
+   |------------------|-------|-------|-------|------|
+   | Species1_sample1 | TPM   | TPM   | TPM   | TPM  |
+   | Species2_sample1 | TPM   | TPM   | TPM   | TPM  |
+   | Species1_sample2 | TPM   | TPM   | TPM   | TPM  |
+
+11. **Create the Conda environment for MarPRISM**  
+    ```bash
+    conda env create -f MarPRISM_environment.mlk.yml
+    ```
+
+12. **Activate the Conda environment for MarPRISM**  
+    ```bash
+    conda activate MarPRISM
+    ```
+    
+13. **Run your dataframe through Jupyter Notebook `MarPRISM.ipynb`:**  
+    - Open the Jupyter Notebook `MarPRISM.ipynb` and follow the instructions within to process the DataFrame and make predictions.
+    ```bash
+    jupyter-notebook MarPRISM.ipynb
+    ```
+    - MarPRISM will output a warning and not make predictions for species bin sample pairs with <70% of eukaryote core transcribed genes (CTGs) expressed.
+      - Trophic predictions are not reliable for species bins with low coverage.
+      - The eukaryote CTGs `MarFERReT.v1.core_genes_eukaryota.csv` are from [MarFERReT.v1.core_genes.csv](https://zenodo.org/records/10554340), filtering for lineage Eukaryota.
+
+    - **Files:**  
+      - Training Data: `trainingDataMarPRISM.csv`
+      - Features: `MarPRISM_featurePfams.csv`
+      - Example DataFrame: `exampleDataset.csv`
+      - Eukaryote CTGs: `MarFERReT.v1.core_genes_eukaryota.csv`
+
+     - **Output:**
+       - To check that your Jupyter Notebook is working correctly, if `exampleDataset.csv` is used as input, your output `exampleDataset_trophicPredictions.csv` should match    
+         `exampleDataset_trophicPredictions_toCompare.csv`.
+     
+13. **Deactivate the Conda environment for MarPRISM**  
+    ```bash
+    conda deactivate
+    ```
+    
+14. **Filter predictions based on replicate consistency:**  
+    - Exclude phototrophy and heterotrophy predictions that are evenly split between replicate metatranscriptomes for the same species bin.  
+    - For non-diel samples, we excluded instances where ≥25% of trophic predictions across replicates for one species bin fall into phototrophy and heterotrophy categories.  
+
+15. **Prioritize replicate-supported predictions:**  
+    - When interpreting results, put more trust in trophic predictions when multiple replicates give you the same trophic mode prediction.
+   
+### Example use of MarPRISM:
+
+We ran MarPRISM on processed metatranscriptomes collected across the North Pacific Ocean: from surface and euphotic depths, across the diel cycle, and onboard nutrient amendment incubations. Most of these metatranscriptomes came from the Gradients (G) cruises. 
+   G1 surface transect 
+   G2 surface transect 
+   G3 surface transect
+   G3 depth profiles 
+   ALOHA diel study 
+   G3 diel study 
+   G2 onboard nutrient amendment incubations
+
+G1-G3 surface, ALOHA diel, and G3 diel metatranscriptomes were processed for the [North Pacific Gene Catalog](https://www.nature.com/articles/s41597-024-04005-5).
+
+Estimated counts outputted by `kallisto` were converted to transcripts per million using the above methods. 
+Transcripts per million for each set of samples can be found here: [10.5281/zenodo.14519070]. 
+
+####  Datasets:
+- **G1PA.tpm_counts.csv** (G1 surface)
+- **G2PA.tpm_counts.csv** (G2 surface)
+- **G3PA.tpm_counts.csv** (G3 surface)
+- **G3PA_depth.tpm_counts.csv** (G3 depth profiles)
+- **D1PA.tpm_counts.csv** (ALOHA diel)
+- **G3PA_diel.tpm_counts.csv** (G3 diel)
+- **G2PA_incubations.tpm_counts.csv** (G2 onboard nutrient amendment incubations)
+
+You can substitute `exampleDataset.csv` with the following datasets from the Gradients (G) cruises to generate trophic mode predictions. Then you would exclude trophic predictions for any taxonomic bin that is not identified at the species level and is not a protist. Then exclude predictions that are mixed. 
+
+```bash
+conda env create -f MarPRISM_environment.mlk.yml
+conda activate MarPRISM
+jupyter-notebook MarPRISM.ipynb
+#substitute exampleDataset.csv in MarPRISM.ipynb for one of the above datasets.
+conda deactivate
+```
+This will output exampleDataset_trophicPredictions.csv with the trophic predictions for each taxonomic bin and sample pair that have ≥70% eukaryote core transcribed genes expressed. 
+Then we excluded trophic predictions for taxonomic bins not identified at the species level, and taxonomic bins that were not identified as protists. 
+
+
+## **Model development**  
+
+After removing contaminated and low-sequence transcriptomes, we conducted feature selection using mean decrease in accuracy to identify the feature Pfams essential for model performance.  
+
+1. **Feature selection**  
+   - Training dataset is unbalanced, more phototrophic transcriptomes than heterotrophic and mixotrophic transcriptomes.
+   - To address this, phototrophic transcriptomes were randomly undersampled to create four more balanced datasets:  
+     - Number of phototrophic transcriptomes = 50, 80, 100, 120
+     - Mixotrophic and heterotrophic transcriptomes were included in full.
+     - Datasets with undersampled phototrophic transcriptomes can be found [here](https://zenodo.org/uploads/14518902).
         -    `Field_training_contamLowSeqsRemoved_50phototrophic.csv`
         -    `Field_training_contamLowSeqsRemoved_80phototrophic.csv`
         -    `Field_training_contamLowSeqsRemoved_100phototrophic.csv`
@@ -109,92 +243,6 @@ We further quantified MarPRISM's performance by testing its ability to make trop
  ```
 The trophic mode predictions for the test transcriptomes can be compared to their metadata: [testTranscriptomes.xlsx](https://zenodo.org/uploads/14518902) 
 
-## **How to run the model on marine metatranscriptomes**  
-Details of how we process metatranscriptomes can be found [here](https://www.nature.com/articles/s41597-024-04005-5).
-
-1. **Collect poly(A)-selected metatranscriptomes.**  
-2. **Trim, quality control, and de novo assemble RNA sequences.**  
-3. **Map transcripts to de novo assemblies.** We used `kallisto` estimated counts (est_counts). 
-4. **Functionally annotate transcripts** using the [Pfam database](https://www.ebi.ac.uk/interpro/download/pfam/) with `hmmsearch` (E-value < 1e-05).  
-5. **Taxonomically annotate assemblies.** We used `Diamond last common ancestor`, using the [Marine Functional EukaRyotic Reference Taxa (MarFERReT) reference sequence library](https://www.nature.com/articles/s41597-023-02842-4) (E-value < 1e-05).  
-6. **Sum the estimated number of reads mapped to each contig** by taxonomic annotation and sample (metatranscriptome).  
-7. **Normalize sequence reads to TPM:**  
-   - Divide the estimated number of reads mapped to each contig by its nucleotide length (in kilobases) to generate reads per kilobase (RPK).  
-   - Sum the RPK by species and sample, then divide by one million to generate a conversion factor.  
-   - Divide the RPK by the conversion factor to calculate TPM per contig.  
-   - Sum TPMs by Pfam for each species and sample.  
-8. **Filter species bins:** Retain only transcript bins identified as protists and at the species level. 
-10. **Create a data frame:**  
-   Fill in missing Pfams for a species, sample pair with `0`.  
-
-   |                  | Pfam1 | Pfam2 | Pfam3 | ...  |
-   |------------------|-------|-------|-------|------|
-   | Species1_sample1 | TPM   | TPM   | TPM   | TPM  |
-   | Species2_sample1 | TPM   | TPM   | TPM   | TPM  |
-   | Species1_sample2 | TPM   | TPM   | TPM   | TPM  |
-
-11. **Create the Conda environment for MarPRISM**  
-    ```bash
-    conda env create -f MarPRISM_environment.mlk.yml
-    ```
-
-12. **Activate the Conda environment for MarPRISM**  
-    ```bash
-    conda activate MarPRISM
-    ```
-    
-13. **Run your dataframe through Jupyter Notebook `MarPRISM.ipynb`:**  
-    - Open the Jupyter Notebook `MarPRISM.ipynb` and follow the instructions within to process the DataFrame and make predictions.
-    ```bash
-    jupyter-notebook MarPRISM.ipynb
-    ```
-    - MarPRISM will output a warning and not make predictions for species bin sample pairs with <70% of eukaryote core transcribed genes (CTGs) expressed.
-      - Trophic predictions are not reliable for species bins with low coverage.
-      - The eukaryote CTGs `MarFERReT.v1.core_genes_eukaryota.csv` are from [MarFERReT.v1.core_genes.csv](https://zenodo.org/records/10554340), filtering for lineage Eukaryota.
-
-    - **Files:**  
-      - Training Data: `trainingDataMarPRISM.csv`
-      - Features: `MarPRISM_featurePfams.csv`
-      - Example DataFrame: `exampleDataset.csv`
-      - Eukaryote CTGs: `MarFERReT.v1.core_genes_eukaryota.csv`
-
-     - **Output:**
-       - To check that your Jupyter Notebook is working correctly, if `exampleDataset.csv` is used as input, your output `exampleDataset_trophicPredictions.csv` should match    
-         `exampleDataset_trophicPredictions_toCompare.csv`.
-     
-13. **Deactivate the Conda environment for MarPRISM**  
-    ```bash
-    conda deactivate
-    ```
-
-14. **Filter predictions based on replicate consistency:**  
-    - Exclude phototrophy and heterotrophy predictions that are evenly split between replicate metatranscriptomes for the same species bin.  
-    - For non-diel samples, we excluded instances where ≥25% of trophic predictions across replicates for one species bin fall into phototrophy and heterotrophy categories.  
-
-15. **Prioritize replicate-supported predictions:**  
-    - When interpreting results, put more trust in trophic predictions when multiple replicates give you the same trophic mode prediction.
-   
-### Example use of MarPRISM:
-
-We ran MarPRISM on TPM counts collected across the North Pacific Ocean, from surface and euphotic depths, across the diel cycle, and onboard nutrient amendment incubations.  
-The TPM counts for these samples can be found on [10.5281/zenodo.14519070](https://www.nature.com/articles/s41597-024-04005-5).
-
-You can substitute `exampleDataset.csv` with the following datasets from the Gradients (G) cruises to generate trophic mode predictions. Then you would exclude trophic predictions for any taxonomic bin that is not identified at the species level and is not a protist. Then exclude predictions that are mixed. 
-
-Descriptions for **G1-G3 surface**, **ALOHA diel**, and **G3 diel** samples are provided by [North Pacific Ocean study](https://www.nature.com/articles/s41597-024-04005-5).
-
-####  Datasets:
-- **G1PA.tpm_counts.csv** (G1 surface)
-- **G2PA.tpm_counts.csv** (G2 surface)
-- **G3PA.tpm_counts.csv** (G3 surface)
-- **G3PA_depth.tpm_counts.csv** (G3 depth profiles)
-- **D1PA.tpm_counts.csv** (ALOHA diel)
-- **G3PA_diel.tpm_counts.csv** (G3 diel)
-- **G2PA_incubations.tpm_counts.csv** (G2 onboard nutrient amendment incubations)
-
-#### Additional Resources:
-- **G2 Incubations Read Processing and Mapping Scripts, and Metadata**:  
-  [GitHub - G2 Read Processing](https://github.com/armbrustlab/armbrust-metat/tree/main/gradients2/g2_dcm_rr_pa_metat)
 
 - **G3 Depth Read Processing, Assembly, and Mapping Scripts, and Metadata**:  
   [GitHub - G3 Depth Read Processing](https://github.com/armbrustlab/armbrust-metat/tree/main/gradients3/g3_depth_pa_metat)
