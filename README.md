@@ -104,7 +104,7 @@ We further quantified MarPRISM's performance by testing its ability to make trop
  conda env create -f MarPRISM_environment.mlk.yml
  conda activate MarPRISM
  jupyter-notebook MarPRISM.ipynb
- substitute exampleDataset.csv for testTranscritomes.csv (https://zenodo.org/uploads/14518902) 
+ substitute exampleDataset.csv for testTranscriptomes.csv (https://zenodo.org/uploads/14518902) 
  conda deactivate
  ```
 The trophic mode predictions for the test transcriptomes can be compared to their metadata: [testTranscriptomes.xlsx](https://zenodo.org/uploads/14518902) 
@@ -179,18 +179,18 @@ Details of how we process metatranscriptomes can be found [here](https://www.nat
 We ran MarPRISM on TPM counts collected across the North Pacific Ocean, from surface and euphotic depths, across the diel cycle, and onboard nutrient amendment incubations.  
 The TPM counts for these samples can be found on [10.5281/zenodo.14519070](https://www.nature.com/articles/s41597-024-04005-5).
 
-You can substitute `exampleDataset.csv` with the following datasets from the Gradients (G) cruises to generate trophic mode predictions. 
+You can substitute `exampleDataset.csv` with the following datasets from the Gradients (G) cruises to generate trophic mode predictions. Then you would exclude trophic predictions for any taxonomic bin that is not identified at the species level and is not a protist. Then exclude predictions that are mixed. 
 
 Descriptions for **G1-G3 surface**, **ALOHA diel**, and **G3 diel** samples are provided by [North Pacific Ocean study](https://www.nature.com/articles/s41597-024-04005-5).
 
 ####  Datasets:
-- **G1PA.tpm_counts.csv.gz** (G1 surface)
-- **G2PA.tpm_counts.csv.gz** (G2 surface)
-- **G3PA.tpm_counts.csv.gz** (G3 surface)
-- **G3PA_depth.tpm_counts.csv.gz** (G3 depth profiles)
-- **D1PA.tpm_counts.csv.gz** (ALOHA diel)
-- **G3PA_diel.tpm_counts.csv.gz** (G3 diel)
-- **G2PA_incubations.tpm_counts.csv.gz** (G2 onboard nutrient amendment incubations)
+- **G1PA.tpm_counts.csv** (G1 surface)
+- **G2PA.tpm_counts.csv** (G2 surface)
+- **G3PA.tpm_counts.csv** (G3 surface)
+- **G3PA_depth.tpm_counts.csv** (G3 depth profiles)
+- **D1PA.tpm_counts.csv** (ALOHA diel)
+- **G3PA_diel.tpm_counts.csv** (G3 diel)
+- **G2PA_incubations.tpm_counts.csv** (G2 onboard nutrient amendment incubations)
 
 #### Additional Resources:
 - **G2 Incubations Read Processing and Mapping Scripts, and Metadata**:  
