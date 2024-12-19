@@ -50,6 +50,11 @@ The performance of MarPRISM was estimated using cross-validation:
 
 **Mixotrophy** was the most difficult trophic mode to predict, likely due to overlapping Pfams with both phototrophy and heterotrophy.  
 
+### **Testing on Cultured Protist Transcriptomes**  
+To further validate, MarPRISM was tested on cultured protist transcriptomes excluded from training:  
+- **Accuracy (culture-level):** 21/27 (77.78%)  
+- **Accuracy (transcriptome-level):** 60/76 (78.95%)
+
 ## **How to run MarPRISM on marine metatranscriptomes to generate in situ trophic mode predictions**  
 Details of how we process metatranscriptomes can be found [here](https://www.nature.com/articles/s41597-024-04005-5).
 
@@ -110,21 +115,28 @@ Details of how we process metatranscriptomes can be found [here](https://www.nat
     
 14. **Filter predictions based on replicate consistency:**  
     - Exclude phototrophy and heterotrophy predictions that are evenly split between replicate metatranscriptomes for the same species bin.  
-    - For non-diel samples, we excluded instances where ≥25% of trophic predictions across replicates for one species bin fall into phototrophy and heterotrophy categories.  
+    - For non-diel samples, we excluded instances where >25% of trophic predictions across replicates for one species bin fell into phototrophy and heterotrophy categories.  
+    - For diel samples, we excluded instances where >25% of trophic predictions across samples and timepoints in a day for one species bin fell into phototrophy and heterotrophy             categories.  
 
 15. **Prioritize replicate-supported predictions:**  
     - When interpreting results, put more trust in trophic predictions when multiple replicates give you the same trophic mode prediction.
    
-### Example application of MarPRISM to marine metatranscriptomes:
+## **Example application of MarPRISM to marine metatranscriptomes**  
 
-We ran MarPRISM on processed metatranscriptomes collected across the North Pacific Ocean: from surface and euphotic depths, across the diel cycle, and onboard nutrient amendment incubations. Most of these metatranscriptomes came from the Gradients (G) cruises. 
+We ran MarPRISM on processed metatranscriptomes collected across the North Pacific Ocean: 
+   - Surface
+   - Euphotic depths
+   - Diel cycle
+   - Onboard nutrient amendment incubations.
+
+Most of these metatranscriptomes came from the Gradients (G) cruises.
 
 G1-G3 surface, ALOHA diel, and G3 diel metatranscriptomes were processed for the [North Pacific Gene Catalog](https://www.nature.com/articles/s41597-024-04005-5).
 
-Estimated counts outputted by `kallisto` were converted to transcripts per million using the above methods. 
-Transcripts per million for each set of samples can be found [here](https://zenodo.org/uploads/14519070). 
+Estimated counts outputted by `kallisto` were converted to transcripts per million using the above methods.  
+   - Transcripts per million for each set of samples can be found [here](https://zenodo.org/uploads/14519070).
 
-####  Datasets:
+#### Datasets:
 - **G1PA.tpm_counts.csv** (G1 surface transect)
 - **G2PA.tpm_counts.csv** (G2 surface transect)
 - **G3PA.tpm_counts.csv** (G3 surface transect)
@@ -137,50 +149,59 @@ Transcripts per million for each set of samples can be found [here](https://zeno
 conda env create -f MarPRISM_environment.mlk.yml
 conda activate MarPRISM
 jupyter-notebook MarPRISM.ipynb
-#substitute exampleDataset.csv in MarPRISM.ipynb for one of the above datasets.
+#substitute exampleDataset.csv in MarPRISM.ipynb for one of the above datasets
 conda deactivate
 ```
-Output: 
-   `exampleDataset_trophicPredictions.csv` which contains the trophic predictions for each taxonomic bin and sample pair that have ≥70% eukaryote core transcribed genes expressed. 
+*Output:**
+   - `exampleDataset_trophicPredictions.csv` which contains the trophic predictions for each taxonomic bin and sample pair that have ≥70% eukaryote core transcribed genes expressed. 
 
-Then we retain only trophic predictions for transcript bins identified as protists and at the species level. 
-Then we excluded predictions that are mixed. 
+Then we retained only trophic predictions for transcript bins identified as protists and at the species level. 
 
-## **How to run feature selection**  
+Exclude predictions split between phototrophy and heterotrophy:
+   - For non-diel samples, we excluded instances where >25% of trophic predictions across replicates for one species bin fell into phototrophy and heterotrophy categories.  
+   - For diel samples, we excluded instances where >25% of trophic predictions across samples and timepoints in a day for one species bin fell into phototrophy and heterotrophy             categories.  
 
-   - Datasets with undersampled phototrophic transcriptomes can be found [here](https://zenodo.org/uploads/14518902).
-        -    `Field_training_contamLowSeqsRemoved_50phototrophic.csv`
-        -    `Field_training_contamLowSeqsRemoved_80phototrophic.csv`
-        -    `Field_training_contamLowSeqsRemoved_100phototrophic.csv`
-        -    `Field_training_contamLowSeqsRemoved_120phototrophic.csv`
-   - Script: `modelDevelopmentTesting/mda.py`
+## **How we ran feature selection**  
+
+Datasets with undersampled phototrophic transcriptomes can be found [here](https://zenodo.org/uploads/14518902).
+   - `trainingData_contamLowSeqsRemoved_50phot`
+   - `trainingData_contamLowSeqsRemoved_80phot`
+   - `trainingData_contamLowSeqsRemoved_100phot`
+   - `trainingData_contamLowSeqsRemoved_120phot`
+Script: `modelDevelopmentTesting/mda.py`
 
 ```bash
 conda env create -f MarPRISM_environment.mlk.yml
 conda activate MarPRISM
 cd modelDevelopmentTesting
-python mda.py -model xgboost -data [path/to/balanced/datasets] -o [output file name and path]
+#find feature Pfams for xgboost model
+python mda.py -model xgboost -data trainingData_contamLowSeqsRemoved_50phot -o features_contamLowSeqsRemoved_50phot_xg
+python mda.py -model xgboost -data trainingData_contamLowSeqsRemoved_80phot -o features_contamLowSeqsRemoved_80phot_xg
+python mda.py -model xgboost -data trainingData_contamLowSeqsRemoved_100phot -o features_contamLowSeqsRemoved_100phot_xg
+python mda.py -model xgboost -data trainingData_contamLowSeqsRemoved_120phot -o features_contamLowSeqsRemoved_120phot_xg
 conda deactivate
 ```
+We then took the union of Pfams in 'features_contamLowSeqsRemoved_50phot_xg', 'features_contamLowSeqsRemoved_80phot_xg', 'features_contamLowSeqsRemoved_100phot_xg', and 'features_contamLowSeqsRemoved_120phot_xg' that had an importance score greater than 0. 
 
-## **How to run hyperparameter optimization**  
+## **How we ran hyperparameter optimization**  
 
-   - Dataset with 100 phototrophic transcriptomes and all mixotrophic and heterotrophic transcriptomes, located [here](https://zenodo.org/uploads/14518902).
-       -    `Field_training_contamLowSeqsRemoved_100phototrophic.csv`
-   - Script: `modelDevelopmentTesting/parameter_gridsearch.py`
+Dataset with 100 phototrophic transcriptomes and all mixotrophic and heterotrophic transcriptomes, located [here](https://zenodo.org/uploads/14518902).
+   - `trainingData_contamLowSeqsRemoved_100phot`
+Script: `modelDevelopmentTesting/parameter_gridsearch.py`
 
 ```bash
 conda env create -f MarPRISM_environment.mlk.yml
 conda activate MarPRISM
 cd modelDevelopmentTesting
-python parameter_gridsearch.py -model xgboost -data ../trophicModePrediction/Field_training_data_noOutliers_newContaminationMetric_parameterSearch_phot100.csv -labels ../trophicModePrediction/Field_training_labels_noOutliers_newContaminationMetric_parameterSearch_phot100.csv -o results_xgBoostModel_noOutliers_newContaminationMetric_phot100
+#find best performing hyperparameters for xgboost model
+python parameter_gridsearch.py -model xgboost -data trainingData_contamLowSeqsRemoved_100phot/data_contamLowSeqsRemoved_phot100.csv -labels trainingData_contamLowSeqsRemoved_100phot/labels_contamLowSeqsRemoved_phot100.csv -o hyperparameters_contamLowSeqsRemoved_100phot_xg
 conda deactivate
 ```
 
 #### How to run cross-validation:
 
-- Cross-validation was conducted using the script located at: `modelDevelopmentTesting/crossValidation.ipynb`.
-- We tested other versions of the model in the same script, including a Random Forest model and different sets of feature Pfams.
+Cross-validation was conducted using the script located at: `modelDevelopmentTesting/crossValidation.ipynb`.
+We tested other versions of the model in the same script, including a Random Forest model and different sets of feature Pfams.
 
 ```bash
 conda env create -f MarPRISM_environment.mlk.yml
@@ -189,12 +210,13 @@ cd modelDevelopmentTesting
 jupyter-notebook crossValidation.ipynb
 conda deactivate
 ```
-Output: 
-   'model_overall_f1_scores.csv': the overall mean and standard error of the F1 score for each model tested. 
-   'models_byClass_f1_scores.csv': the mean and standard error of the F1 score by trophic mode for each model tested. 
-   'marPRISM_k_train_size_vs_f1_score_by_class.csv': For MarPRISM, the mean and standard error of the F1 score by percentage of training data used. 
 
-- To run cross-validation on the previous version of the model (Lambert et al. 2022):
+Output: 
+   - 'model_overall_f1_scores.csv': the overall mean and standard error of the F1 score for each model tested. 
+   - 'models_byClass_f1_scores.csv': the mean and standard error of the F1 score by trophic mode for each model tested. 
+   - 'marPRISM_k_train_size_vs_f1_score_by_class.csv': For MarPRISM, the mean and standard error of the F1 score by percentage of training data used. 
+
+To run cross-validation on the previous version of the model (Lambert et al. 2022):
 ```bash
 cd modelDevelopmentTesting
 conda env create -f environment.mlk.yml
@@ -203,13 +225,15 @@ jupyter-notebook lambertModel_crossValidation.ipynb
 conda deactivate
 ```
 Output: 
-   'lambert_model_overall_f1_score.csv': the overall mean and standard error of the F1 score for the previous version of the model (Lambert et al. 2022). 
-   'lambert_model_overall_f1_score_byClass.csv': the mean and standard error of the F1 score by trophic mode for the previous version of the model (Lambert et al. 2022). 
+   - 'lambert_model_overall_f1_score.csv': the overall mean and standard error of the F1 score for the previous version of the model (Lambert et al. 2022). 
+   - 'lambert_model_overall_f1_score_byClass.csv': the mean and standard error of the F1 score by trophic mode for the previous version of the model (Lambert et al. 2022). 
    
 ### **How to test MarPRISM on test transcriptomes**  
-- `modelDevelopmentTesting/testTranscriptomes.csv` can be run through `MarPRISM.ipynb` to recreate trophic predictions.
-- Transcript per million counts for the test transcriptomes are located [here](https://zenodo.org/uploads/14518902)
-- The transcriptomes used for testing are from publicly available sources: accession IDs for transcriptomes used to test MarPRISM are available in [testTranscriptomes.xlsx](https://zenodo.org/uploads/14518902).
+
+`modelDevelopmentTesting/testTranscriptomes.csv` can be run through `MarPRISM.ipynb` to recreate trophic predictions.
+
+Transcript per million counts for the test transcriptomes are located [here](https://zenodo.org/uploads/14518902)
+The transcriptomes used for testing are from publicly available sources: accession IDs for transcriptomes used to test MarPRISM are available in [testTranscriptomes.xlsx](https://zenodo.org/uploads/14518902).
 
  ```bash
  conda env create -f MarPRISM_environment.mlk.yml
@@ -218,4 +242,7 @@ Output:
  substitute exampleDataset.csv for testTranscriptomes.csv
  conda deactivate
  ```
-The trophic mode predictions for the test transcriptomes can be compared to their metadata: [testTranscriptomes.xlsx](https://zenodo.org/uploads/14518902).
+Output: 
+   - `exampleDataset_trophicPredictions.csv` will have the trophic mode predictions for the test transcriptomes. 
+
+The trophic mode predictions can then be compared to their metadata: [testTranscriptomes.xlsx](https://zenodo.org/uploads/14518902).
