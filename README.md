@@ -23,15 +23,9 @@ These changes did not increase the accuracy of trophic predictions. However:
 
 After removing contaminated and low-sequence transcriptomes, we conducted feature selection using mean decrease in accuracy to identify the feature Pfams essential for model performance.  
 
-1. **Balancing training data**  
-   - Training data was imbalanced:  
-     - 44 heterotrophic entries  
-     - 85 mixotrophic entries  
-     - 258 phototrophic entries  
-
-2. **Feature selection**  
-   - Conducted on the balanced training datasets to identify essential Pfams.
-   - - To address this, phototrophic transcriptomes were randomly undersampled to create five balanced training datasets:  
+1. **Feature selection**  
+   - Training dataset is unbalanced, more phototrophic transcriptomes than heterotrophic and mixotrophic transcriptomes.
+   - To address this, phototrophic transcriptomes were randomly undersampled to create five balanced training datasets:  
      - Number of phototrophic transcriptomes = 50, 80, 100, 120, 140  
      - Mixotrophic and heterotrophic transcriptomes were included in full.
      - Balanced training datasets can be found [here](https://zenodo.org/uploads/14518902).
