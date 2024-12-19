@@ -29,12 +29,13 @@ After removing contaminated and low-sequence transcriptomes, we conducted featur
      - Number of phototrophic transcriptomes = 50, 80, 100, 120
      - Mixotrophic and heterotrophic transcriptomes were included in full.
      - Datasets with undersampled phototrophic transcriptomes can be found [here](https://zenodo.org/uploads/14518902).
-        -    Field_training_contamLowSeqsRemoved_50phototrophic.csv
-        -    Field_training_contamLowSeqsRemoved_80phototrophic.csv
-        -    Field_training_contamLowSeqsRemoved_100phototrophic.csv
-        -    Field_training_contamLowSeqsRemoved_120phototrophic.csv
+        -    `Field_training_contamLowSeqsRemoved_50phototrophic.csv`
+        -    `Field_training_contamLowSeqsRemoved_80phototrophic.csv`
+        -    `Field_training_contamLowSeqsRemoved_100phototrophic.csv`
+        -    `Field_training_contamLowSeqsRemoved_120phototrophic.csv`
    - Script: `modelDevelopmentTesting/mda.py`
-- ```bash
+
+```bash
 conda env create -f MarPRISM_environment.mlk.yml
 conda activate MarPRISM
 cd modelDevelopmentTesting
@@ -46,7 +47,8 @@ conda deactivate
    - Used one dataset with 100 phototrophic transcriptomes and all mixotrophic and heterotrophic transcriptomes.
        -    Field_training_contamLowSeqsRemoved_100phototrophic.csv
    - Script: `modelDevelopmentTesting/parameter_gridsearch.py`
-   - ```bash
+
+```bash
 conda env create -f MarPRISM_environment.mlk.yml
 conda activate MarPRISM
 cd modelDevelopmentTesting
@@ -181,7 +183,7 @@ You can substitute `exampleDataset.csv` with the following datasets from the Gra
 
 Descriptions for **G1-G3 surface**, **ALOHA diel**, and **G3 diel** samples are provided by [North Pacific Ocean study](https://www.nature.com/articles/s41597-024-04005-5).
 
-#### Available Datasets:
+####  Datasets:
 - **G1PA.tpm_counts.csv.gz** (G1 surface)
 - **G2PA.tpm_counts.csv.gz** (G2 surface)
 - **G3PA.tpm_counts.csv.gz** (G3 surface)
