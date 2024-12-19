@@ -44,8 +44,8 @@ conda deactivate
 
 3. **Hyperparameter optimization**  
    - A grid search was performed to optimize model parameters.  
-   - Used one dataset with 100 phototrophic transcriptomes and all mixotrophic and heterotrophic transcriptomes.
-       -    Field_training_contamLowSeqsRemoved_100phototrophic.csv
+   - Used one dataset with 100 phototrophic transcriptomes and all mixotrophic and heterotrophic transcriptomes, located [here](https://zenodo.org/uploads/14518902).
+       -    `Field_training_contamLowSeqsRemoved_100phototrophic.csv`
    - Script: `modelDevelopmentTesting/parameter_gridsearch.py`
 
 ```bash
