@@ -199,5 +199,5 @@ Descriptions for **G1-G3 surface**, **ALOHA diel**, and **G3 diel** samples are 
 - **G3 Depth Read Processing, Assembly, and Mapping Scripts, and Metadata**:  
   [GitHub - G3 Depth Read Processing](https://github.com/armbrustlab/armbrust-metat/tree/main/gradients3/g3_depth_pa_metat)
 
-- **Code to Generate ALOHA Diel Assemblies**:  
+- **Code to Generate ALOHA Diel Assemblies and north pacific gene catalog**:  
   [GitHub - ALOHA Diel Assemblies and North Pacific Eukaryotic Gene Catalog](https://github.com/armbrustlab/NPac_euk_gene_catalog)
