@@ -131,7 +131,7 @@ We ran MarPRISM on processed metatranscriptomes collected across the North Pacif
 
 Most of these metatranscriptomes came from the Gradients (G) cruises.
 
-G1-G3 surface, ALOHA diel, and G3 diel metatranscriptomes were processed for the [North Pacific Gene Catalog](https://www.nature.com/articles/s41597-024-04005-5).
+G1-G3 surface, ALOHA diel, and G3 diel metatranscriptomes were processed for the [North Pacific Eukaryotic Gene Catalog](https://www.nature.com/articles/s41597-024-04005-5).
 
 Estimated counts outputted by `kallisto` were converted to transcripts per million using the above methods.  
    - Transcripts per million for each set of samples can be found [here](https://zenodo.org/uploads/14519070).
