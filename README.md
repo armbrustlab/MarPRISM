@@ -50,7 +50,7 @@ The performance of MarPRISM was estimated using cross-validation:
 
 **Mixotrophy** was the most difficult trophic mode to predict, likely due to overlapping Pfams with both phototrophy and heterotrophy.  
 
-## **How to run the model on marine metatranscriptomes**  
+## **How to run MarPRISM on marine metatranscriptomes to generate in situ trophic mode predictions**  
 Details of how we process metatranscriptomes can be found [here](https://www.nature.com/articles/s41597-024-04005-5).
 
 1. **Collect poly(A)-selected metatranscriptomes.**  
@@ -115,32 +115,23 @@ Details of how we process metatranscriptomes can be found [here](https://www.nat
 15. **Prioritize replicate-supported predictions:**  
     - When interpreting results, put more trust in trophic predictions when multiple replicates give you the same trophic mode prediction.
    
-### Example use of MarPRISM:
+### Example application of MarPRISM to marine metatranscriptomes:
 
 We ran MarPRISM on processed metatranscriptomes collected across the North Pacific Ocean: from surface and euphotic depths, across the diel cycle, and onboard nutrient amendment incubations. Most of these metatranscriptomes came from the Gradients (G) cruises. 
-   G1 surface transect 
-   G2 surface transect 
-   G3 surface transect
-   G3 depth profiles 
-   ALOHA diel study 
-   G3 diel study 
-   G2 onboard nutrient amendment incubations
 
 G1-G3 surface, ALOHA diel, and G3 diel metatranscriptomes were processed for the [North Pacific Gene Catalog](https://www.nature.com/articles/s41597-024-04005-5).
 
 Estimated counts outputted by `kallisto` were converted to transcripts per million using the above methods. 
-Transcripts per million for each set of samples can be found here: [10.5281/zenodo.14519070]. 
+Transcripts per million for each set of samples can be found [here](https://zenodo.org/uploads/14519070). 
 
 ####  Datasets:
-- **G1PA.tpm_counts.csv** (G1 surface)
-- **G2PA.tpm_counts.csv** (G2 surface)
-- **G3PA.tpm_counts.csv** (G3 surface)
+- **G1PA.tpm_counts.csv** (G1 surface transect)
+- **G2PA.tpm_counts.csv** (G2 surface transect)
+- **G3PA.tpm_counts.csv** (G3 surface transect)
 - **G3PA_depth.tpm_counts.csv** (G3 depth profiles)
-- **D1PA.tpm_counts.csv** (ALOHA diel)
-- **G3PA_diel.tpm_counts.csv** (G3 diel)
+- **D1PA.tpm_counts.csv** (ALOHA diel study)
+- **G3PA_diel.tpm_counts.csv** (G3 diel study)
 - **G2PA_incubations.tpm_counts.csv** (G2 onboard nutrient amendment incubations)
-
-You can substitute `exampleDataset.csv` with the following datasets from the Gradients (G) cruises to generate trophic mode predictions. Then you would exclude trophic predictions for any taxonomic bin that is not identified at the species level and is not a protist. Then exclude predictions that are mixed. 
 
 ```bash
 conda env create -f MarPRISM_environment.mlk.yml
@@ -149,20 +140,15 @@ jupyter-notebook MarPRISM.ipynb
 #substitute exampleDataset.csv in MarPRISM.ipynb for one of the above datasets.
 conda deactivate
 ```
-This will output exampleDataset_trophicPredictions.csv with the trophic predictions for each taxonomic bin and sample pair that have ≥70% eukaryote core transcribed genes expressed. 
+Output: 
+   `exampleDataset_trophicPredictions.csv` which contains the trophic predictions for each taxonomic bin and sample pair that have ≥70% eukaryote core transcribed genes expressed. 
+
 Then we excluded trophic predictions for taxonomic bins not identified at the species level, and taxonomic bins that were not identified as protists. 
+Then we excluded predictions that are mixed. 
 
+## **How to run feature selection**  
 
-## **Model development**  
-
-After removing contaminated and low-sequence transcriptomes, we conducted feature selection using mean decrease in accuracy to identify the feature Pfams essential for model performance.  
-
-1. **Feature selection**  
-   - Training dataset is unbalanced, more phototrophic transcriptomes than heterotrophic and mixotrophic transcriptomes.
-   - To address this, phototrophic transcriptomes were randomly undersampled to create four more balanced datasets:  
-     - Number of phototrophic transcriptomes = 50, 80, 100, 120
-     - Mixotrophic and heterotrophic transcriptomes were included in full.
-     - Datasets with undersampled phototrophic transcriptomes can be found [here](https://zenodo.org/uploads/14518902).
+   - Datasets with undersampled phototrophic transcriptomes can be found [here](https://zenodo.org/uploads/14518902).
         -    `Field_training_contamLowSeqsRemoved_50phototrophic.csv`
         -    `Field_training_contamLowSeqsRemoved_80phototrophic.csv`
         -    `Field_training_contamLowSeqsRemoved_100phototrophic.csv`
@@ -173,12 +159,14 @@ After removing contaminated and low-sequence transcriptomes, we conducted featur
 conda env create -f MarPRISM_environment.mlk.yml
 conda activate MarPRISM
 cd modelDevelopmentTesting
+python mda.py -model xgboost -data [path/to/balanced/datasets] -o [output file name and path]
 conda deactivate
 ```
 
+## **How to run hyperparameter optimization**  
+
 3. **Hyperparameter optimization**  
-   - A grid search was performed to optimize model parameters.  
-   - Used one dataset with 100 phototrophic transcriptomes and all mixotrophic and heterotrophic transcriptomes, located [here](https://zenodo.org/uploads/14518902).
+   - Dataset with 100 phototrophic transcriptomes and all mixotrophic and heterotrophic transcriptomes, located [here](https://zenodo.org/uploads/14518902).
        -    `Field_training_contamLowSeqsRemoved_100phototrophic.csv`
    - Script: `modelDevelopmentTesting/parameter_gridsearch.py`
 
@@ -186,26 +174,14 @@ conda deactivate
 conda env create -f MarPRISM_environment.mlk.yml
 conda activate MarPRISM
 cd modelDevelopmentTesting
+python parameter_gridsearch.py -model xgboost -data ../trophicModePrediction/Field_training_data_noOutliers_newContaminationMetric_parameterSearch_phot100.csv -labels ../trophicModePrediction/Field_training_labels_noOutliers_newContaminationMetric_parameterSearch_phot100.csv -o results_xgBoostModel_noOutliers_newContaminationMetric_phot100
 conda deactivate
 ```
 
-## **Model performance**  
+#### How to run cross-validation:
 
-### **Cross-validation**  
-The performance of MarPRISM was estimated using cross-validation:  
-- Cross-validation can be run in `modelDevelopmentTesting/marPRISM_crossValidation.ipynb`.
-- The model was trained on **83% of the training data** and tested on the remaining data.  
-- Performance was evaluated using **F1 score** (Mean F1 score ± standard error)
-  - **Overall mean**: 0.944 ± 0.0154  
-  - **Heterotrophy mean**: 0.958 ± 0.0271  
-  - **Mixotrophy mean**: 0.888 ± 0.0254  
-  - **Phototrophy mean**: 0.961 ± 0.0124
 - Cross-validation was conducted using the script located at: `modelDevelopmentTesting/crossValidation.ipynb`.
 - We tested other versions of the model in the same script, including a Random Forest model and different sets of feature Pfams.
-
-**Mixotrophy** was the most difficult trophic mode to predict, likely due to overlapping Pfams with both phototrophy and heterotrophy.  
-
-#### To run cross-validation:
 
 ```bash
 conda env create -f MarPRISM_environment.mlk.yml
@@ -226,14 +202,11 @@ conda deactivate
 ```
 This will output two csv files for the previous version of the model (Lambert et al. 2022): one for the mean and standard error of the F1 score for the overall model, and one for the mean and standard error of the F1 score treating each trophic mode separately. 
 
-### **Testing on cultured protist transcriptomes**  
-We further quantified MarPRISM's performance by testing its ability to make trophic predictions for cultured protist transcriptomes not present in the training data. 
+### **How to test MarPRISM on test transcriptomes**  
 - `modelDevelopmentTesting/testTranscriptomes.csv` can be run through `MarPRISM.ipynb` to recreate trophic predictions.
-- **21/27 (77.78%) protist cultures** were correctly predicted across all replicate transcriptomes.  
-- **60/76 (78.95%) transcriptomes** were correctly predicted when replicate transcriptomes were considered individually
 - Transcript per million counts for the test transcriptomes are located [here](https://zenodo.org/uploads/14518902)
-- The transcriptomes used for testing are from publicly available sources: accession IDs for transcriptomes used to test MarPRISM are available in [testTranscriptomes.xlsx](https://zenodo.org/uploads/14518902) 
-- To run the test transcriptomes through MarPRISM:
+- The transcriptomes used for testing are from publicly available sources: accession IDs for transcriptomes used to test MarPRISM are available in [testTranscriptomes.xlsx](https://zenodo.org/uploads/14518902).
+
  ```bash
  conda env create -f MarPRISM_environment.mlk.yml
  conda activate MarPRISM
@@ -241,11 +214,4 @@ We further quantified MarPRISM's performance by testing its ability to make trop
  substitute exampleDataset.csv for testTranscriptomes.csv (https://zenodo.org/uploads/14518902) 
  conda deactivate
  ```
-The trophic mode predictions for the test transcriptomes can be compared to their metadata: [testTranscriptomes.xlsx](https://zenodo.org/uploads/14518902) 
-
-
-- **G3 Depth Read Processing, Assembly, and Mapping Scripts, and Metadata**:  
-  [GitHub - G3 Depth Read Processing](https://github.com/armbrustlab/armbrust-metat/tree/main/gradients3/g3_depth_pa_metat)
-
-- **Code to Generate ALOHA Diel Assemblies and north pacific gene catalog**:  
-  [GitHub - ALOHA Diel Assemblies and North Pacific Eukaryotic Gene Catalog](https://github.com/armbrustlab/NPac_euk_gene_catalog)
+The trophic mode predictions for the test transcriptomes can be compared to their metadata: [testTranscriptomes.xlsx](https://zenodo.org/uploads/14518902).
