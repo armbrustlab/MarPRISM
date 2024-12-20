@@ -1,8 +1,19 @@
-**G2.RR_exp.metadata.csv**: Metadata for G2 incubations
+## **Scripts to calculate absolute transcripts for polyA metatranscriptomes**  
 
-**G2PA.RR_DCM.mf_lookup.csv**: sample ID (Inv_ID) to sequence run ID (NWGC_ID)
+We used these scripts to calculate transcripts per liter. 
+   - Transcripts per liter were not used as input to MarPRISM. 
+   - Rather, transcripts per liter were used to assess the abundance of protists. 
 
-**G2PA.RR_DCM.process_short_reads.sh**: trim adapters and quality trim raw sequence reads from G2 incubations
+G1-G3 surface, ALOHA diel, and G3 diel metatranscriptome absolute counts were taken from [North Pacific Eukaryotic Gene Catalog](https://www.nature.com/articles/s41597-024-04005-5), but did use these scripts. 
 
-**G2RR_polyA_kallisto**: map trimmed sequence reads from G2 incubations to G2 surface assembly
+We used the scripts in this directory to coculate transcripts per liter for the G2 incubation and G3 depthp profile samples. 
+   - Resulting normalization factors can be found in 'Normalization_factors'.
+
+**Bowtie2_map_count_standards_pipe.txt**: Bowtie2 is used to map trimmed reads to the custom standard sequences
+
+**CustomStandardSequences.fasta**: Custom standard sequences that were spiked in
+
+**count_custom_standards.py**: Counts the number of reads mapped to the custom standard sequences
+
+**Calculate_Norm_Factors.R**: Calculates normalization factors based on mapping of reads to custom standard sequences. Normalization factors can then be used to convert from number of transcripts mapped to transcripts per liter. 
 
