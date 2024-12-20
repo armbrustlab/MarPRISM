@@ -52,8 +52,8 @@ The performance of MarPRISM was estimated using cross-validation:
 
 ### **Testing on Cultured Protist Transcriptomes**  
 To further validate, MarPRISM was tested on cultured protist transcriptomes excluded from training:  
-- **Accuracy (culture-level):** 21/27 (77.78%)  
-- **Accuracy (transcriptome-level):** 60/76 (78.95%)
+- **Accuracy (correct prediction across all replicates):** 21/27 (77.78%)  
+- **Accuracy (by replicate):** 60/76 (78.95%)
 
 ## **How to run MarPRISM on marine metatranscriptomes to generate in situ trophic mode predictions**  
 Details of how we process metatranscriptomes can be found [here](https://www.nature.com/articles/s41597-024-04005-5).
@@ -127,13 +127,15 @@ We ran MarPRISM on processed metatranscriptomes collected across the North Pacif
    - Surface
    - Euphotic depths
    - Diel cycle
-   - Onboard nutrient amendment incubations.
+   - Onboard nutrient amendment incubations
 
 Most of these metatranscriptomes came from the Gradients (G) cruises.
 
 G1-G3 surface, ALOHA diel, and G3 diel metatranscriptomes were processed for the [North Pacific Eukaryotic Gene Catalog](https://www.nature.com/articles/s41597-024-04005-5).
 
-Estimated counts outputted by `kallisto` were converted to transcripts per million using the above methods.  
+Scripts for proceasing G2 incubations and G3 depth profiles are available in 'processMarineMetatranscriptomes'.
+
+Estimated counts outputted by `kallisto` were converted to transcripts per million as outlined in previous section.  
    - Transcripts per million for each set of samples can be found [here](https://zenodo.org/uploads/14519070).
 
 #### Datasets:
