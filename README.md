@@ -133,7 +133,7 @@ Most of these metatranscriptomes came from the Gradients (G) cruises.
 
 G1-G3 surface, ALOHA diel, and G3 diel metatranscriptomes were processed for the [North Pacific Eukaryotic Gene Catalog](https://www.nature.com/articles/s41597-024-04005-5).
 
-Scripts for proceasing G2 incubations and G3 depth profiles are available in 'processMarineMetatranscriptomes'.
+Scripts for proceasing G2 incubations and G3 depth profiles are available in `processMarineMetatranscriptomes`.
 
 Estimated counts outputted by `kallisto` were converted to transcripts per million as outlined in previous section.  
    - Transcripts per million for each set of samples can be found [here](https://zenodo.org/uploads/14519070).
@@ -246,7 +246,7 @@ conda deactivate
 #### Dataset:
    - `testTranscriptomes.csv.gz` located [here](https://zenodo.org/uploads/14518902)
    - Has transcript per million counts for the test transcriptomes.
-   - Transcriptomes used for testing are from publicly available sources: accession IDs for transcriptomes used to test MarPRISM are available in 'testTranscriptomes.xlsx' located [here](https://zenodo.org/uploads/14518902).
+   - Transcriptomes used for testing are from publicly available sources: accession IDs for transcriptomes used to test MarPRISM are available in `testTranscriptomes.xlsx` located [here](https://zenodo.org/uploads/14518902).
 
 #### To run MarPRISM on test transcriptomes:
 
