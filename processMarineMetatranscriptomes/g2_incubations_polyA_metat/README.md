@@ -1,4 +1,6 @@
-## **Scripts for processing polyA-selected metatranscriptomes collected from Gradients 2 (G2) onboard nutrient amendment aka resource ratio (RR) experiments** 
+## **Scripts for processing polyA-selected metatranscriptomes collected from Gradients 2 (G2) incubations** 
+
+**aka resource ratio (RR) experiments**
 
 **G2.RR_exp.metadata.csv**: Metadata for G2 incubations
 
