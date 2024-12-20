@@ -1,0 +1,32 @@
+###map g2 resource ratio (rr, incubations) short reads to G2 polyA surface transect assembly 
+###Elaina Thomas
+
+#make kallisto index of G2 polyA surface transect assembly
+egthomas@grazer:/scratch/elaina/g2Inc$ kallisto index -i NPac.G2PA.bf100.id99.nt.idx NPac.G2PA.bf100.id99.nt.fasta
+
+#make function for running kallisto alignment
+function run_kallisto {
+
+#create output directory for this sample
+mkdir ${SAMPLE}
+
+#declare paths and filenames of short reads
+LEFT_READS="/mnt/nfs/projects/armbrust-metat/gradients2/g2_dcm_rr_pa_metat/paired_end/${SAMPLE}.1.paired.trim.fastq.gz"
+RIGHT_READS="/mnt/nfs/projects/armbrust-metat/gradients2/g2_dcm_rr_pa_metat/paired_end/${SAMPLE}.2.paired.trim.fastq.gz"
+
+#run kallisto using the index, sample and short reads (writing out a log)
+echo "Running kallisto on ${SAMPLE} against nucleotideClusterSequences.fasta"
+kallisto quant --rf-stranded -i /scratch/elaina/g2Inc/NPac.G2PA.bf100.id99.nt.idx -o ${SAMPLE} <(zcat ${LEFT_READS}) <(zcat ${RIGHT_READS}) >> ${SAMPLE}.kallisto.log
+
+#rename the output to something project and sample specific:
+mv ${SAMPLE}/abundance.tsv /scratch/elaina/g2Inc/mapped/${SAMPLE}.abundance.tsv
+#rename run_info.json to something project and sample specific:
+mv ${SAMPLE}/run_info.json /scratch/elaina/g2Inc/mapped/${SAMPLE}.run_info.json
+}
+
+#align short reads against the kallisto index of assembled contigs
+#concatenated across samples
+egthomas@grazer:/scratch/elaina/g2Inc$ for SAMPLE in $(cat ~/g2Incubations/samplesEdited); do
+echo $SAMPLE
+time run_kallisto
+done
