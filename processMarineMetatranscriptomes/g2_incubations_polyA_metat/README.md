@@ -1,3 +1,5 @@
+## **Scripts for processing polyA-selected metatranscriptomes collected from Gradients 2 (G2) onboard nutrient amendment aka resource ratio (RR) experiments** 
+
 **G2.RR_exp.metadata.csv**: Metadata for G2 incubations
 
 **G2PA.RR_DCM.mf_lookup.csv**: sample ID (Inv_ID) to sequence run ID (NWGC_ID)
