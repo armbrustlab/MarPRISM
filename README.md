@@ -189,7 +189,7 @@ python mda.py -model xgboost -data trainingData_contamLowSeqsRemoved_120phot -o 
 conda deactivate
 ```
 
-We then took the **union of Pfams** in 'features_contamLowSeqsRemoved_50phot_xg', 'features_contamLowSeqsRemoved_80phot_xg', 'features_contamLowSeqsRemoved_100phot_xg', and 'features_contamLowSeqsRemoved_120phot_xg' that had an **importance score greater than 0**. 
+We then took the **union of Pfams** in `features_contamLowSeqsRemoved_50phot_xg`, `features_contamLowSeqsRemoved_80phot_xg`, `features_contamLowSeqsRemoved_100phot_xg`, and `features_contamLowSeqsRemoved_120phot_xg` that had an **importance score greater than 0**. 
 
 ## **How we ran hyperparameter optimization**  
 
