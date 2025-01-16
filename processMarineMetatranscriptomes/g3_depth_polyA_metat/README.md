@@ -4,7 +4,7 @@
 
 **lookup_armbrust_grc_rnaseq_6.csv**: sample ID (Inv_ID) to sequence run ID (NWGC_ID)
 
-Note: S5C6 should say S5C8
+Note: Every instance of S5C6 should say S5C8
 
 **G3Depth_polyA.process_short_reads.sh**: trim adapters and quality trim raw sequence reads from G3 depth profiles
 
