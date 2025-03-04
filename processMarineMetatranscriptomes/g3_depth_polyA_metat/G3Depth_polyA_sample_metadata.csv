@@ -22,4 +22,4 @@ G3PA.depth.S5C6.15m.A,km1906,5,8,0.2,A,15,4/20/19 8:05,37,-158,442893,DP21,"Trul
 G3PA.depth.S5C6.DCM.B,km1906,5,8,0.2,B,55,4/20/19 8:00,37,-158,442895,DP23,"Truly is Station 5, Cast 8; SampleID has wrong cast"
 G3PA.depth.S5C6.DCM.A,km1906,5,8,0.2,A,55,4/20/19 8:00,37,-158,442896,DP24,"Truly is Station 5, Cast 8; SampleID has wrong cast"
 G3PA.depth.S8C2.75m.B,km1906,8,2,0.2,B,75,4/24/19 14:39,42.33,-158,442897,DP25,
-G3PA.depth.S6C7.DCM.A,km1906,6,7,0.2,A,130,4/22/19 6:36,32.92,-158,442894,DP22,
+G3PA.depth.S6C7.DCM.A,km1906,6,7,0.2,A,130,4/22/19 6:36,32.92,-158,442894,DP22,Failed library
