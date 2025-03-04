@@ -10,7 +10,7 @@ Note: Every instance of S5C6 should say S5C8
 
 **G3Depth_polyA_trinity_assemble.sh**: de novo assemble trimmed sequence reads from G3 depth profiles
 
-**G3_depth_pa_Kallisto_pipe_unstranded.sh**: map trimmed sequence reads from G2 depth profiles to G3 depth profiles assembly
+**G3_depth_pa_Kallisto_pipe_unstranded.sh**: map trimmed sequence reads from G3 depth profiles to G3 depth profiles assembly
 
 
 
