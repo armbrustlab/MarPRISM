@@ -2,7 +2,7 @@
 
 **aka resource ratio (RR) experiments**
 
-**G2.RR_exp.metadata.csv**: Metadata for G2 incubations
+**G2RR_polyA_sample_metadata.csv**: Metadata for G2 incubations
 
 **G2PA.RR_DCM.mf_lookup.csv**: sample ID (Inv_ID) to sequence run ID (NWGC_ID)
 
