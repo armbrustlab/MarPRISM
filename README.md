@@ -209,7 +209,7 @@ python parameter_gridsearch.py -model xgboost -data trainingData_contamLowSeqsRe
 conda deactivate
 ```
 
-#### How we ran cross-validation:
+#### **How we ran cross-validation**
 
 We used cross-validation to **quantify the performance of MarPRISM** as well as other model versions. 
 
@@ -226,7 +226,8 @@ conda deactivate
 #### Output:
    - 'model_overall_f1_scores.csv': the overall mean and standard error of the F1 score for each model tested. 
    - 'models_byClass_f1_scores.csv': the mean and standard error of the F1 score by trophic mode for each model tested. 
-   - 'marPRISM_k_train_size_vs_f1_score_by_class.csv': For MarPRISM, the mean and standard error of the F1 score by percentage of training data used. 
+   - 'marPRISM_k_train_size_vs_f1_score_by_class.csv': For MarPRISM, the mean and standard error of the F1 score by percentage of training data used.
+   - 'marPRISM_cumulative_confusion_matrix.csv': For MarPRISM, data for confusion matrix, summarizing performance across folds of cross-validation.
 
 #### To run cross-validation on the previous version of the model (Lambert et al. 2022):
 
