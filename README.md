@@ -209,7 +209,7 @@ python parameter_gridsearch.py -model xgboost -data trainingData_contamLowSeqsRe
 conda deactivate
 ```
 
-#### **How we ran cross-validation**
+## **How we ran cross-validation**  
 
 We used cross-validation to **quantify the performance of MarPRISM** as well as other model versions. 
 
