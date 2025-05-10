@@ -241,7 +241,7 @@ conda deactivate
 #### Output:
    - 'lambert_model_overall_f1_score.csv': the overall mean and standard error of the F1 score for the previous version of the model (Lambert et al. 2022). 
    - 'lambert_model_overall_f1_score_byClass.csv': the mean and standard error of the F1 score by trophic mode for the previous version of the model (Lambert et al. 2022).
-   - 'lambert_model_cumulative_confusion_matrix.csv': for the previous version of the model (Lambert et al. 2022), data for confusion matrix, summarizing performance across folds of         cross-validation.
+   - 'lambert_model_cumulative_confusion_matrix.csv': for the previous version of the model (Lambert et al. 2022), data for confusion matrix, summarizing performance across folds of         cross-validation. Cross-validation is not changed but confusion matrix predictions are only included for entries in trainingDataMarPRISM.csv so that results can be compared            to results using MarPRISM.
    
 ## **How we ran MarPRISM on test transcriptomes**  
 
