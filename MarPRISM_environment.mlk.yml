@@ -1,8 +1,0 @@
-name: MarPRISM
-dependencies:
-  - pandas=2.0.2
-  - scikit-learn=1.2.2
-  - cython=0.29.35
-  - conda-forge::xgboost=1.7.4
-  - python=3.11
-  - jupyter=1.0.0
